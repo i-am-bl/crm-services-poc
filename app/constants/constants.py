@@ -104,6 +104,10 @@ PRODUCTS_DEL_SERV = "ProductsDelService"
 PRODUCTS_READ_SERV = "ProductsReadService"
 PRODUCTS_UPDATE_SERV = "ProductsUpdateService"
 
+TOKEN_TYPE = "bearer"
+TOKEN_KEY = "jwt"
+TOKEN_URL = "/v1/system-management/login/"
+
 SCHEMAS = ["sales"]
 
 SYS_USER_CREATE_SERV = "SysUserCreateService"
@@ -120,3 +124,7 @@ WEBSITES_UPDATE_SERVICE = "WebsitesUpdateService"
 
 WEBSITE_QUERY_NAME = "entity_website_name"
 WEBSITE_QUERY_UUID = "entity_website_uuid"
+
+# variables for messages
+_RECORD_EXISTS = "record already exists. A duplicate record is not allowed."
+_RECORD_NOT_EXIST = "record does not exist."

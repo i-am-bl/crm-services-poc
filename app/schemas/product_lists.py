@@ -3,11 +3,11 @@ from typing import List, Optional
 
 from pydantic import UUID4, BaseModel
 
-from app.schemas._variables import ConstrainedStr, TimeStamp
+from ._variables import ConstrainedStr, TimeStamp
 
 
 class ProductLists(BaseModel):
-    owner_id: int
+    owner_uuid: Optional[UUID4] = None
     name: ConstrainedStr
     start_on: Optional[date]
     end_on: Optional[date]
@@ -15,30 +15,34 @@ class ProductLists(BaseModel):
 
 class ProductListsCreate(ProductLists):
     sys_created_at: datetime = TimeStamp
-    sys_created_by: Optional[int] = None
+    sys_created_by: Optional[UUID4] = None
 
 
 class ProductListsUpdate(ProductLists):
-    owner_id: Optional[int] = None
+    owner_uuid: Optional[UUID4] = None
     name: Optional[ConstrainedStr] = None
     start_on: Optional[date] = None
     end_on: Optional[date] = None
     sys_updated_at: datetime = TimeStamp
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
 
 class ProductListsDel(BaseModel):
     sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
 
-class ProductListsResponse(ProductLists):
+class ProductListsResponse(BaseModel):
     id: int
     uuid: UUID4
+    owner_uuid: Optional[UUID4] = None
+    name: ConstrainedStr
+    start_on: Optional[date]
+    end_on: Optional[date]
     sys_created_at: datetime
-    sys_created_by: Optional[int]
+    sys_created_by: Optional[UUID4] = None
     sys_updated_at: Optional[datetime]
-    sys_updated_by: Optional[int]
+    sys_updated_by: Optional[UUID4] = None
 
     class Config:
         from_attributes = True
@@ -54,7 +58,7 @@ class ProductListsPagResponse(BaseModel):
 
 class ProductListsDelResponse(ProductListsResponse):
     sys_deleted_at: Optional[datetime]
-    sys_deleted_by: Optional[int]
+    sys_deleted_by: Optional[UUID4] = None
 
     class Config:
         from_attributes = True

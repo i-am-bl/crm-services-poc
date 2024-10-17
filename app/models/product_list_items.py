@@ -18,9 +18,7 @@ class ProductListItems(SysBase):
         UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
     )
 
-    product_list_id: Mapped[int] = mapped_column(Integer, nullable=False)
     product_list_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
-    product_id: Mapped[int] = mapped_column(Integer, nullable=False)
     product_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
 
     price: Mapped[Decimal] = mapped_column(

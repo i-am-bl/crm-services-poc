@@ -18,10 +18,8 @@ class Contacts(SysBase):
     )
 
     parent_table: Mapped[str] = mapped_column(String(50), nullable=True)
-    parent_id: Mapped[int] = mapped_column(Integer, nullable=False)
     parent_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
     child_table: Mapped[str] = mapped_column(String(50), nullable=True)
-    child_id: Mapped[int] = mapped_column(Integer, nullable=False)
     child_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
 
     sys_value_type_id: Mapped[str] = mapped_column(String(100), nullable=True)

@@ -1,11 +1,10 @@
 import re
 from datetime import datetime
 from typing import List, Optional
-from uuid import uuid5
 
 from pydantic import UUID4, BaseModel, field_validator
 
-from app.schemas._variables import ConstrainedEmailStr, ConstrainedStr, TimeStamp
+from ._variables import ConstrainedEmailStr, ConstrainedStr, TimeStamp
 
 
 class SysUsers(BaseModel):
@@ -25,6 +24,7 @@ class SysUsers(BaseModel):
 
 class SysUsersCreate(SysUsers):
     password: ConstrainedStr
+    sys_created_at: datetime = TimeStamp
 
     @field_validator("password")
     def validate_password(cls, value):
@@ -51,6 +51,7 @@ class SysUsersUpdate(BaseModel):
     username: Optional[ConstrainedStr] = None
     password: Optional[ConstrainedStr] = None
     sys_updated_at: datetime = TimeStamp
+    sys_updated_by: Optional[UUID4] = None
 
     @field_validator("password")
     def validate_password(cls, value):
@@ -73,7 +74,7 @@ class SysUsersUpdate(BaseModel):
 
 class SysUsersDel(BaseModel):
     sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
 
 class SysUsersDisable(BaseModel):
@@ -88,9 +89,9 @@ class SysUsersResponse(BaseModel):
     email: ConstrainedEmailStr
     username: ConstrainedStr
     sys_created_at: datetime
-    sys_created_by: Optional[int] = None
+    sys_created_by: Optional[UUID4] = None
     sys_updated_at: Optional[datetime] = None
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
     class Config:
         from_attributes = True
@@ -105,7 +106,7 @@ class SysUsersPagResponse(BaseModel):
 
 class SysUsersDelResponse(SysUsersResponse):
     sys_deleted_at: datetime
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
 
 class SysUserLogin(BaseModel):

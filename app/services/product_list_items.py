@@ -1,14 +1,17 @@
 from typing import List
+
 from fastapi import Depends
 from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
-import app.models.product_list_items as m_product_list_items
-import app.schemas.product_list_items as s_product_list_items
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+from ..models import product_list_items as m_product_list_items
+from ..schemas import product_list_items as s_product_list_items
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..utilities.utilities import DataUtils as di
+from ..exceptions import ProductListItemExists, ProductListItemNotExist
 
 
 class ProductListItemsModels:
@@ -28,8 +31,9 @@ class ProductListItemsStatements:
             product_list_items = ProductListItemsModels.product_list_items
             statement = Select(product_list_items).where(
                 and_(
-                    product_list_items.price_list_uuid == product_list_uuid,
+                    product_list_items.product_list_uuid == product_list_uuid,
                     product_list_items.uuid == product_list_item_uuid,
+                    product_list_items.sys_deleted_at == None,
                 )
             )
             return statement
@@ -39,7 +43,12 @@ class ProductListItemsStatements:
             product_list_items = ProductListItemsModels.product_list_items
             statement = (
                 Select(product_list_items)
-                .where(product_list_items.product_list_uuid == product_list_uuid)
+                .where(
+                    pand_(
+                        product_list_items.product_list_uuid == product_list_uuid,
+                        product_list_items.sys_deleted_at == None,
+                    )
+                )
                 .offset(offset=offset)
                 .limit(limit=limit)
             )
@@ -68,9 +77,10 @@ class ProductListItemsStatements:
         ):
             product_list_items = ProductListItemsModels.product_list_items
             statement = Select(product_list_items).where(
-                product_list_items.product_list_uuid == product_list_uuid,
                 and_(
+                    product_list_items.product_list_uuid == product_list_uuid,
                     product_list_items.product_uuid.in_(product_uuid_list),
+                    product_list_items.sys_deleted_at == None,
                 ),
             )
 
@@ -92,6 +102,7 @@ class ProductListItemsStatements:
                     and_(
                         product_list_items.product_list_uuid == product_list_uuid,
                         product_list_items.uuid == product_list_item_uuid,
+                        product_list_items.sys_deleted_at == None,
                     )
                 )
                 .values(di.set_empty_strs_null(product_list_item_data))
@@ -120,7 +131,9 @@ class ProductListItemsSerivces:
             product_list_item = await Operations.return_one_row(
                 service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(product_list_item)
+            di.record_not_exist(
+                instance=product_list_item, exception=ProductListItemNotExist
+            )
             return product_list_item
 
         async def get_product_list_items(
@@ -135,10 +148,13 @@ class ProductListItemsSerivces:
                     product_list_uuid=product_list_uuid, limit=limit, offset=offset
                 )
             )
-            items = await Operations.return_all_rows(
+            product_list_items = await Operations.return_all_rows(
                 service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
             )
-            return items
+            di.record_not_exist(
+                instance=product_list_items, exception=ProductListItemNotExist
+            )
+            return product_list_items
 
         async def get_product_list_items_ct(
             self,
@@ -179,14 +195,18 @@ class ProductListItemsSerivces:
                 statement=statement,
                 db=db,
             )
-            di.record_exists(product_list_item_exists)
+            di.record_exists(
+                instance=product_list_item_exists, exception=ProductListItemExists
+            )
             product_list_item = await Operations.add_instances(
                 service=cnst.PRODUCT_LIST_ITEMS_CREATE_SERV,
                 model=product_list_items,
                 data=product_list_item_data,
                 db=db,
             )
-            di.record_not_exist(product_list_item)
+            di.record_not_exist(
+                instance=product_list_item, exception=ProductListItemNotExist
+            )
             return product_list_item
 
     class UpdateService:
@@ -208,7 +228,9 @@ class ProductListItemsSerivces:
             product_list_item = await Operations.return_one_row(
                 service=cnst.PRODUCT_LIST_ITEMS_UPDATE_SERV, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(product_list_item)
+            di.record_not_exist(
+                instance=product_list_item, exception=ProductListItemNotExist
+            )
             return product_list_item
 
     class DelService:
@@ -230,5 +252,7 @@ class ProductListItemsSerivces:
             product_list_item = await Operations.return_one_row(
                 service=cnst.PRODUCT_LIST_ITEMS_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(product_list_item)
+            di.record_not_exist(
+                instance=product_list_item, exception=ProductListItemNotExist
+            )
             return product_list_item

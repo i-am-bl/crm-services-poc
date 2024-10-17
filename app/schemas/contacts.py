@@ -4,10 +4,9 @@ from typing import Optional
 from pydantic import UUID4, BaseModel
 
 
+# TODO: fix this
 class ContactsBase(BaseModel):
-    parent_id: int
     parent_uuid: UUID4
-    child_id: int
     child_uuid: UUID4
 
 

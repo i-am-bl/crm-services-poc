@@ -3,13 +3,11 @@ from typing import List, Optional
 
 from pydantic import UUID4, BaseModel
 
-from app.schemas._variables import ConstrainedStr, TimeStamp
+from ._variables import ConstrainedStr, TimeStamp
 
 
 class EntityAccounts(BaseModel):
-    entity_id: int
     entity_uuid: UUID4
-    account_id: int
     account_uuid: UUID4
     start_on: Optional[date] = None
     end_on: Optional[date] = None
@@ -17,39 +15,43 @@ class EntityAccounts(BaseModel):
 
 class EntityAccountsCreate(EntityAccounts):
     sys_created_at: datetime = TimeStamp
-    sys_created_by: Optional[int] = None
+    sys_created_by: Optional[UUID4] = None
 
 
 class EntityAccountsAccountCreate(BaseModel):
-    entity_id: int
     entity_uuid: UUID4
-    account_id: Optional[int] = None
     account_uuid: Optional[UUID4] = None
     start_on: Optional[date] = None
     end_on: Optional[date] = None
     sys_created_at: datetime = TimeStamp
-    sys_created_by: Optional[int] = None
+    sys_created_by: Optional[UUID4] = None
 
 
 class EntityAccountsUpdate(BaseModel):
     start_on: Optional[date] = None
     end_on: Optional[date] = None
     sys_updated_at: datetime = TimeStamp
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
 
 class EntityAccountsDel(BaseModel):
     sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
 
-class EntityAccountsResponse(EntityAccounts):
+class EntityAccountsResponse(BaseModel):
     id: int
     uuid: UUID4
+    entity_uuid: UUID4
+    account_uuid: Optional[UUID4] = None
+    start_on: Optional[date] = None
+    end_on: Optional[date] = None
+    sys_created_at: datetime = TimeStamp
+    sys_created_by: Optional[UUID4] = None
     sys_created_at: datetime
     sys_created_by: Optional[int] = None
     sys_updated_at: Optional[datetime] = None
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
     class Config:
         from_attributes = True
@@ -65,7 +67,7 @@ class EntityAccountsPagResponse(BaseModel):
 
 class EntityAccountsDelResponse(EntityAccountsResponse):
     sys_deleted_at: datetime
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
     class Config:
         from_attributes = True

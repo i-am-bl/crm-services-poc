@@ -5,11 +5,13 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
 import app.models.invoice_items as m_invoice_items
 import app.schemas.invoice_items as s_invoice_Items
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..utilities.utilities import DataUtils as di
+from ..exceptions import InvoiceItemExists, InvoiceItemNotExist
 
 
 class InvoiceItemsModels:
@@ -60,6 +62,7 @@ class InvoiceItemsStatements:
                 and_(
                     invoice_items.invoice_uuid == invoice_uuid,
                     invoice_items.uuid == invoice_item_uuid,
+                    invoice_items.sys_deleted_at == None,
                 )
             )
             return statement
@@ -106,7 +109,7 @@ class InvoiceItemsServices:
             invoice_item = await Operations.return_one_row(
                 service=cnst.INVOICE_ITEMS_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=invoice_item)
+            di.record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
             return invoice_item
 
         async def get_invoices_items(
@@ -122,7 +125,7 @@ class InvoiceItemsServices:
             invoice_items = await Operations.return_all_rows(
                 cnst.INVOICE_ITEMS_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=invoice_items)
+            di.record_not_exist(instance=invoice_items, exception=InvoiceItemNotExist)
             return invoice_items
 
         async def get_invoices_items_ct(
@@ -156,7 +159,7 @@ class InvoiceItemsServices:
                 data=invoice_item_data,
                 db=db,
             )
-            di.record_not_exist(model=invoice_item)
+            di.record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
             return invoice_item
 
     class UpdateService:
@@ -178,7 +181,7 @@ class InvoiceItemsServices:
             invoice_item = await Operations.return_one_row(
                 cnst.INVOICE_ITEMS_UPDATE_SERV, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(model=invoice_item)
+            di.record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
             return invoice_item
 
     class DelService:
@@ -200,5 +203,5 @@ class InvoiceItemsServices:
             invoice_item = await Operations.return_one_row(
                 cnst.INVOICE_ITEMS_DEL_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=invoice_item)
+            di.record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
             return invoice_item

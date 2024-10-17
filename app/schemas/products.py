@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from pydantic import UUID4, BaseModel, EmailStr, Field, StringConstraints
 
-from app.schemas._variables import ConstrainedStr, TimeStamp
+from ._variables import ConstrainedStr, TimeStamp
 
 
 class Products(BaseModel):
@@ -20,7 +20,7 @@ class Products(BaseModel):
 
 class ProductsCreate(Products):
     sys_created_at: datetime = TimeStamp
-    sys_created_by: Optional[int] = None
+    sys_created_by: Optional[UUID4] = None
 
 
 class ProductsUpdate(BaseModel):
@@ -33,19 +33,29 @@ class ProductsUpdate(BaseModel):
     man_allowed_price_increase: Optional[bool] = None
     man_allowed_price_decrease: Optional[bool] = None
     sys_updated_at: datetime = TimeStamp
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
 
 class ProductsDel(BaseModel):
     sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
 
-class ProductsResponse(Products):
+class ProductsResponse(BaseModel):
     id: int
     uuid: UUID4
+    name: Optional[ConstrainedStr] = None
+    code: Optional[ConstrainedStr] = None
+    terms: Optional[ConstrainedStr] = None
+    description: Optional[ConstrainedStr] = None
+    sys_allowed_price_increase: Optional[bool] = None
+    sys_allowed_price_decrease: Optional[bool] = None
+    man_allowed_price_increase: Optional[bool] = None
+    man_allowed_price_decrease: Optional[bool] = None
     sys_created_at: datetime
-    sys_updated_at: Optional[datetime]
+    sys_created_by: Optional[UUID4] = None
+    sys_updated_at: Optional[datetime] = None
+    sys_updated_by: Optional[UUID4] = None
 
     class Config:
         from_attributes = True
@@ -60,9 +70,8 @@ class ProductsPagResponse(BaseModel):
 
 
 class ProductsDelResponse(ProductsResponse):
-    sys_updated_at: Optional[datetime]
     sys_deleted_at: datetime
-    sys_deleted_by: Optional[int]
+    sys_deleted_by: Optional[UUID4] = None
 
     class Config:
         from_attributes = True

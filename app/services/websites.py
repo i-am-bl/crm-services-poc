@@ -1,15 +1,15 @@
-from typing import Annotated, Literal, Optional
-
-from fastapi import Depends, HTTPException, dependencies, status
+from fastapi import Depends
 from pydantic import UUID4
 from sqlalchemy import Select, Update, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
-import app.models.websites as m_websites
-import app.schemas.websites as s_websites
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+from ..models import websites as m_websites
+from ..exceptions import WebsitesExists, WebsitesNotExist
+from ..schemas import websites as s_websites
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..utilities.utilities import DataUtils as di
 
 
 class WebsitesModels:
@@ -23,7 +23,7 @@ class WebsitesStatements:
         pass
 
         @staticmethod
-        def sel_web_by_entity_web_uuid_stm(
+        def sel_web_by_uuid(
             entity_uuid: UUID4,
             website_uuid: UUID4,
         ):
@@ -32,12 +32,13 @@ class WebsitesStatements:
                 and_(
                     websites.entity_uuid == entity_uuid,
                     websites.uuid == website_uuid,
+                    websites.sys_deleted_at == None,
                 )
             )
             return statement
 
         @staticmethod
-        def sel_web_entity_web_name_stm(
+        def sel_web_by_url(
             entity_uuid: UUID4,
             website_name: str,
             db: AsyncSession = Depends(get_db),
@@ -47,6 +48,7 @@ class WebsitesStatements:
                 and_(
                     websites.entity_uuid == entity_uuid,
                     websites.url == website_name,
+                    websites.sys_deleted_at == None,
                 )
             )
 
@@ -56,15 +58,14 @@ class WebsitesStatements:
         pass
 
         @staticmethod
-        def update_web_stm(
-            entity_uuid: UUID4, website_uuid: UUID4, website_data: object
-        ):
+        def update_web(entity_uuid: UUID4, website_uuid: UUID4, website_data: object):
             websites = WebsitesModels.websites
             statement = (
                 Update(websites)
                 .where(
                     websites.entity_uuid == entity_uuid,
                     websites.uuid == website_uuid,
+                    websites.sys_deleted_at == None,
                 )
                 .values(di.set_empty_strs_null(website_data))
                 .returning(websites)
@@ -86,13 +87,13 @@ class WebsitesServices:
             db: AsyncSession = Depends(get_db),
         ):
 
-            statement = statement.sel_web_by_entity_web_uuid_stm(
+            statement = WebsitesStatements.SelStatements.sel_web_by_uuid(
                 entity_uuid=entity_uuid, website_uuid=website_uuid
             )
             website = await Operations.return_one_row(
                 service=cnst.WEBSITES_READ_SERVICE, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(website)
+            di.record_not_exist(instance=website, exception=WebsitesNotExist)
             return website
 
     class CreateService:
@@ -105,27 +106,28 @@ class WebsitesServices:
             db: AsyncSession = Depends(get_db),
         ):
 
-            statement = WebsitesStatements.SelStatements.sel_web_entity_web_name_stm(
+            statement = WebsitesStatements.SelStatements.sel_web_by_url(
                 entity_uuid=website_data.entity_uuid, website_name=website_data.url
             )
             websites = WebsitesModels.websites
             website_exists = await Operations.return_one_row(
                 service=cnst.WEBSITES_CREATE_SERVICE, statement=statement, db=db
             )
-            di.record_exists(model=website_exists)
+            di.record_exists(instance=website_exists, exception=WebsitesExists)
             website = await Operations.add_instance(
                 service=cnst.WEBSITES_CREATE_SERVICE,
                 model=websites,
                 data=website_data,
                 db=db,
             )
+            di.record_not_exist(instance=website, exception=WebsitesNotExist)
             return website
 
     class UpdateService:
         def __init__(self) -> None:
             pass
 
-        async def update_website_eng(
+        async def update_website(
             self,
             entity_uuid: UUID4,
             website_uuid: UUID4,
@@ -133,7 +135,7 @@ class WebsitesServices:
             db: AsyncSession = Depends(get_db),
         ):
 
-            statement = WebsitesStatements.UpdateStatements.update_web_stm(
+            statement = WebsitesStatements.UpdateStatements.update_web(
                 entity_uuid=entity_uuid,
                 website_uuid=website_uuid,
                 website_data=website_data,
@@ -141,7 +143,7 @@ class WebsitesServices:
             website = await Operations.return_one_row(
                 service=cnst.WEBSITES_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(website)
+            di.record_not_exist(instance=website, exception=WebsitesNotExist)
             return website
 
     class DelService:
@@ -156,7 +158,7 @@ class WebsitesServices:
             db: AsyncSession = Depends(get_db),
         ):
 
-            statement = WebsitesStatements.UpdateStatements.update_web_stm(
+            statement = WebsitesStatements.UpdateStatements.update_web(
                 entity_uuid=entity_uuid,
                 website_uuid=website_uuid,
                 website_data=website_data,
@@ -164,4 +166,5 @@ class WebsitesServices:
             website = await Operations.return_one_row(
                 service=cnst.WEBSITES_DEL_SERVICE, statement=statement, db=db
             )
+            di.record_not_exist(instance=website, exception=WebsitesNotExist)
             return website

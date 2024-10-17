@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import Annotated, Literal, Optional, List
+from typing import Annotated, List, Literal, Optional
 
 from pydantic import UUID4, BaseModel
 
-import app.constants as cnst
-from app.schemas._variables import TimeStamp
+from ..constants import constants as cnst
+from ._variables import TimeStamp
 
 
 class Entities(BaseModel):
@@ -12,9 +12,8 @@ class Entities(BaseModel):
 
 
 class EntitiesCreate(Entities):
-
-    class Config:
-        from_attributes = True
+    sys_created_at: datetime = TimeStamp
+    sys_created_by: Optional[UUID4] = None
 
 
 class EntitiesUpdate(BaseModel):
@@ -22,21 +21,21 @@ class EntitiesUpdate(BaseModel):
         str, Optional[Literal[cnst.ENTITY_INDIVIDUAL, cnst.ENTITY_NON_INDIVIDUAL]]
     ] = None
     sys_updated_at: datetime = TimeStamp
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
 
 class EntitiesDel(BaseModel):
     sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
 
 class EntitiesResponse(Entities):
     id: int
     uuid: UUID4
     sys_created_at: datetime
-    sys_created_by: Optional[int] = None
+    sys_created_by: Optional[UUID4] = None
     sys_updated_at: Optional[datetime] = None
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
     class Config:
         from_attributes = True
@@ -52,7 +51,7 @@ class EntitiesPagResponse(BaseModel):
 
 class EntitiesDelResponse(EntitiesResponse):
     sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
     class Config:
         from_attributes = True

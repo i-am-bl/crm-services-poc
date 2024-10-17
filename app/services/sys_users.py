@@ -1,22 +1,20 @@
-import logging
-from datetime import UTC, timedelta
-from typing import Optional
+from datetime import UTC
 
-
-from fastapi import Depends, HTTPException, Query, status
+from config import settings
+from fastapi import Depends, Query
 from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
-import app.models.sys_users as m_sys_user
-import app.schemas.sys_users as s_sys_user
-from app.services.utilities import DataUtils as di, PasswordUtils
-from config import settings
-from app.database.database import Operations, get_db
-from app.logger import logger
-from app.service_utils import AuthUtils
-from app.services.oauth2 import AuthService
+from ..models import sys_users as m_sys_user
+from ..schemas import sys_users as s_sys_user
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..exceptions import InvalidCredentials, SysUserExists, SysUserNotExist
+from ..utilities.logger import logger
+from ..utilities.service_utils import AuthUtils
+from ..utilities.utilities import DataUtils as di
 
 
 class SysUsersModels:
@@ -47,6 +45,7 @@ class SysUsersStatements:
             statement = Select(sys_users).where(
                 and_(
                     sys_users.username == username,
+                    # TODO: handle disabled users with exception
                     sys_users.disabled_at == None,
                     sys_users.sys_deleted_at == None,
                 )
@@ -56,7 +55,13 @@ class SysUsersStatements:
         @staticmethod
         def sel_sys_user_by_uuid(sys_user_uuid: UUID4):
             sys_users = SysUsersModels.sys_users
-            statement = Select(sys_users).where(sys_users.uuid == sys_user_uuid)
+            statement = Select(sys_users).where(
+                and_(
+                    sys_users.uuid == sys_user_uuid,
+                    sys_users.disabled_at == None,
+                    sys_users.sys_deleted_at == None,
+                )
+            )
             return statement
 
         @staticmethod
@@ -119,7 +124,21 @@ class SysUsersServices:
             sys_user = await Operations.return_one_row(
                 service=cnst.SYS_USER_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=sys_user)
+            di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
+            return sys_user
+
+        async def get_sys_user_by_username(
+            self,
+            username: str,
+            db: AsyncSession = Depends(get_db),
+        ):
+            statement = SysUsersStatements.SelStatements.sel_sys_user_by_username(
+                username=username
+            )
+            sys_user = await Operations.return_one_row(
+                service=cnst.SYS_USER_READ_SERV, statement=statement, db=db
+            )
+            di.record_not_exist(instance=sys_user, exception=InvalidCredentials)
             return sys_user
 
         async def get_sys_users(
@@ -134,7 +153,7 @@ class SysUsersServices:
             sys_users = await Operations.return_all_rows(
                 service=cnst.SYS_USER_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=sys_users)
+            di.record_not_exist(instance=sys_users, exception=SysUserNotExist)
             return sys_users
 
         async def get_sys_users_ct(
@@ -163,7 +182,7 @@ class SysUsersServices:
             user_exists = await Operations.return_one_row(
                 service=cnst.SYS_USER_CREATE_SERV, statement=statement, db=db
             )
-            di.record_exists(model=user_exists)
+            di.record_exists(instance=user_exists, exception=user_exists)
             sys_user_data.password = AuthUtils.gen_hash(password=sys_user_data.password)
             sys_user = await Operations.add_instance(
                 service=cnst.SYS_USER_CREATE_SERV,
@@ -171,7 +190,7 @@ class SysUsersServices:
                 data=sys_user_data,
                 db=db,
             )
-            di.record_not_exist(model=sys_user)
+            di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
             return sys_user
 
     class UpdateService:
@@ -188,7 +207,7 @@ class SysUsersServices:
             sys_user = await Operations.return_one_row(
                 service=cnst.SYS_USER_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=sys_user)
+            di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
             return sys_user
 
         async def disable_sys_user(
@@ -203,7 +222,7 @@ class SysUsersServices:
             sys_user = await Operations.return_one_row(
                 service=cnst.SYS_USER_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=sys_user)
+            di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
             return sys_user
 
     class DelService:
@@ -219,54 +238,5 @@ class SysUsersServices:
             sys_user = await Operations.return_one_row(
                 service=cnst.SYS_USER_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=sys_user)
+            di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
             return sys_user
-
-
-class SysUserAuthService:
-    def __init__(self) -> None:
-        pass
-
-    async def authenticate_sys_user(
-        self, form_data: s_sys_user.SysUserLogin, db: AsyncSession = Depends(get_db)
-    ):
-        statement = SysUsersStatements.SelStatements.sel_sys_user_by_username(
-            username=form_data.username
-        )
-
-        sys_user = await Operations.return_one_row(
-            service=cnst.AUTH_SERVICE, statement=statement, db=db
-        )
-        di.record_not_exist(model=sys_user)
-
-        if not PasswordUtils.validate_hash(
-            password=form_data.password, hash=sys_user.password
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=cnst.USER_INVALID_CREDENTIALS,
-            )
-
-        return sys_user
-
-    async def gen_sys_session(
-        self, form_data: s_sys_user.SysUserLogin, db: AsyncSession = Depends(get_db)
-    ):
-
-        statement = SysUsersStatements.SelStatements.sel_sys_user_by_username(
-            username=form_data.username
-        )
-        sys_user = await Operations.return_one_row(
-            service=cnst.AUTH_SERVICE, statement=statement, db=db
-        )
-        if sys_user:
-            user_dict = {}
-            user_dict["sys_user_id"] = str(sys_user.id)
-            user_dict[cnst.USER_USERNAME] = form_data.username
-        valid_data = s_sys_user.TokenData(**user_dict)
-        data = di.m_dumps(data=valid_data)
-        encoded_jwt = await AuthService.gen_access_token(
-            data=data,
-            expires_delta=timedelta(minutes=settings.jwt_expiration),
-        )
-        return encoded_jwt

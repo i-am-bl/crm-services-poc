@@ -18,13 +18,11 @@ class Orders(SysBase):
         UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
     )
 
-    account_id: Mapped[int] = mapped_column(Integer, nullable=False)
     account_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
-    invoice_id: Mapped[int] = mapped_column(Integer, nullable=True)
     invoice_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
 
-    owner_id: Mapped[int] = mapped_column(Integer, nullable=True)
-    approved_by_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    owner_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
+    approved_by_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
     approved_on: Mapped[date] = mapped_column(Date, nullable=True)
 
     transacted_on: Mapped[Date] = mapped_column(Date, nullable=True)

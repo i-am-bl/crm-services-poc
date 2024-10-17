@@ -1,10 +1,9 @@
 from datetime import datetime
 from typing import List, Optional
 
-from click import Option
 from pydantic import UUID4, BaseModel
 
-from app.schemas._variables import ConstrainedStr, TimeStamp
+from ._variables import ConstrainedStr, TimeStamp
 
 
 class Individuals(BaseModel):
@@ -13,31 +12,33 @@ class Individuals(BaseModel):
 
 
 class IndividualsCreate(Individuals):
-    entity_id: int
     entity_uuid: UUID4
+    sys_created_at: datetime = TimeStamp
+    sys_created_by: Optional[UUID4] = None
 
 
 class IndividualsUpdate(BaseModel):
     first_name: Optional[ConstrainedStr] = None
     last_name: Optional[ConstrainedStr] = None
     sys_updated_at: datetime = TimeStamp
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
 
 class IndividualsDel(BaseModel):
     sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
 
 class IndividualsResponse(BaseModel):
     id: int
     uuid: UUID4
-    first_name: Optional[ConstrainedStr] = None
-    last_name: Optional[ConstrainedStr] = None
+    entity_uuid: UUID4
+    sys_created_at: datetime = TimeStamp
+    sys_created_by: Optional[UUID4] = None
     sys_created_at: datetime
-    sys_created_by: Optional[int] = None
+    sys_created_by: Optional[UUID4] = None
     sys_updated_at: Optional[datetime] = None
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
     class Config:
         from_attributes = True
@@ -53,7 +54,7 @@ class IndividualsPagResponse(BaseModel):
 
 class IndividualsDelResponse(IndividualsResponse):
     sys_deleted_at: datetime
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
     class Config:
         from_attributes = True

@@ -18,9 +18,7 @@ class EntityAccounts(SysBase):
         unique=True,
     )
 
-    entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
     entity_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
-    account_id: Mapped[int] = mapped_column(Integer, nullable=False)
     account_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
 
     start_on: Mapped[date] = mapped_column(Date, nullable=True)

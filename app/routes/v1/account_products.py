@@ -1,18 +1,22 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, status, Query
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.schemas.account_products as s_account_products
-from app.database.database import Operations, get_db
-from app.services.account_products import AccountProductsServices
-from app.service_utils import pagination_offset
+from ...database.database import Operations, get_db
+from ...schemas import account_products as s_account_products
+from ...services.account_products import AccountProductsServices
+from ...services.authetication import SessionService
+from ...utilities.service_utils import pagination_offset
+from ...utilities.sys_users import SetSys
+from ...exceptions import UnhandledException, AccProductstNotExist, AccProductsExists
 
 serv_acc_products_r = AccountProductsServices.ReadService()
 serv_acc_products_c = AccountProductsServices.CreateService()
 serv_acc_products_u = AccountProductsServices.UpdateService()
 serv_acc_products_d = AccountProductsServices.DelService()
+serv_session = SessionService()
 
 router = APIRouter()
 
@@ -23,16 +27,28 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
 )
 async def get_account_products(
-    account_uuid: UUID4, account_product_uuid: UUID4, db: AsyncSession = Depends(get_db)
+    request: Request,
+    response: Response,
+    account_uuid: UUID4,
+    account_product_uuid: UUID4,
+    db: AsyncSession = Depends(get_db),
 ):
     """get one active allowed account product"""
-    async with db.begin():
-        account_product = await serv_acc_products_r.get_account_product(
-            account_uuid=account_uuid,
-            account_product_uuid=account_product_uuid,
-            db=db,
-        )
-        return account_product
+    try:
+        async with db.begin():
+            _ = await serv_session.validate_session(
+                request=request, response=response, db=db
+            )
+            account_product = await serv_acc_products_r.get_account_product(
+                account_uuid=account_uuid,
+                account_product_uuid=account_product_uuid,
+                db=db,
+            )
+            return account_product
+    except AccProductstNotExist:
+        raise AccProductstNotExist()
+    except Exception:
+        raise UnhandledException()
 
 
 @router.get(
@@ -41,27 +57,37 @@ async def get_account_products(
     status_code=status.HTTP_200_OK,
 )
 async def get_account_products(
+    request: Request,
+    response: Response,
     account_uuid: UUID4,
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
     """get all active allowed account products"""
-    async with db.begin():
-        offset = pagination_offset(page=page, limit=limit)
-        total_count = await serv_acc_products_r.get_account_product_ct(
-            account_uuid=account_uuid, db=db
-        )
-        account_products = await serv_acc_products_r.get_account_products(
-            account_uuid=account_uuid, limit=limit, offset=offset, db=db
-        )
-        return {
-            "total": total_count,
-            "page": page,
-            "limit": limit,
-            "has_more": total_count > (page * limit),
-            "account_products": account_products,
-        }
+    try:
+        async with db.begin():
+            _ = await serv_session.validate_session(
+                request=request, response=response, db=db
+            )
+            offset = pagination_offset(page=page, limit=limit)
+            total_count = await serv_acc_products_r.get_account_product_ct(
+                account_uuid=account_uuid, db=db
+            )
+            account_products = await serv_acc_products_r.get_account_products(
+                account_uuid=account_uuid, limit=limit, offset=offset, db=db
+            )
+            return {
+                "total": total_count,
+                "page": page,
+                "limit": limit,
+                "has_more": total_count > (page * limit),
+                "account_products": account_products,
+            }
+    except AccProductstNotExist:
+        raise AccProductstNotExist()
+    except Exception:
+        raise UnhandledException()
 
 
 @router.post(
@@ -70,16 +96,31 @@ async def get_account_products(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_account_product(
+    request: Request,
+    response: Response,
     account_uuid: UUID4,
     account_product_data: s_account_products.AccountProductsCreate,
     db: AsyncSession = Depends(get_db),
 ):
     """create one allowed account product"""
-    async with db.begin():
-        account_product = await serv_acc_products_c.create_account_product(
-            account_uuid=account_uuid, account_product_data=account_product_data, db=db
-        )
-        return account_product
+    try:
+        async with db.begin():
+            sys_user = await serv_session.validate_session(
+                request=request, response=response, db=db
+            )
+            SetSys.sys_created_by(data=account_product_data, sys_user=sys_user)
+            account_product = await serv_acc_products_c.create_account_product(
+                account_uuid=account_uuid,
+                account_product_data=account_product_data,
+                db=db,
+            )
+            return account_product
+    except AccProductstNotExist:
+        raise AccProductstNotExist()
+    except AccProductsExists:
+        raise AccProductsExists()
+    except Exception:
+        raise UnhandledException()
 
 
 @router.put(
@@ -88,20 +129,31 @@ async def create_account_product(
     status_code=status.HTTP_200_OK,
 )
 async def update_account_product(
+    request: Request,
+    response: Response,
     account_uuid: UUID4,
     account_product_uuid: UUID4,
     account_product_data: s_account_products.AccountProductsUpdate,
     db: AsyncSession = Depends(get_db),
 ):
     """update one account product"""
-    async with db.begin():
-        account_product = await serv_acc_products_u.update_account_product(
-            account_uuid=account_uuid,
-            account_product_uuid=account_product_uuid,
-            account_product_data=account_product_data,
-            db=db,
-        )
-        return account_product
+    try:
+        async with db.begin():
+            sys_user = await serv_session.validate_session(
+                request=request, response=response, db=db
+            )
+            SetSys.sys_updated_by(data=account_product_data, sys_user=sys_user)
+            account_product = await serv_acc_products_u.update_account_product(
+                account_uuid=account_uuid,
+                account_product_uuid=account_product_uuid,
+                account_product_data=account_product_data,
+                db=db,
+            )
+            return account_product
+    except AccProductstNotExist:
+        raise AccProductstNotExist()
+    except Exception:
+        raise UnhandledException()
 
 
 @router.delete(
@@ -110,17 +162,28 @@ async def update_account_product(
     status_code=status.HTTP_200_OK,
 )
 async def soft_del_account_product(
+    request: Request,
+    response: Response,
     account_uuid: UUID4,
     account_product_uuid: UUID4,
     account_product_data: s_account_products.AccountProductsDel,
     db: AsyncSession = Depends(get_db),
 ):
     """soft del one account product"""
-    async with db.begin():
-        account_product = await serv_acc_products_d.soft_del_account_product(
-            account_uuid=account_uuid,
-            account_product_uuid=account_product_uuid,
-            account_product_data=account_product_data,
-            db=db,
-        )
-        return account_product
+    try:
+        async with db.begin():
+            sys_user = await serv_session.validate_session(
+                request=request, response=response, db=db
+            )
+            SetSys.sys_deleted_by(data=account_product_data, sys_user=sys_user)
+            account_product = await serv_acc_products_d.soft_del_account_product(
+                account_uuid=account_uuid,
+                account_product_uuid=account_product_uuid,
+                account_product_data=account_product_data,
+                db=db,
+            )
+            return account_product
+    except AccProductstNotExist:
+        raise AccProductstNotExist()
+    except Exception:
+        raise UnhandledException()
