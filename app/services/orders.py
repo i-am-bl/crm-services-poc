@@ -5,11 +5,13 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
-import app.models.orders as m_orders
-import app.schemas.orders as s_orders
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+from ..models import orders as m_orders
+from ..schemas import orders as s_orders
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..utilities.utilities import DataUtils as di
+from ..exceptions import OrderExists, OrderNotExist
 
 
 class OrdersModels:
@@ -25,7 +27,12 @@ class OrdersStatements:
         @staticmethod
         def sel_order_by_uuid(order_uuid: UUID4):
             orders = OrdersModels.orders
-            statement = Select(orders).where(orders.uuid == order_uuid)
+            statement = Select(orders).where(
+                and_(
+                    orders.uuid == order_uuid,
+                    orders.sys_deleted_at == None,
+                )
+            )
             return statement
 
         @staticmethod
@@ -57,7 +64,7 @@ class OrdersStatements:
             orders = OrdersModels.orders
             statement = (
                 update(orders)
-                .where(orders.uuid == order_uuid)
+                .where(and_(orders.uuid == order_uuid, orders.sys_deleted_at == None))
                 .values(di.set_empty_strs_null(values=order_data))
                 .returning(orders)
             )
@@ -80,7 +87,7 @@ class OrdersServices:
             order = await Operations.return_one_row(
                 service=cnst.ORDERS_READ_SERVICE, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(model=order)
+            di.record_not_exist(instance=order, exception=OrderNotExist)
             return order
 
         async def get_orders(
@@ -92,7 +99,7 @@ class OrdersServices:
             orders = await Operations.return_all_rows(
                 service=cnst.ORDERS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(model=orders)
+            di.record_not_exist(instance=orders, exception=OrderNotExist)
             return orders
 
         async def get_orders_ct(self, db: AsyncSession = Depends(get_db)):
@@ -100,7 +107,7 @@ class OrdersServices:
             orders = await Operations.return_count(
                 service=cnst.ORDERS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(model=orders)
+
             return orders
 
     class CreateService:
@@ -114,7 +121,7 @@ class OrdersServices:
             order = await Operations.add_instance(
                 service=cnst.ORDERS_CREATE_SERVICE, model=orders, data=order_data, db=db
             )
-            di.record_not_exist(model=order)
+            di.record_not_exist(instance=order, exception=OrderNotExist)
             return order
 
     # TODO: implement something for updating the invoice fields, will need different schema for this
@@ -134,8 +141,7 @@ class OrdersServices:
             order = await Operations.return_one_row(
                 service=cnst.ORDERS_UPDATE_SERVICE, statement=statement, db=db
             )
-            # TODO: implement emthod to disallow updating an order that has been approved or attached to an invoice
-            di.rec_not_exist_or_soft_del(model=order)
+            di.record_not_exist(instance=order, exception=OrderNotExist)
             return order
 
     class DelService:
@@ -154,6 +160,5 @@ class OrdersServices:
             order = await Operations.return_one_row(
                 service=cnst.ORDERS_DEL_SERVICE, statement=statement, db=db
             )
-            # TODO: implement emthod to disallow updating an order that has been approved or attached to an invoice
-            di.record_not_exist(model=order)
+            di.record_not_exist(instance=order, exception=OrderNotExist)
             return order

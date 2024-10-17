@@ -4,13 +4,11 @@ from typing import List, Optional
 
 from pydantic import UUID4, BaseModel, field_validator
 
-from app.schemas._variables import ConstrainedDec, TimeStamp
+from ._variables import ConstrainedDec, TimeStamp
 
 
 class ProductListItems(BaseModel):
-    product_list_id: int
     product_list_uuid: UUID4
-    product_id: int
     product_uuid: UUID4
 
     price: Optional[Decimal] = None
@@ -30,7 +28,7 @@ class ProductListItems(BaseModel):
 
 class ProductListItemsCreate(ProductListItems):
     sys_created_at: datetime = TimeStamp
-    sys_created_by: Optional[int] = None
+    sys_created_by: Optional[UUID4] = None
 
 
 class ProductListItemsUpdate(BaseModel):
@@ -40,7 +38,7 @@ class ProductListItemsUpdate(BaseModel):
     man_allowed_price_increase: Optional[bool] = None
     man_allowed_price_decrease: Optional[bool] = None
     sys_updated_at: datetime = TimeStamp
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
     @field_validator("price", mode="before")
     def round_price(cls, value):
@@ -53,14 +51,23 @@ class ProductListItemsUpdate(BaseModel):
 
 class ProductListItemsDel(BaseModel):
     sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
 
-class ProductListItemsRespone(ProductListItems):
+class ProductListItemsRespone(BaseModel):
     id: int
     uuid: UUID4
-    sys_created_at: datetime
-    sys_updated_at: Optional[datetime]
+    product_list_uuid: UUID4
+    product_uuid: UUID4
+    price: Optional[Decimal] = None
+    sys_allowed_price_increase: Optional[bool] = None
+    sys_allowed_price_decrease: Optional[bool] = None
+    man_allowed_price_increase: Optional[bool] = None
+    man_allowed_price_decrease: Optional[bool] = None
+    sys_created_at: datetime = TimeStamp
+    sys_created_by: Optional[UUID4] = None
+    sys_updated_at: Optional[datetime] = None
+    sys_updated_by: Optional[UUID4] = None
 
 
 class ProductListItemsPagRespone(BaseModel):
@@ -73,4 +80,4 @@ class ProductListItemsPagRespone(BaseModel):
 
 class ProductListItemsDelRespone(ProductListItemsRespone):
     sys_deleted_at: datetime
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None

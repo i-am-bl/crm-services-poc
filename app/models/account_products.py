@@ -18,9 +18,7 @@ class AccountProducts(SysBase):
         UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
     )
 
-    account_id: Mapped[int] = mapped_column(Integer, nullable=False)
     account_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
-    product_id: Mapped[int] = mapped_column(Integer, nullable=False)
     product_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
 
     start_on: Mapped[date] = mapped_column(Date, nullable=False)

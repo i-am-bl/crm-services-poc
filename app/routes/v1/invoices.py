@@ -1,18 +1,22 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.schemas.invoices as s_invoices
-from app.database.database import get_db
-from app.services.invoices import InvoicesServices
-from app.service_utils import pagination_offset
+from ...database.database import get_db
+from ...schemas import invoices as s_invoices
+from ...services.authetication import SessionService
+from ...services.invoices import InvoicesServices
+from ...utilities.service_utils import pagination_offset
+from ...utilities.sys_users import SetSys
+from ...exceptions import UnhandledException, InvoiceExists, InvoiceNotExist
 
 serv_invoices_r = InvoicesServices.ReadService()
 serv_invoices_c = InvoicesServices.CreateService()
 serv_invoices_u = InvoicesServices.UpdateService()
 serv_invoices_d = InvoicesServices.DelService()
+serv_session = SessionService()
 
 router = APIRouter()
 
@@ -22,11 +26,26 @@ router = APIRouter()
     response_model=s_invoices.InvoicesResponse,
     status_code=status.HTTP_200_OK,
 )
-async def get_invoice(invoice_uuid: UUID4, db: AsyncSession = Depends(get_db)):
+async def get_invoice(
+    request: Request,
+    response: Response,
+    invoice_uuid: UUID4,
+    db: AsyncSession = Depends(get_db),
+):
     """get one invoice"""
-    async with db.begin():
-        invoice = await serv_invoices_r.get_invoice(invoice_uuid=invoice_uuid, db=db)
-        return invoice
+    try:
+        async with db.begin():
+            _ = await serv_session.validate_session(
+                request=request, response=response, db=db
+            )
+            invoice = await serv_invoices_r.get_invoice(
+                invoice_uuid=invoice_uuid, db=db
+            )
+            return invoice
+    except InvoiceNotExist:
+        raise InvoiceNotExist()
+    except Exception:
+        raise UnhandledException()
 
 
 @router.get(
@@ -35,22 +54,34 @@ async def get_invoice(invoice_uuid: UUID4, db: AsyncSession = Depends(get_db)):
     status_code=status.HTTP_200_OK,
 )
 async def get_invoices(
+    request: Request,
+    response: Response,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
     """get many inovices"""
-    async with db.begin():
-        offset = pagination_offset(page=page, limit=limit)
-        total_count = await serv_invoices_r.get_invoices_ct(db=db)
-        invoices = await serv_invoices_r.get_invoices(limit=limit, offset=offset, db=db)
-        return {
-            "total": total_count,
-            "page": page,
-            "limit": limit,
-            "has_more": total_count > (page * limit),
-            "invoices": invoices,
-        }
+    try:
+        async with db.begin():
+            _ = await serv_session.validate_session(
+                request=request, response=response, db=db
+            )
+            offset = pagination_offset(page=page, limit=limit)
+            total_count = await serv_invoices_r.get_invoices_ct(db=db)
+            invoices = await serv_invoices_r.get_invoices(
+                limit=limit, offset=offset, db=db
+            )
+            return {
+                "total": total_count,
+                "page": page,
+                "limit": limit,
+                "has_more": total_count > (page * limit),
+                "invoices": invoices,
+            }
+    except InvoiceNotExist:
+        raise InvoiceNotExist()
+    except Exception:
+        raise UnhandledException()
 
 
 @router.post(
@@ -59,12 +90,29 @@ async def get_invoices(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_invoice(
-    invoice_data: s_invoices.InvoicesCreate, db: AsyncSession = Depends(get_db)
+    request: Request,
+    response: Response,
+    invoice_data: s_invoices.InvoicesCreate,
+    db: AsyncSession = Depends(get_db),
 ):
     """create on invoice"""
-    async with db.begin():
-        invoice = await serv_invoices_c.create_invoice(invoice_data=invoice_data, db=db)
-        return invoice
+    try:
+        async with db.begin():
+
+            sys_user = await serv_session.validate_session(
+                request=request, response=response, db=db
+            )
+            SetSys.sys_created_by(data=invoice_data, sys_user=sys_user)
+            invoice = await serv_invoices_c.create_invoice(
+                invoice_data=invoice_data, db=db
+            )
+            return invoice
+    except InvoiceExists:
+        raise InvoiceExists()
+    except InvoiceNotExist:
+        raise InvoiceNotExist()
+    except Exception:
+        raise UnhandledException()
 
 
 @router.put(
@@ -73,16 +121,27 @@ async def create_invoice(
     status_code=status.HTTP_200_OK,
 )
 async def update_invoice(
+    request: Request,
+    response: Response,
     invoice_uuid: UUID4,
     invoice_data: s_invoices.InvoicesUpdate,
     db: AsyncSession = Depends(get_db),
 ):
     """update one invoice"""
-    async with db.begin():
-        invoice = await serv_invoices_u.update_invoice(
-            invoice_uuid=invoice_uuid, invoice_data=invoice_data, db=db
-        )
-        return invoice
+    try:
+        async with db.begin():
+            sys_user = await serv_session.validate_session(
+                request=request, response=response, db=db
+            )
+            SetSys.sys_updated_by(data=invoice_data, sys_user=sys_user)
+            invoice = await serv_invoices_u.update_invoice(
+                invoice_uuid=invoice_uuid, invoice_data=invoice_data, db=db
+            )
+            return invoice
+    except InvoiceNotExist:
+        raise InvoiceNotExist()
+    except Exception:
+        raise UnhandledException()
 
 
 @router.delete(
@@ -91,13 +150,24 @@ async def update_invoice(
     status_code=status.HTTP_200_OK,
 )
 async def soft_del_invoice(
+    request: Request,
+    response: Response,
     invoice_uuid: UUID4,
     invoice_data: s_invoices.InvoicesDel,
     db: AsyncSession = Depends(get_db),
 ):
     """soft delete one invoice"""
-    async with db.begin():
-        invoice = await serv_invoices_d.soft_del_invoice(
-            invoice_uuid=invoice_uuid, invoice_data=invoice_data, db=db
-        )
-        return invoice
+    try:
+        async with db.begin():
+            sys_user = await serv_session.validate_session(
+                request=request, response=response, db=db
+            )
+            SetSys.sys_deleted_by(data=invoice_data, sys_user=sys_user)
+            invoice = await serv_invoices_d.soft_del_invoice(
+                invoice_uuid=invoice_uuid, invoice_data=invoice_data, db=db
+            )
+            return invoice
+    except InvoiceNotExist:
+        raise InvoiceNotExist()
+    except Exception:
+        raise UnhandledException()

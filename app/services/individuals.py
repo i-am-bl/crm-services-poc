@@ -3,11 +3,13 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
 import app.models.individuals as m_individuals
 import app.schemas.individuals as s_individuals
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..utilities.utilities import DataUtils as di
+from ..exceptions import IndividualNotExist, IndividualExists
 
 
 class IndividualsModels:
@@ -27,6 +29,7 @@ class IndividualsStatements:
                 and_(
                     individuals.entity_uuid == entity_uuid,
                     individuals.uuid == individual_uuid,
+                    individuals.sys_deleted_at == None,
                 )
             )
             return statement
@@ -56,6 +59,7 @@ class IndividualsStatements:
                     and_(
                         individuals.entity_uuid == entity_uuid,
                         individuals.uuid == individual_uuid,
+                        individuals.sys_deleted_at == None,
                     )
                 )
                 .values(di.set_empty_strs_null(individual_data))
@@ -82,7 +86,7 @@ class IndividualsServices:
             individual = await Operations.return_one_row(
                 service=cnst.INDIVIDUALS_READ_SERV, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(model=individual)
+            di.record_not_exist(instance=individual, exception=IndividualNotExist)
             return individual
 
     class CreateService:
@@ -102,14 +106,14 @@ class IndividualsServices:
             individual_exists = await Operations.return_one_row(
                 service=cnst.INDIVIDUALS_CREATE_SERV, statement=statement, db=db
             )
-            di.record_exists(individual_exists)
+            di.record_exists(instance=individual_exists, exception=IndividualExists)
             individual = await Operations.add_instance(
                 service=cnst.INDIVIDUALS_CREATE_SERV,
                 model=individuals,
                 data=individual_data,
                 db=db,
             )
-            di.record_not_exist(model=individual)
+            di.record_not_exist(instance=individual, exception=IndividualNotExist)
             return individual
 
     class UpdateService:
@@ -131,7 +135,7 @@ class IndividualsServices:
             individual = await Operations.return_one_row(
                 service=cnst.INDIVIDUALS_UPDATE_SERV, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(model=individual)
+            di.record_not_exist(instance=individual, exception=IndividualNotExist)
             return individual
 
     class DelService:
@@ -153,5 +157,5 @@ class IndividualsServices:
             individual = await Operations.return_one_row(
                 service=cnst.INDIVIDUALS_DEL_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=individual)
+            di.record_not_exist(instance=individual, exception=IndividualNotExist)
             return individual

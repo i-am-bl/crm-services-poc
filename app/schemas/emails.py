@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 
 from pydantic import UUID4, BaseModel
 
-from app.schemas._variables import ConstrainedEmailStr, TimeStamp
+from ._variables import ConstrainedEmailStr, TimeStamp
 
 
 class Emails(BaseModel):
@@ -11,7 +11,6 @@ class Emails(BaseModel):
 
 
 class EmailsCreate(Emails):
-    entity_id: int
     entity_uuid: UUID4
     sys_created_at: datetime = TimeStamp
     sys_created_by: Optional[UUID4] = None
@@ -20,18 +19,17 @@ class EmailsCreate(Emails):
 class EmailsUpdate(BaseModel):
     email: Optional[ConstrainedEmailStr] = None
     sys_updated_at: datetime = TimeStamp
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
 
 class EmailsDel(BaseModel):
     sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
 
 class EmailsRespone(BaseModel):
     id: int
     uuid: UUID4
-    entity_id: int
     entity_uuid: UUID4
     sys_created_at: datetime
     sys_created_by: Optional[UUID4] = None
@@ -55,7 +53,7 @@ class EmailsPagRespone(BaseModel):
 
 class EmailsDelResponse(EmailsRespone):
     sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
     class Config:
         from_attributes: True

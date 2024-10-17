@@ -19,7 +19,6 @@ class Individuals(SysBase):
     )
 
     entity_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
-    entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
 
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)

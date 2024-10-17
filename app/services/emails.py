@@ -1,16 +1,17 @@
-from math import e
 from fastapi import Depends
 from pydantic import UUID4
-from sqlalchemy import Select, update, and_, func
+from sqlalchemy import Select, and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
 import app.models.emails as m_emails
 import app.schemas.emails as s_emails
-from app.database.database import Operations, get_db
-from app.logger import logger
-from app.schemas._variables import ConstrainedEmailStr
-from app.services.utilities import DataUtils as di
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..schemas._variables import ConstrainedEmailStr
+from ..utilities.logger import logger
+from ..utilities.utilities import DataUtils as di
+from ..exceptions import UnhandledException, EmailNotExist, EmailExists
 
 
 class EmailModels:
@@ -31,6 +32,7 @@ class EmailStatements:
                 and_(
                     emails.entity_uuid == entity_uuid,
                     emails.email == email,
+                    emails.sys_deleted_at == None,
                 )
             )
             return statement
@@ -72,6 +74,7 @@ class EmailStatements:
                 and_(
                     emails.uuid == email_uuid,
                     emails.entity_uuid == entity_uuid,
+                    emails.sys_deleted_at == None,
                 )
             )
             return statement
@@ -93,6 +96,7 @@ class EmailStatements:
                     and_(
                         emails.entity_uuid == entity_uuid,
                         emails.uuid == email_uuid,
+                        emails.sys_deleted_at == None,
                     )
                 )
                 .values(di.set_empty_strs_null(email_data))
@@ -121,7 +125,7 @@ class EmailsServices:
             email = await Operations.return_one_row(
                 service=cnst.EMAILS_READ_SERVICE, statement=statement, db=db
             )
-            # di.rec_not_exist_or_soft_del(email)
+            di.record_not_exist(instance=email, exception=EmailNotExist)
             return email
 
         async def get_emails(
@@ -137,6 +141,7 @@ class EmailsServices:
             emails = await Operations.return_all_rows(
                 service=cnst.EMAILS_READ_SERVICE, statement=statement, db=db
             )
+            di.record_not_exist(instance=emails, exception=EmailNotExist)
 
             return emails
 
@@ -170,11 +175,12 @@ class EmailsServices:
             email_exists = await Operations.return_one_row(
                 service=cnst.EMAILS_CREATE_SERVICE, statement=statement, db=db
             )
-            di.record_exists(email_exists)
+            di.record_exists(instance=email_exists, exception=EmailExists)
 
             email = await Operations.add_instance(
                 service=cnst.EMAILS_CREATE_SERVICE, model=emails, data=email_data, db=db
             )
+            di.record_not_exist(instance=emails, exception=EmailNotExist)
             return email
 
     class UpdateService:
@@ -194,7 +200,7 @@ class EmailsServices:
             email = await Operations.return_one_row(
                 service=cnst.EMAILS_UPDATE_SERVICE, statement=statment, db=db
             )
-            di.rec_not_exist_or_soft_del(email)
+            di.record_not_exist(instance=email, exception=EmailNotExist)
             return email
 
     class DelService:
@@ -214,5 +220,5 @@ class EmailsServices:
             email = await Operations.return_one_row(
                 service=cnst.EMAILS_DEL_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(email)
+            di.record_not_exist(instance=email, exception=EmailNotExist)
             return email

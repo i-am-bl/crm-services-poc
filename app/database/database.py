@@ -1,13 +1,13 @@
 from typing import List
 
+from config import settings as set
 from fastapi import Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
-from config import settings as set
-from app.logger import logger
-from app.services.utilities import DataUtils as di
+from ..utilities.logger import logger
+from ..utilities.utilities import DataUtils as di
 
 schema = "fastapi6"
 connection_string = f"{set.db_connector}://{set.db_usrnm}:{set.db_pwd}@{set.db_hst}:{set.db_port}/{set.db_nm}"
@@ -97,6 +97,7 @@ class Operations:
         data: object,
         db: AsyncSession = Depends(get_db),
     ):
+        # TODO: add error handling in the data layer
         logger.info("Dumping data into model.")
         instance = model(**di.m_dumps(data=data))
         db.add(instance=instance)

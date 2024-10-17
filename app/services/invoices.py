@@ -1,15 +1,18 @@
 from importlib import invalidate_caches
+from math import e
 
 from fastapi import Depends, status
 from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
-import app.models.invoices as m_invoices
-import app.schemas.invoices as s_invoices
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+
+from ..models import invoices as m_invoices
+from ..schemas import invoices as s_invoices
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..utilities.utilities import DataUtils as di
+from ..exceptions import InvoiceNotExist, InvoiceExists
 
 
 class InvoicesModels:
@@ -25,7 +28,9 @@ class InvoicesStatements:
         @staticmethod
         def sel_invoices_by_uuid(invoice_uuid: UUID4):
             invoices = InvoicesModels.inovices
-            statement = Select(invoices).where(invoices.uuid == invoice_uuid)
+            statement = Select(invoices).where(
+                and_(invoices.uuid == invoice_uuid, invoices.sys_deleted_at == None)
+            )
             return statement
 
         @staticmethod
@@ -93,7 +98,7 @@ class InvoicesServices:
             invoice = await Operations.return_one_row(
                 service=cnst.INVOICES_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=invoice)
+            di.record_not_exist(instance=invoice, exception=InvoiceNotExist)
             return invoice
 
         async def get_invoices(
@@ -105,7 +110,7 @@ class InvoicesServices:
             invoices = await Operations.return_all_rows(
                 service=cnst.INVOICES_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=invoices)
+            di.record_not_exist(instance=invoices, exception=InvoiceNotExist)
             return invoices
 
         async def get_invoices_ct(self, db: AsyncSession = Depends(get_db)):
@@ -132,14 +137,14 @@ class InvoicesServices:
             invoice_exists = await Operations.return_one_row(
                 service=cnst.INVOICES_CREATE_SERV, statement=statement, db=db
             )
-            di.record_exists(model=invoice_exists)
+            di.record_exists(instance=invoice_exists, exception=InvoiceExists)
             invoice = await Operations.add_instance(
                 service=cnst.INVOICES_CREATE_SERV,
                 model=invoices,
                 data=invoice_data,
                 db=db,
             )
-            di.record_not_exist(model=invoice)
+            di.record_not_exist(instance=invoice, exception=InvoiceNotExist)
             return invoice
 
     class UpdateService:
@@ -158,7 +163,7 @@ class InvoicesServices:
             invoice = await Operations.return_one_row(
                 service=cnst.INVOICES_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=invoice)
+            di.record_not_exist(instance=invoice, exception=InvoiceNotExist)
             return invoice
 
     class DelService:
@@ -177,5 +182,5 @@ class InvoicesServices:
             invoice = await Operations.return_one_row(
                 service=cnst.INVOICES_DEL_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=invoice)
+            di.record_not_exist(instance=invoice, exception=InvoiceNotExist)
             return invoice

@@ -1,9 +1,9 @@
 from datetime import UTC, datetime, timedelta, timezone
-import jwt
-from fastapi.security import OAuth2PasswordBearer
-from fastapi import Depends, HTTPException, status
 
+import jwt
 from config import settings as set
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/system-management/login/")
 
@@ -31,8 +31,8 @@ class AuthService:
     @staticmethod
     async def verify_access_token(token: str, credentials_exception):
         payload = jwt.decode(token, set.jwt_secret_key, set.jwt_algorithm)
-        sys_user_id = payload.get("sys_user_id")
-        if not sys_user_id:
+        sys_user_uuid = payload.get("sys_user_uuid")
+        if not sys_user_uuid:
             raise credentials_exception
         # TODO: add additional validation
 
@@ -40,7 +40,7 @@ class AuthService:
     async def get_current_user(token: str = Depends(oauth2_scheme)):
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"could not validate..",
+            detail=f"could not validate",
             headers={"WWW-Athenticate": "Bearer"},
         )
         return AuthService.verify_access_token(

@@ -1,8 +1,10 @@
 from uuid import uuid4
+
 from pydantic import UUID4
-from models.sys_base import SysBase
 from sqlalchemy import UUID, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column
+
+from models.sys_base import SysBase
 
 
 class Addresses(SysBase):
@@ -19,7 +21,6 @@ class Addresses(SysBase):
         server_default=text("gen_random_uuid()"),
     )
 
-    entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
     entity_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
 
     address_line1: Mapped[str] = mapped_column(String(325), nullable=True)

@@ -1,13 +1,17 @@
 from fastapi import Depends
 from pydantic import UUID4
-from sqlalchemy import Select, and_, update, func
+from sqlalchemy import Select, and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
 import app.models.account_products as m_account_products
 import app.schemas.account_products as s_account_products
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..exceptions import AccProductsExists, AccProductstNotExist
+from ..utilities.utilities import DataUtils as di
+
+from ..exceptions import UnhandledException, AccProductstNotExist, AccProductsExists
 
 
 class AccountProductsModels:
@@ -27,6 +31,7 @@ class AccountProductStatements:
                 and_(
                     account_products.account_uuid == account_uuid,
                     account_products.uuid == account_product_uuid,
+                    account_products.sys_deleted_at == None,
                 )
             )
             return statement
@@ -90,6 +95,7 @@ class AccountProductStatements:
                     and_(
                         account_products.account_uuid == account_uuid,
                         account_products.uuid == account_product_uuid,
+                        account_products.sys_deleted_at == None,
                     )
                 )
                 .values(di.set_empty_strs_null(values=account_product_data))
@@ -117,7 +123,9 @@ class AccountProductsServices:
             account_product = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(model=account_product)
+            di.record_not_exist(
+                instance=account_product, exception=AccProductstNotExist
+            )
             return account_product
 
         async def get_account_products(
@@ -133,7 +141,9 @@ class AccountProductsServices:
             account_products = await Operations.return_all_rows(
                 service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(model=account_products)
+            di.record_not_exist(
+                instance=account_products, exception=AccProductstNotExist
+            )
             return account_products
 
         async def get_account_product_ct(
@@ -170,14 +180,16 @@ class AccountProductsServices:
                 statement=statement,
                 db=db,
             )
-            di.record_exists(model=account_product_exists)
+            di.record_exists(instance=account_product, exception=AccProductsExists)
             account_product = await Operations.add_instance(
                 service=cnst.ACCOUNTS_PRODUCTS_CREATE_SERVICE,
                 model=accont_products,
                 data=account_product_data,
                 db=db,
             )
-            di.record_not_exist(model=account_product)
+            di.record_not_exist(
+                instance=account_product, exception=AccProductstNotExist
+            )
             return account_product
 
     class UpdateService:
@@ -203,7 +215,9 @@ class AccountProductsServices:
                 statement=statement,
                 db=db,
             )
-            di.rec_not_exist_or_soft_del(model=account_product)
+            di.record_not_exist(
+                instance=account_product, exception=AccProductstNotExist
+            )
             return account_product
 
     class DelService:
@@ -227,5 +241,7 @@ class AccountProductsServices:
             account_product = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_PRODUCTS_DEL_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(model=account_product)
+            di.record_not_exist(
+                instance=account_product, exception=AccProductstNotExist
+            )
             return account_product

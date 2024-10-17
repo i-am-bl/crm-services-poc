@@ -5,11 +5,12 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
 import app.models.products as m_products
 import app.schemas.products as s_products
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..utilities.utilities import DataUtils as di
 
 
 class ProductModel:
@@ -186,5 +187,5 @@ class ProductsServices:
             product = await Operations.return_one_row(
                 service=cnst.PRODUCTS_DEL_SERV, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(product)
+            di.record_not_exist(product)
             return product

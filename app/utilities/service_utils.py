@@ -2,6 +2,9 @@ import bcrypt
 from passlib.context import CryptContext
 from passlib.hash import pbkdf2_sha256
 
+# TODO: remove auth utitls
+# TODO: expand on pageinatoin and move it
+
 
 class AuthUtils:
     def __init__(self) -> None: ...

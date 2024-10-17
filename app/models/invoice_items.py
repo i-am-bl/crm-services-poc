@@ -25,17 +25,14 @@ class InvoiceItems(SysBase):
         UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
     )
 
-    invoice_id: Mapped[int] = mapped_column(Integer, nullable=False)
     invoice_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
-    order_item_id: Mapped[int] = mapped_column(Integer, nullable=False)
     order_item_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
 
-    product_list_item_id: Mapped[int] = mapped_column(Integer, nullable=False)
     product_list_item_uuid: Mapped[uuid4] = mapped_column(
         UUID(as_uuid=True), nullable=False
     )
-    owner_id: Mapped[int] = mapped_column(Integer, nullable=True)
-    adjusted_by_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    owner_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
+    adjusted_by: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     original_price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     adjustment_type: Mapped[str] = mapped_column(String(50), nullable=True)

@@ -1,20 +1,22 @@
 from fastapi import Depends
 from pydantic import UUID4
-from sqlalchemy import Select, and_, update, func
+from sqlalchemy import Select, and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
 import app.models.account_contracts as m_account_contracts
 import app.schemas.account_contracts as s_account_contracts
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..exceptions import AccContractExists, AccContractNotExist
+from ..utilities.utilities import DataUtils as di
 
 
-class AccontContractsModels:
+class AccContractsModels:
     account_contracts = m_account_contracts.AcccountContracts
 
 
-class AccountContractsStatements:
+class AccContractsStms:
     pass
 
     class SelStatements:
@@ -23,16 +25,17 @@ class AccountContractsStatements:
 
         @staticmethod
         def sel_acc_contr_by_uuid(account_uuid: UUID4, account_contract_uuid: UUID4):
-            account_contracts = AccontContractsModels.account_contracts
+            account_contracts = AccContractsModels.account_contracts
             statement = Select(account_contracts).where(
                 account_contracts.account_uuid == account_uuid,
                 account_contracts.uuid == account_contract_uuid,
+                account_contracts.sys_deleted_at == None,
             )
             return statement
 
         @staticmethod
         def sel_acc_contr_by_acc(account_uuid: UUID4, limit: int, offset: int):
-            account_contracts = AccontContractsModels.account_contracts
+            account_contracts = AccContractsModels.account_contracts
             statement = (
                 Select(account_contracts)
                 .where(
@@ -46,12 +49,13 @@ class AccountContractsStatements:
 
         @staticmethod
         def sel_acc_contr_ct(account_uuid: UUID4):
-            account_contracts = AccontContractsModels.account_contracts
+            account_contracts = AccContractsModels.account_contracts
             statement = (
                 Select(func.count())
                 .select_from(account_contracts)
                 .where(
                     account_contracts.account_uuid == account_uuid,
+                    account_contracts.sys_deleted_at == None,
                     account_contracts.sys_deleted_at == None,
                 )
             )
@@ -66,13 +70,14 @@ class AccountContractsStatements:
             account_contract_uuid: UUID4,
             account_contract_data: object,
         ):
-            account_contracts = AccontContractsModels.account_contracts
+            account_contracts = AccContractsModels.account_contracts
             statement = (
                 update(account_contracts)
                 .where(
                     and_(
                         account_contracts.account_uuid == account_uuid,
                         account_contracts.uuid == account_contract_uuid,
+                        account_contracts.sys_deleted_at == None,
                     )
                 )
                 .values(di.set_empty_strs_null(values=account_contract_data))
@@ -94,13 +99,15 @@ class AccountContractsServices:
             account_contract_uuid: UUID4,
             db: AsyncSession = Depends(get_db),
         ):
-            statement = AccountContractsStatements.SelStatements.sel_acc_contr_by_uuid(
+            statement = AccContractsStms.SelStatements.sel_acc_contr_by_uuid(
                 account_uuid=account_uuid, account_contract_uuid=account_contract_uuid
             )
             account_contract = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_CONTRACTS_READ_SERVICE, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(model=account_contract)
+            di.record_not_exist(
+                instance=account_contract, exception=AccContractNotExist
+            )
             return account_contract
 
         async def get_account_contracts(
@@ -110,7 +117,7 @@ class AccountContractsServices:
             offset: int,
             db: AsyncSession = Depends(get_db),
         ):
-            statement = AccountContractsStatements.SelStatements.sel_acc_contr_by_acc(
+            statement = AccContractsStms.SelStatements.sel_acc_contr_by_acc(
                 account_uuid=account_uuid,
                 limit=limit,
                 offset=offset,
@@ -118,7 +125,9 @@ class AccountContractsServices:
             account_contracts = await Operations.return_all_rows(
                 service=cnst.ACCOUNTS_CONTRACTS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(model=account_contracts)
+            di.record_not_exist(
+                instance=account_contracts, exception=AccContractNotExist
+            )
             return account_contracts
 
         async def get_account_contracts_ct(
@@ -126,7 +135,7 @@ class AccountContractsServices:
             account_uuid: UUID4,
             db: AsyncSession = Depends(get_db),
         ):
-            statement = AccountContractsStatements.SelStatements.sel_acc_contr_ct(
+            statement = AccContractsStms.SelStatements.sel_acc_contr_ct(
                 account_uuid=account_uuid
             )
             total_count = await Operations.return_count(
@@ -145,14 +154,16 @@ class AccountContractsServices:
             account_contract_data: s_account_contracts.AccountContractsCreate,
             db: AsyncSession = Depends(get_db),
         ):
-            account_contracts = AccontContractsModels.account_contracts
+            account_contracts = AccContractsModels.account_contracts
             account_contract = await Operations.add_instance(
                 service=cnst.ACCOUNTS_CONTRACTS_CREATE_SERVICE,
                 model=account_contracts,
                 data=account_contract_data,
                 db=db,
             )
-            di.record_not_exist(model=account_contract)
+            di.record_not_exist(
+                instance=account_contract, exception=AccContractNotExist
+            )
             return account_contract
 
     class UpdateService:
@@ -166,19 +177,19 @@ class AccountContractsServices:
             account_contract_data: s_account_contracts.AccountContractsUpdate,
             db: AsyncSession = Depends(get_db),
         ):
-            statement = (
-                AccountContractsStatements.UpdateStatements.update_acc_contr_by_uuid(
-                    account_uuid=account_uuid,
-                    account_contract_uuid=account_contract_uuid,
-                    account_contract_data=account_contract_data,
-                )
+            statement = AccContractsStms.UpdateStatements.update_acc_contr_by_uuid(
+                account_uuid=account_uuid,
+                account_contract_uuid=account_contract_uuid,
+                account_contract_data=account_contract_data,
             )
             account_contract = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_CONTRACTS_UPDATE_SERVICE,
                 statement=statement,
                 db=db,
             )
-            di.rec_not_exist_or_soft_del(model=account_contract)
+            di.record_not_exist(
+                instance=account_contract, exception=AccContractNotExist
+            )
             return account_contract
 
     class DelService:
@@ -192,17 +203,17 @@ class AccountContractsServices:
             account_contract_data: s_account_contracts.AccountContractsDel,
             db: AsyncSession = Depends(get_db),
         ):
-            statement = (
-                AccountContractsStatements.UpdateStatements.update_acc_contr_by_uuid(
-                    account_uuid=account_uuid,
-                    account_contract_uuid=account_contract_uuid,
-                    account_contract_data=account_contract_data,
-                )
+            statement = AccContractsStms.UpdateStatements.update_acc_contr_by_uuid(
+                account_uuid=account_uuid,
+                account_contract_uuid=account_contract_uuid,
+                account_contract_data=account_contract_data,
             )
             account_contract = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_CONTRACTS_UPDATE_SERVICE,
                 statement=statement,
                 db=db,
             )
-            di.rec_not_exist_or_soft_del(model=account_contract)
+            di.record_not_exist(
+                instance=account_contract, exception=AccContractNotExist
+            )
             return account_contract

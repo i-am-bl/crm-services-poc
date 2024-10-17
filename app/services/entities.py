@@ -1,18 +1,16 @@
-from typing import Annotated, Literal, Optional
-from xml.dom import ValidationErr
-
-from fastapi import Depends, Query
+from fastapi import Depends
 from pydantic import UUID4
-from sqlalchemy import Select, and_, func, or_, update
+from sqlalchemy import Select, and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
-import app.messages as msg
-import app.models.entities as m_entities
-import app.schemas.entities as s_entities
-from app.database.database import Operations, get_db
-from app.logger import logger
-from app.services.utilities import DataUtils as di
+from ..constants import constants as cnst
+from ..constants import messages as msg
+from ..database.database import Operations, get_db
+from ..exceptions import EntityNotExist
+from ..models import entities as m_entities
+from ..schemas import entities as s_entities
+from ..utilities.logger import logger
+from ..utilities.utilities import DataUtils as di
 
 
 class EntitiesModels:
@@ -28,7 +26,9 @@ class EntitiesStatements:
         @staticmethod
         def sel_entity(entity_uuid: UUID4):
             entities = EntitiesModels.entities
-            statement = Select(entities).where(entities.uuid == entity_uuid)
+            statement = Select(entities).where(
+                and_(entities.uuid == entity_uuid, entities.sys_deleted_at == None)
+            )
             return statement
 
         @staticmethod
@@ -60,7 +60,9 @@ class EntitiesStatements:
             entities = EntitiesModels.entities
             statement = (
                 update(entities)
-                .where(entities.uuid == entity_uuid)
+                .where(
+                    and_(entities.uuid == entity_uuid, entities.sys_deleted_at == None)
+                )
                 .values(di.set_empty_strs_null(entity_data))
                 .returning(entities)
             )
@@ -83,7 +85,7 @@ class EntitiesServices:
             entity = await Operations.return_one_row(
                 service=cnst.ENTITIES_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=entity)
+            di.record_not_exist(instance=entity, exception=entity)
             return entity
 
         async def get_entities(
@@ -98,7 +100,7 @@ class EntitiesServices:
             entities = await Operations.return_all_rows(
                 service=cnst.ENTITIES_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=entities)
+            di.record_not_exist(instance=entities, exception=EntityNotExist)
             return entities
 
         async def get_entity_ct(self, db: AsyncSession = Depends(get_db)):
@@ -106,7 +108,6 @@ class EntitiesServices:
             entity_ct = await Operations.return_count(
                 service=cnst.ENTITIES_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=entity_ct)
             return entity_ct
 
     class CreateService:
@@ -125,7 +126,7 @@ class EntitiesServices:
                 data=entity_data,
                 db=db,
             )
-            di.record_not_exist(model=entity)
+            di.record_not_exist(instance=entity, exception=EntityNotExist)
             return entity
 
     class UpdateService:
@@ -144,7 +145,7 @@ class EntitiesServices:
             entity = await Operations.return_one_row(
                 service=cnst.ENTITIES_UPDATE_SERV, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(model=entity)
+            di.record_not_exist(instance=entity, exception=EntityNotExist)
             return entity
 
     class DelService:
@@ -163,5 +164,5 @@ class EntitiesServices:
             entity = await Operations.return_one_row(
                 service=cnst.ENTITIES_DEL_SERV, statement=statement, db=db
             )
-            di.record_not_exist(model=entity)
+            di.record_not_exist(instance=entity, exception=EntityNotExist)
             return entity

@@ -6,11 +6,14 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
-import app.models.numbers as m_numbers
-import app.schemas.numbers as s_numbers
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+from ..models import numbers as m_numbers
+from ..schemas import numbers as s_numbers
+from ..database.database import Operations, get_db
+
+from ..constants import constants as cnst
+from ..utilities.utilities import DataUtils as di
+
+from ..exceptions import NumberExists, NumbersNotExist
 
 
 class NumbersModels:
@@ -108,6 +111,7 @@ class NumbersStatements:
                     and_(
                         numbers.entity_uuid == entity_uuid,
                         numbers.uuid == number_uuid,
+                        numbers.sys_deleted_at == None,
                     )
                 )
                 .values(di.set_empty_strs_null(number_data))
@@ -133,11 +137,11 @@ class NumbersServices:
             statement = NumbersStatements.SelStatements.sel_num_by_uuid(
                 entity_uuid=entity_uuid,
                 number_uuid=number_uuid,
-                db=db,
             )
-            number = Operations.return_one_row(
+            number = await Operations.return_one_row(
                 service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
             )
+            di.record_not_exist(instance=number, exception=NumbersNotExist)
             return number
 
         async def get_numbers(
@@ -154,7 +158,7 @@ class NumbersServices:
             numbers = await Operations.return_all_rows(
                 service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(model=numbers)
+            di.record_not_exist(instance=numbers, exception=NumbersNotExist)
             return numbers
 
         async def get_numbers_ct(
@@ -192,14 +196,14 @@ class NumbersServices:
             number_exists = await Operations.return_one_row(
                 service=cnst.NUMBERS_CREATE_SERVICE, statement=statement, db=db
             )
-            di.record_exists(model=number_exists)
+            di.record_exists(instance=number_exists, exception=NumberExists)
             number = await Operations.add_instance(
                 service=cnst.NUMBERS_CREATE_SERVICE,
                 model=numbers,
                 data=number_data,
                 db=db,
             )
-            di.record_not_exist(model=number)
+            di.record_not_exist(instance=number, exception=NumbersNotExist)
             return number
 
     class UpdateService:
@@ -214,12 +218,14 @@ class NumbersServices:
             db: AsyncSession = Depends(get_db),
         ):
             statement = NumbersStatements.UpdateStatements.update_ent_num_uuid(
-                entity_uuid=entity_uuid, number_data=number_data
+                entity_uuid=entity_uuid,
+                number_uuid=number_uuid,
+                number_data=number_data,
             )
             number = await Operations.return_one_row(
                 service=cnst.NUMBERS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(number)
+            di.record_not_exist(instance=number, exception=NumbersNotExist)
             return number
 
     class DelService:
@@ -234,12 +240,14 @@ class NumbersServices:
             db: AsyncSession = Depends(get_db),
         ):
             statement = NumbersStatements.UpdateStatements.update_ent_num_uuid(
-                entity_uuid=entity_uuid, number_data=number_data
+                entity_uuid=entity_uuid,
+                number_uuid=number_uuid,
+                number_data=number_data,
             )
             number = await Operations.return_one_row(
                 service=cnst.NUMBERS_DEL_SERVICE,
-                entity_uuid=entity_uuid,
                 statement=statement,
                 db=db,
             )
+            di.record_not_exist(instance=number, exception=NumbersNotExist)
             return number

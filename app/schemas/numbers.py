@@ -4,11 +4,10 @@ from typing import Annotated, List, Optional
 
 from pydantic import UUID4, BaseModel, StringConstraints
 
-from app.schemas._variables import ConstrainedStr, TimeStamp
+from ._variables import ConstrainedStr, TimeStamp
 
 
 class Numbers(BaseModel):
-    entity_id: int
     entity_uuid: UUID4
     country_code: Annotated[
         ConstrainedStr, StringConstraints(min_length=1, max_length=1)
@@ -24,7 +23,7 @@ class Numbers(BaseModel):
 
 class NumbersCreate(Numbers):
     sys_created_at: datetime = TimeStamp
-    sys_created_by: Optional[int] = None
+    sys_created_by: Optional[UUID4] = None
 
 
 class NumbersUpdate(BaseModel):
@@ -39,18 +38,17 @@ class NumbersUpdate(BaseModel):
     extension: Optional[ConstrainedStr] = None
 
     sys_updated_at: datetime = TimeStamp
-    sys_updated_by: Optional[int] = None
+    sys_updated_by: Optional[UUID4] = None
 
 
 class NumbersDel(BaseModel):
     sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
 
 class NumbersResponse(BaseModel):
     id: int
     uuid: UUID4
-    entity_id: int
     entity_uuid: UUID4
     country_code: Optional[str] = None
     area_code: Optional[str] = None
@@ -72,10 +70,9 @@ class NumbersPagResponse(BaseModel):
 class NumbersDelResponse(Numbers):
     id: int
     uuid: UUID4
-    entity_id: int
     entity_uuid: UUID4
     sys_deleted_at: datetime
-    sys_deleted_by: Optional[int] = None
+    sys_deleted_by: Optional[UUID4] = None
 
     class Config:
         from_attributes: True

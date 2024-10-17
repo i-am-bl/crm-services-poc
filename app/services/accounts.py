@@ -1,17 +1,15 @@
-from abc import ABC, abstractmethod
-from os import stat
-from typing import Annotated, Literal
-
 from fastapi import Depends, Query
 from pydantic import UUID4
-from sqlalchemy import Select, and_, update, select, func
+from sqlalchemy import Select, and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
-import app.models.accounts as m_accounts
-import app.schemas.accounts as s_accounts
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+from ..models import accounts as m_accounts
+from ..schemas import accounts as s_accounts
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..exceptions import AccsNotExist
+from ..utilities.utilities import DataUtils as di
 
 
 class AccountsModels:
@@ -27,7 +25,9 @@ class AccountsStatements:
         @staticmethod
         def sel_account_by_uuid(account_uuid: UUID4):
             accounts = AccountsModels.accounts
-            statement = Select(accounts).where(accounts.uuid == account_uuid)
+            statement = Select(accounts).where(
+                and_(accounts.uuid == account_uuid, accounts.sys_deleted_at == None)
+            )
             return statement
 
         @staticmethod
@@ -35,7 +35,11 @@ class AccountsStatements:
             accounts = AccountsModels.accounts
             statement = (
                 Select(accounts)
-                .where(accounts.sys_deleted_at == None)
+                .where(
+                    and_(
+                        accounts.sys_deleted_at == None, accounts.sys_deleted_at == None
+                    )
+                )
                 .offset(offset=offset)
                 .limit(limit=limit)
             )
@@ -44,7 +48,11 @@ class AccountsStatements:
         @staticmethod
         def sel_count():
             accounts = AccountsModels.accounts
-            statement = select(func.count()).select_from(m_accounts.Accounts)
+            statement = (
+                select(func.count())
+                .select_from(accounts)
+                .where(accounts.sys_deleted_at == None)
+            )
             return statement
 
     class UpdateStatements:
@@ -55,7 +63,9 @@ class AccountsStatements:
             accounts = AccountsModels.accounts
             statement = (
                 update(accounts)
-                .where(accounts.uuid == account_uuid)
+                .where(
+                    and_(accounts.uuid == account_uuid, accounts.sys_deleted_at == None)
+                )
                 .values(di.set_empty_strs_null(account_data))
                 .returning(accounts)
             )
@@ -78,7 +88,7 @@ class AccountsServices:
             account = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_READ_SERVICE, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(account)
+            di.record_not_exist(instance=account, exception=AccsNotExist)
             return account
 
         async def get_accounts(
@@ -120,7 +130,7 @@ class AccountsServices:
                 data=account_data,
                 db=db,
             )
-            di.record_not_exist(account)
+            di.record_not_exist(instance=account, exception=AccsNotExist)
             return account
 
     class UpdateService:
@@ -139,7 +149,7 @@ class AccountsServices:
             account = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(account)
+            di.record_not_exist(instance=account, exception=AccsNotExist)
             return account
 
     class DelService:
@@ -158,5 +168,5 @@ class AccountsServices:
             account = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(account)
+            di.record_not_exist(instance=account, exception=AccsNotExist)
             return account

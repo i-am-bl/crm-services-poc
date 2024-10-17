@@ -17,7 +17,6 @@ class Emails(SysBase):
         UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
     )
 
-    entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
     entity_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
 
     email: Mapped[str] = mapped_column(

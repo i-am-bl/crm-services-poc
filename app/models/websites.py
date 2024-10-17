@@ -17,7 +17,6 @@ class Websites(SysBase):
         UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
     )
 
-    entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
     entity_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
     # parent_table: Mapped[str] = mapped_column(String(100), nullable=False)
     sys_value_type_id: Mapped[int] = mapped_column(Integer, nullable=True)

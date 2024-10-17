@@ -17,7 +17,6 @@ class Invoices(SysBase):
         UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
     )
 
-    order_id: Mapped[int] = mapped_column(Integer, nullable=False)
     order_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
     sys_value_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
 

@@ -20,7 +20,7 @@ class ProductLists(SysBase):
     )
 
     # optional ownership at the list level on who is maintaining the container of products and prices
-    owner_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    owner_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     start_on: Mapped[date] = mapped_column(Date, nullable=False)

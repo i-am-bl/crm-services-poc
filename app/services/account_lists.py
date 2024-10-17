@@ -2,14 +2,16 @@ from typing import List
 
 from fastapi import Depends, status
 from pydantic import UUID4
-from sqlalchemy import Select, and_, update, values, func
+from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.constants as cnst
 import app.models.account_lists as m_account_lists
 import app.schemas.account_lists as s_account_lists
-from app.database.database import Operations, get_db
-from app.services.utilities import DataUtils as di
+
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..exceptions import AccListExists, AccListNotExist
+from ..utilities.utilities import DataUtils as di
 
 
 class AccountListsModels:
@@ -29,6 +31,7 @@ class AccountListsStatements:
                 and_(
                     account_lists.account_uuid == account_uuid,
                     account_lists.uuid == account_list_uuid,
+                    account_lists.sys_deleted_at == None,
                 )
             )
             return statement
@@ -90,6 +93,7 @@ class AccountListsStatements:
                     and_(
                         account_lists.account_uuid == account_uuid,
                         account_lists.uuid == account_list_uuid,
+                        account_lists.sys_deleted_at == None,
                     )
                 )
                 .values(di.set_empty_strs_null(values=account_list_data))
@@ -105,7 +109,7 @@ class AccountListsServices:
         def __init__(self) -> None:
             pass
 
-        async def get_account_list(
+        async def fget_account_list(
             self,
             account_uuid: UUID4,
             account_list_uuid: UUID4,
@@ -117,7 +121,7 @@ class AccountListsServices:
             account_list = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(model=account_list)
+            di.record_not_exist(instance=account_list, exception=AccListNotExist)
             return account_list
 
         async def get_account_lists(
@@ -133,7 +137,7 @@ class AccountListsServices:
             account_lists = await Operations.return_all_rows(
                 service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(model=account_lists)
+            di.record_not_exist(instance=account_lists, exception=AccListNotExist)
             return account_lists
 
         async def get_account_list_ct(
@@ -165,7 +169,7 @@ class AccountListsServices:
             account_list_exists = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_LISTS_CREATE_SERVICE, statement=statement, db=db
             )
-            di.record_exists(model=account_list_exists)
+            di.record_exists(instance=account_list_exists, exception=AccListExists)
 
             account_list = await Operations.add_instance(
                 service=cnst.ACCOUNTS_LISTS_CREATE_SERVICE,
@@ -174,7 +178,7 @@ class AccountListsServices:
                 db=db,
             )
 
-            di.record_not_exist(model=account_list)
+            di.record_not_exist(instance=account_list, exception=AccListNotExist)
 
             return account_list
 
@@ -197,7 +201,7 @@ class AccountListsServices:
             account_list = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_LISTS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(model=account_list)
+            di.record_not_exist(instance=account_list, exception=AccListNotExist)
             return account_list
 
     class DelService:
@@ -219,5 +223,5 @@ class AccountListsServices:
             account_list = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_LISTS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(model=account_list)
+            di.record_not_exist(instance=account_list, exception=AccListNotExist)
             return account_list
