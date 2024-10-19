@@ -5,13 +5,12 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import orders as m_orders
-from ..schemas import orders as s_orders
-
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
-from ..utilities.utilities import DataUtils as di
 from ..exceptions import OrderExists, OrderNotExist
+from ..models import orders as m_orders
+from ..schemas import orders as s_orders
+from ..utilities.utilities import DataUtils as di
 
 
 class OrdersModels:
@@ -87,8 +86,7 @@ class OrdersServices:
             order = await Operations.return_one_row(
                 service=cnst.ORDERS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=order, exception=OrderNotExist)
-            return order
+            return di.record_not_exist(instance=order, exception=OrderNotExist)
 
         async def get_orders(
             self, limt: int, offset: int, db: AsyncSession = Depends(get_db)
@@ -104,11 +102,9 @@ class OrdersServices:
 
         async def get_orders_ct(self, db: AsyncSession = Depends(get_db)):
             statement = OrdersStatements.SelStatements.sel_orders_ct()
-            orders = await Operations.return_count(
+            return await Operations.return_count(
                 service=cnst.ORDERS_READ_SERVICE, statement=statement, db=db
             )
-
-            return orders
 
     class CreateService:
         def __init__(self) -> None:
@@ -121,8 +117,7 @@ class OrdersServices:
             order = await Operations.add_instance(
                 service=cnst.ORDERS_CREATE_SERVICE, model=orders, data=order_data, db=db
             )
-            di.record_not_exist(instance=order, exception=OrderNotExist)
-            return order
+            return di.record_not_exist(instance=order, exception=OrderNotExist)
 
     # TODO: implement something for updating the invoice fields, will need different schema for this
     class UpdateService:
@@ -141,8 +136,7 @@ class OrdersServices:
             order = await Operations.return_one_row(
                 service=cnst.ORDERS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=order, exception=OrderNotExist)
-            return order
+            return di.record_not_exist(instance=order, exception=OrderNotExist)
 
     class DelService:
         def __init__(self) -> None:
@@ -160,5 +154,4 @@ class OrdersServices:
             order = await Operations.return_one_row(
                 service=cnst.ORDERS_DEL_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=order, exception=OrderNotExist)
-            return order
+            return di.record_not_exist(instance=order, exception=OrderNotExist)

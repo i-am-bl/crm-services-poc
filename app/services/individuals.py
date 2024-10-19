@@ -8,8 +8,8 @@ import app.schemas.individuals as s_individuals
 
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
+from ..exceptions import IndividualExists, IndividualNotExist
 from ..utilities.utilities import DataUtils as di
-from ..exceptions import IndividualNotExist, IndividualExists
 
 
 class IndividualsModels:
@@ -86,8 +86,9 @@ class IndividualsServices:
             individual = await Operations.return_one_row(
                 service=cnst.INDIVIDUALS_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=individual, exception=IndividualNotExist)
-            return individual
+            return di.record_not_exist(
+                instance=individual, exception=IndividualNotExist
+            )
 
     class CreateService:
         def __init__(self) -> None:
@@ -113,8 +114,9 @@ class IndividualsServices:
                 data=individual_data,
                 db=db,
             )
-            di.record_not_exist(instance=individual, exception=IndividualNotExist)
-            return individual
+            return di.record_not_exist(
+                instance=individual, exception=IndividualNotExist
+            )
 
     class UpdateService:
         def __init__(self) -> None:
@@ -135,8 +137,9 @@ class IndividualsServices:
             individual = await Operations.return_one_row(
                 service=cnst.INDIVIDUALS_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=individual, exception=IndividualNotExist)
-            return individual
+            return di.record_not_exist(
+                instance=individual, exception=IndividualNotExist
+            )
 
     class DelService:
         def __init__(self) -> None:
@@ -157,5 +160,6 @@ class IndividualsServices:
             individual = await Operations.return_one_row(
                 service=cnst.INDIVIDUALS_DEL_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=individual, exception=IndividualNotExist)
-            return individual
+            return di.record_not_exist(
+                instance=individual, exception=IndividualNotExist
+            )

@@ -8,10 +8,9 @@ import app.schemas.account_products as s_account_products
 
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
-from ..exceptions import AccProductsExists, AccProductstNotExist
+from ..exceptions import (AccProductsExists, AccProductstNotExist,
+                          UnhandledException)
 from ..utilities.utilities import DataUtils as di
-
-from ..exceptions import UnhandledException, AccProductstNotExist, AccProductsExists
 
 
 class AccountProductsModels:
@@ -123,10 +122,9 @@ class AccountProductsServices:
             account_product = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=account_product, exception=AccProductstNotExist
             )
-            return account_product
 
         async def get_account_products(
             self,
@@ -141,10 +139,9 @@ class AccountProductsServices:
             account_products = await Operations.return_all_rows(
                 service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=account_products, exception=AccProductstNotExist
             )
-            return account_products
 
         async def get_account_product_ct(
             self, account_uuid: UUID4, db: AsyncSession = Depends(get_db)
@@ -152,11 +149,9 @@ class AccountProductsServices:
             statement = AccountProductStatements.SelStatements.sel_acc_prod_by_acc_ct(
                 account_uuid=account_uuid
             )
-            account_products = await Operations.return_count(
+            return await Operations.return_count(
                 service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
             )
-
-            return account_products
 
     class CreateService:
         def __init__(self) -> None:
@@ -180,17 +175,18 @@ class AccountProductsServices:
                 statement=statement,
                 db=db,
             )
-            di.record_exists(instance=account_product, exception=AccProductsExists)
+            di.record_exists(
+                instance=account_product_exists, exception=AccProductsExists
+            )
             account_product = await Operations.add_instance(
                 service=cnst.ACCOUNTS_PRODUCTS_CREATE_SERVICE,
                 model=accont_products,
                 data=account_product_data,
                 db=db,
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=account_product, exception=AccProductstNotExist
             )
-            return account_product
 
     class UpdateService:
         def __init__(self) -> None:
@@ -215,10 +211,9 @@ class AccountProductsServices:
                 statement=statement,
                 db=db,
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=account_product, exception=AccProductstNotExist
             )
-            return account_product
 
     class DelService:
         def __init__(self) -> None:
@@ -241,7 +236,6 @@ class AccountProductsServices:
             account_product = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_PRODUCTS_DEL_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=account_product, exception=AccProductstNotExist
             )
-            return account_product

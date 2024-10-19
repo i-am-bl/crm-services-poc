@@ -56,6 +56,8 @@ PRODUCT_EXISTS = f"Product {_RECORD_EXISTS}"
 SYS_USER_NOT_EXIST = f"Sys user {_RECORD_NOT_EXIST}"
 SYS_USER_EXISTS = f"Sys user credential combination invalid."
 
+TOKEN_REFRESH = "A new token was issued."
+
 WEBSITE_NOT_EXIST = f"Website {_RECORD_NOT_EXIST}"
 WEBSITE_EXISTS = f"Website {_RECORD_EXISTS}"
 

@@ -3,12 +3,11 @@ from pydantic import UUID4
 from sqlalchemy import Select, Update, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import websites as m_websites
-from ..exceptions import WebsitesExists, WebsitesNotExist
-from ..schemas import websites as s_websites
-
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
+from ..exceptions import WebsitesExists, WebsitesNotExist
+from ..models import websites as m_websites
+from ..schemas import websites as s_websites
 from ..utilities.utilities import DataUtils as di
 
 
@@ -93,8 +92,7 @@ class WebsitesServices:
             website = await Operations.return_one_row(
                 service=cnst.WEBSITES_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=website, exception=WebsitesNotExist)
-            return website
+            return di.record_not_exist(instance=website, exception=WebsitesNotExist)
 
     class CreateService:
         def __init__(self) -> None:
@@ -120,8 +118,7 @@ class WebsitesServices:
                 data=website_data,
                 db=db,
             )
-            di.record_not_exist(instance=website, exception=WebsitesNotExist)
-            return website
+            return di.record_not_exist(instance=website, exception=WebsitesNotExist)
 
     class UpdateService:
         def __init__(self) -> None:
@@ -143,8 +140,7 @@ class WebsitesServices:
             website = await Operations.return_one_row(
                 service=cnst.WEBSITES_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=website, exception=WebsitesNotExist)
-            return website
+            return di.record_not_exist(instance=website, exception=WebsitesNotExist)
 
     class DelService:
         def __init__(self) -> None:
@@ -166,5 +162,4 @@ class WebsitesServices:
             website = await Operations.return_one_row(
                 service=cnst.WEBSITES_DEL_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=website, exception=WebsitesNotExist)
-            return website
+            return di.record_not_exist(instance=website, exception=WebsitesNotExist)

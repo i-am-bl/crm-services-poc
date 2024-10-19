@@ -1,20 +1,18 @@
 from datetime import UTC
 
 from config import settings
-from fastapi import Depends, Query
+from fastapi import Depends
 from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import sys_users as m_sys_user
-from ..schemas import sys_users as s_sys_user
-
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
 from ..exceptions import InvalidCredentials, SysUserExists, SysUserNotExist
+from ..models import sys_users as m_sys_user
+from ..schemas import sys_users as s_sys_user
 from ..utilities.logger import logger
-from ..utilities.service_utils import AuthUtils
-from ..utilities.utilities import DataUtils as di
+from ..utilities.utilities import DataUtils as di, AuthUtils
 
 
 class SysUsersModels:
@@ -124,8 +122,7 @@ class SysUsersServices:
             sys_user = await Operations.return_one_row(
                 service=cnst.SYS_USER_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
-            return sys_user
+            return di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
 
         async def get_sys_user_by_username(
             self,
@@ -138,8 +135,7 @@ class SysUsersServices:
             sys_user = await Operations.return_one_row(
                 service=cnst.SYS_USER_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=sys_user, exception=InvalidCredentials)
-            return sys_user
+            return di.record_not_exist(instance=sys_user, exception=InvalidCredentials)
 
         async def get_sys_users(
             self,
@@ -153,8 +149,7 @@ class SysUsersServices:
             sys_users = await Operations.return_all_rows(
                 service=cnst.SYS_USER_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=sys_users, exception=SysUserNotExist)
-            return sys_users
+            return di.record_not_exist(instance=sys_users, exception=SysUserNotExist)
 
         async def get_sys_users_ct(
             self,
@@ -182,7 +177,7 @@ class SysUsersServices:
             user_exists = await Operations.return_one_row(
                 service=cnst.SYS_USER_CREATE_SERV, statement=statement, db=db
             )
-            di.record_exists(instance=user_exists, exception=user_exists)
+            di.record_exists(instance=user_exists, exception=SysUserExists)
             sys_user_data.password = AuthUtils.gen_hash(password=sys_user_data.password)
             sys_user = await Operations.add_instance(
                 service=cnst.SYS_USER_CREATE_SERV,
@@ -190,8 +185,7 @@ class SysUsersServices:
                 data=sys_user_data,
                 db=db,
             )
-            di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
-            return sys_user
+            return di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
 
     class UpdateService:
         async def update_sys_user(
@@ -207,8 +201,7 @@ class SysUsersServices:
             sys_user = await Operations.return_one_row(
                 service=cnst.SYS_USER_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
-            return sys_user
+            return di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
 
         async def disable_sys_user(
             self,
@@ -238,5 +231,4 @@ class SysUsersServices:
             sys_user = await Operations.return_one_row(
                 service=cnst.SYS_USER_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
-            return sys_user
+            return di.record_not_exist(instance=sys_user, exception=SysUserNotExist)

@@ -1,19 +1,16 @@
-from typing import Annotated, Literal, Optional
-from xmlrpc.server import list_public_methods
+from typing import Optional
 
 from fastapi import Depends
 from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..constants import constants as cnst
+from ..database.database import Operations, get_db
+from ..exceptions import NumberExists, NumbersNotExist
 from ..models import numbers as m_numbers
 from ..schemas import numbers as s_numbers
-from ..database.database import Operations, get_db
-
-from ..constants import constants as cnst
 from ..utilities.utilities import DataUtils as di
-
-from ..exceptions import NumberExists, NumbersNotExist
 
 
 class NumbersModels:
@@ -141,8 +138,7 @@ class NumbersServices:
             number = await Operations.return_one_row(
                 service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=number, exception=NumbersNotExist)
-            return number
+            return di.record_not_exist(instance=number, exception=NumbersNotExist)
 
         async def get_numbers(
             self,
@@ -158,8 +154,7 @@ class NumbersServices:
             numbers = await Operations.return_all_rows(
                 service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=numbers, exception=NumbersNotExist)
-            return numbers
+            return di.record_not_exist(instance=numbers, exception=NumbersNotExist)
 
         async def get_numbers_ct(
             self,
@@ -170,10 +165,9 @@ class NumbersServices:
             statement = NumbersStatements.SelStatements.sel_num_by_entity_ct(
                 entity_uuid=entity_uuid
             )
-            number = await Operations.return_count(
+            return await Operations.return_count(
                 service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
             )
-            return number
 
     class CreateService:
         def __init__(self) -> None:
@@ -203,8 +197,7 @@ class NumbersServices:
                 data=number_data,
                 db=db,
             )
-            di.record_not_exist(instance=number, exception=NumbersNotExist)
-            return number
+            return di.record_not_exist(instance=number, exception=NumbersNotExist)
 
     class UpdateService:
         def __init__(self) -> None:
@@ -225,8 +218,7 @@ class NumbersServices:
             number = await Operations.return_one_row(
                 service=cnst.NUMBERS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=number, exception=NumbersNotExist)
-            return number
+            return di.record_not_exist(instance=number, exception=NumbersNotExist)
 
     class DelService:
         def __init__(self) -> None:
@@ -249,5 +241,4 @@ class NumbersServices:
                 statement=statement,
                 db=db,
             )
-            di.record_not_exist(instance=number, exception=NumbersNotExist)
-            return number
+            return di.record_not_exist(instance=number, exception=NumbersNotExist)

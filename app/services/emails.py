@@ -8,10 +8,10 @@ import app.schemas.emails as s_emails
 
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
+from ..exceptions import EmailExists, EmailNotExist
 from ..schemas._variables import ConstrainedEmailStr
 from ..utilities.logger import logger
 from ..utilities.utilities import DataUtils as di
-from ..exceptions import UnhandledException, EmailNotExist, EmailExists
 
 
 class EmailModels:
@@ -125,8 +125,7 @@ class EmailsServices:
             email = await Operations.return_one_row(
                 service=cnst.EMAILS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=email, exception=EmailNotExist)
-            return email
+            return di.record_not_exist(instance=email, exception=EmailNotExist)
 
         async def get_emails(
             self,
@@ -141,9 +140,7 @@ class EmailsServices:
             emails = await Operations.return_all_rows(
                 service=cnst.EMAILS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=emails, exception=EmailNotExist)
-
-            return emails
+            return di.record_not_exist(instance=emails, exception=EmailNotExist)
 
         async def get_email_ct(
             self,
@@ -153,10 +150,9 @@ class EmailsServices:
             statement = EmailStatements.SelStatements.sel_email_by_entity_ct(
                 entity_uuid=entity_uuid
             )
-            emails = await Operations.return_count(
+            return await Operations.return_count(
                 service=cnst.EMAILS_READ_SERVICE, statement=statement, db=db
             )
-            return emails
 
     class CreateService:
         def __init__(self) -> None:
@@ -180,8 +176,7 @@ class EmailsServices:
             email = await Operations.add_instance(
                 service=cnst.EMAILS_CREATE_SERVICE, model=emails, data=email_data, db=db
             )
-            di.record_not_exist(instance=emails, exception=EmailNotExist)
-            return email
+            return di.record_not_exist(instance=emails, exception=EmailNotExist)
 
     class UpdateService:
         def __init__(self) -> None:
@@ -200,8 +195,7 @@ class EmailsServices:
             email = await Operations.return_one_row(
                 service=cnst.EMAILS_UPDATE_SERVICE, statement=statment, db=db
             )
-            di.record_not_exist(instance=email, exception=EmailNotExist)
-            return email
+            return di.record_not_exist(instance=email, exception=EmailNotExist)
 
     class DelService:
         def __init__(self) -> None:
@@ -220,5 +214,4 @@ class EmailsServices:
             email = await Operations.return_one_row(
                 service=cnst.EMAILS_DEL_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=email, exception=EmailNotExist)
-            return email
+            return di.record_not_exist(instance=email, exception=EmailNotExist)

@@ -5,13 +5,12 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import product_list_items as m_product_list_items
-from ..schemas import product_list_items as s_product_list_items
-
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
-from ..utilities.utilities import DataUtils as di
 from ..exceptions import ProductListItemExists, ProductListItemNotExist
+from ..models import product_list_items as m_product_list_items
+from ..schemas import product_list_items as s_product_list_items
+from ..utilities.utilities import DataUtils as di
 
 
 class ProductListItemsModels:
@@ -44,7 +43,7 @@ class ProductListItemsStatements:
             statement = (
                 Select(product_list_items)
                 .where(
-                    pand_(
+                    and_(
                         product_list_items.product_list_uuid == product_list_uuid,
                         product_list_items.sys_deleted_at == None,
                     )
@@ -131,10 +130,9 @@ class ProductListItemsSerivces:
             product_list_item = await Operations.return_one_row(
                 service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=product_list_item, exception=ProductListItemNotExist
             )
-            return product_list_item
 
         async def get_product_list_items(
             self,
@@ -151,10 +149,9 @@ class ProductListItemsSerivces:
             product_list_items = await Operations.return_all_rows(
                 service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=product_list_items, exception=ProductListItemNotExist
             )
-            return product_list_items
 
         async def get_product_list_items_ct(
             self,
@@ -166,10 +163,9 @@ class ProductListItemsSerivces:
                     product_list_uuid=product_list_uuid
                 )
             )
-            items = await Operations.return_count(
+            return await Operations.return_count(
                 service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
             )
-            return items
 
     class CreateService:
         def __init__(self) -> None:
@@ -204,10 +200,9 @@ class ProductListItemsSerivces:
                 data=product_list_item_data,
                 db=db,
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=product_list_item, exception=ProductListItemNotExist
             )
-            return product_list_item
 
     class UpdateService:
         def __init__(self) -> None:
@@ -228,10 +223,9 @@ class ProductListItemsSerivces:
             product_list_item = await Operations.return_one_row(
                 service=cnst.PRODUCT_LIST_ITEMS_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=product_list_item, exception=ProductListItemNotExist
             )
-            return product_list_item
 
     class DelService:
         def __init__(self) -> None:
@@ -252,7 +246,6 @@ class ProductListItemsSerivces:
             product_list_item = await Operations.return_one_row(
                 service=cnst.PRODUCT_LIST_ITEMS_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=product_list_item, exception=ProductListItemNotExist
             )
-            return product_list_item

@@ -3,13 +3,12 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import non_individuals as m_non_individuals
-from ..schemas import non_individuals as s_non_individuals
-
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
-from ..utilities.utilities import DataUtils as di
 from ..exceptions import NonIndividualExists, NonIndividualNotExist
+from ..models import non_individuals as m_non_individuals
+from ..schemas import non_individuals as s_non_individuals
+from ..utilities.utilities import DataUtils as di
 
 
 class NonIndividualsModels:
@@ -96,20 +95,18 @@ class NonIndividualsServices:
             non_individual = await Operations.return_one_row(
                 service=cnst.NON_INDIVIDUALS_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=non_individual, exception=NonIndividualNotExist
             )
-            return non_individual
 
         async def get_non_individuals(self, db: AsyncSession = Depends(get_db)):
             statement = NonIndividualsStatements.SelStatements.sel_non_indivs()
             non_individual = await Operations.return_all_rows(
                 service=cnst.NON_INDIVIDUALS_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=non_individual, exception=NonIndividualNotExist
             )
-            return non_individual
 
     class CreateService:
         def __init__(self) -> None:
@@ -137,10 +134,9 @@ class NonIndividualsServices:
                 data=non_individual_data,
                 db=db,
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=non_individual, exception=NonIndividualNotExist
             )
-            return non_individual
 
     class UpdateService:
         def __init__(self) -> None:
@@ -163,10 +159,9 @@ class NonIndividualsServices:
             non_individual = await Operations.return_one_row(
                 service=cnst.NON_INDIVIDUALS_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=non_individual, exception=NonIndividualNotExist
             )
-            return non_individual
 
     class DelService:
         def __init__(self) -> None:
@@ -189,7 +184,6 @@ class NonIndividualsServices:
             non_individual = await Operations.return_one_row(
                 service=cnst.NON_INDIVIDUALS_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=non_individual, exception=NonIndividualNotExist
             )
-            return non_individual

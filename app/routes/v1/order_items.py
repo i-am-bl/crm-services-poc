@@ -1,23 +1,24 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Query, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database.database import get_db
+from ...database.database import get_db, transaction_manager
+from ...exceptions import OrderItemExists, OrderItemNotExist
+from ...handlers.handler import handle_exceptions
 from ...schemas import order_items as s_order_items
-from ...services.authetication import SessionService
+from ...services.authetication import SessionService, TokenService
 from ...services.order_items import OrderItemsServices
-from ...utilities.service_utils import pagination_offset
 from ...utilities.sys_users import SetSys
-from ...exceptions import UnhandledException, OrderItemExists, OrderItemNotExist
-
+from ...utilities.utilities import Pagination as pg
 
 serv_oi_r = OrderItemsServices.ReadService()
 serv_oi_c = OrderItemsServices.CreateService()
 serv_oi_u = OrderItemsServices.UpdateService()
 serv_oi_d = OrderItemsServices.DelService()
 serv_session = SessionService()
+serv_token = TokenService()
 
 router = APIRouter()
 
@@ -27,27 +28,22 @@ router = APIRouter()
     response_model=s_order_items.OrderItemsResponse,
     status_code=status.HTTP_200_OK,
 )
+@serv_token.set_auth_cookie
+@handle_exceptions([OrderItemNotExist])
 async def get_order_item(
-    request: Request,
     response: Response,
     order_uuid: UUID4,
     order_item_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-):
+    user_token: str = Depends(serv_session.validate_session),
+) -> s_order_items.OrderItemsResponse:
     """get one order item"""
-    try:
-        async with db.begin():
-            _ = await serv_session.validate_session(
-                request=request, response=response, db=db
-            )
-            order_item = await serv_oi_r.get_order_item(
-                order_uuid=order_uuid, order_item_uuid=order_item_uuid, db=db
-            )
-            return order_item
-    except OrderItemNotExist:
-        raise OrderItemNotExist()
-    except Exception:
-        raise UnhandledException()
+
+    async with transaction_manager(db=db):
+        order_item = await serv_oi_r.get_order_item(
+            order_uuid=order_uuid, order_item_uuid=order_item_uuid, db=db
+        )
+        return order_item
 
 
 @router.get(
@@ -55,38 +51,31 @@ async def get_order_item(
     response_model=s_order_items.OrderItemsPagResponse,
     status_code=status.HTTP_200_OK,
 )
+@serv_token.set_auth_cookie
+@handle_exceptions([OrderItemNotExist])
 async def get_order_items(
-    request: Request,
     response: Response,
     order_uuid: UUID4,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-):
+    user_token: str = Depends(serv_session.validate_session),
+) -> List[s_order_items.OrderItemsPagResponse]:
     """get order items by order"""
-    try:
-        async with db.begin():
-            _ = await serv_session.validate_session(
-                request=request, response=response, db=db
-            )
-            offset = pagination_offset(page=page, limit=limit)
-            total_count = await serv_oi_r.get_order_items_ct(
-                order_uuid=order_uuid, db=db
-            )
-            order_items = await serv_oi_r.get_order_items(
-                order_uuid=order_uuid, limit=limit, offset=offset, db=db
-            )
-            return {
-                "total": total_count,
-                "page": page,
-                "limit": limit,
-                "has_more": total_count > (page * limit),
-                "order_items": order_items,
-            }
-    except OrderItemNotExist:
-        raise OrderItemNotExist()
-    except Exception:
-        raise UnhandledException()
+
+    async with transaction_manager(db=db):
+        offset = pg.pagination_offset(page=page, limit=limit)
+        total_count = await serv_oi_r.get_order_items_ct(order_uuid=order_uuid, db=db)
+        order_items = await serv_oi_r.get_order_items(
+            order_uuid=order_uuid, limit=limit, offset=offset, db=db
+        )
+        return {
+            "total": total_count,
+            "page": page,
+            "limit": limit,
+            "has_more": pg.has_more(total_count=total_count, page=page, limit=limit),
+            "order_items": order_items,
+        }
 
 
 @router.post(
@@ -94,30 +83,24 @@ async def get_order_items(
     response_model=List[s_order_items.OrderItemsResponse],
     status_code=status.HTTP_200_OK,
 )
+@serv_token.set_auth_cookie
+@handle_exceptions([OrderItemNotExist, OrderItemExists])
 async def create_order_item(
-    request: Request,
     response: Response,
     order_uuid: UUID4,
     order_item_data: List[s_order_items.OrderItemsCreate],
     db: AsyncSession = Depends(get_db),
-):
+    user_token: str = Depends(serv_session.validate_session),
+) -> List[s_order_items.OrderItemsResponse]:
     """create order item"""
-    try:
-        async with db.begin():
-            sys_user = await serv_session.validate_session(
-                request=request, response=response, db=db
-            )
-            SetSys.sys_created_by_ls(data=order_item_data, sys_user=sys_user)
-            order_item = await serv_oi_c.create_order_item(
-                order_uuid=order_uuid, order_item_data=order_item_data, db=db
-            )
-            return order_item
-    except OrderItemExists:
-        raise OrderItemExists()
-    except OrderItemNotExist:
-        raise OrderItemNotExist()
-    except Exception:
-        raise UnhandledException()
+
+    async with transaction_manager(db=db):
+        sys_user, _ = user_token
+        SetSys.sys_created_by_ls(data=order_item_data, sys_user=sys_user)
+        order_item = await serv_oi_c.create_order_item(
+            order_uuid=order_uuid, order_item_data=order_item_data, db=db
+        )
+        return order_item
 
 
 @router.put(
@@ -125,32 +108,28 @@ async def create_order_item(
     response_model=s_order_items.OrderItemsResponse,
     status_code=status.HTTP_200_OK,
 )
+@serv_token.set_auth_cookie
+@handle_exceptions([OrderItemNotExist])
 async def update_order_item(
-    request: Request,
     response: Response,
     order_uuid: UUID4,
     order_item_uuid: UUID4,
     order_item_data: s_order_items.OrderItemsUpdate,
     db: AsyncSession = Depends(get_db),
-):
+    user_token: str = Depends(serv_session.validate_session),
+) -> s_order_items.OrderItemsResponse:
     """update order item"""
-    try:
-        async with db.begin():
-            sys_user = await serv_session.validate_session(
-                request=request, response=response, db=db
-            )
-            SetSys.sys_updated_by(data=order_item_data, sys_user=sys_user)
-            order_item = await serv_oi_u.update_order_item(
-                order_uuid=order_uuid,
-                order_item_uuid=order_item_uuid,
-                order_item_data=order_item_data,
-                db=db,
-            )
-            return order_item
-    except OrderItemNotExist:
-        raise OrderItemNotExist()
-    except Exception:
-        raise UnhandledException()
+
+    async with transaction_manager(db=db):
+        sys_user, _ = user_token
+        SetSys.sys_updated_by(data=order_item_data, sys_user=sys_user)
+        order_item = await serv_oi_u.update_order_item(
+            order_uuid=order_uuid,
+            order_item_uuid=order_item_uuid,
+            order_item_data=order_item_data,
+            db=db,
+        )
+        return order_item
 
 
 @router.delete(
@@ -158,29 +137,25 @@ async def update_order_item(
     response_model=s_order_items.OrderItemsDelResponse,
     status_code=status.HTTP_200_OK,
 )
+@serv_token.set_auth_cookie
+@handle_exceptions([OrderItemNotExist])
 async def soft_del_order_item(
-    request: Request,
     response: Response,
     order_uuid: UUID4,
     order_item_uuid: UUID4,
     order_item_data: s_order_items.OrderItemsDel,
     db: AsyncSession = Depends(get_db),
-):
+    user_token: str = Depends(serv_session.validate_session),
+) -> s_order_items.OrderItemsDelResponse:
     """soft del order item"""
-    try:
-        async with db.begin():
-            sys_user = await serv_session.validate_session(
-                request=request, response=response, db=db
-            )
-            SetSys.sys_deleted_by(data=order_item_data, sys_user=sys_user)
-            order_item = await serv_oi_d.soft_del_order_item(
-                order_uuid=order_uuid,
-                order_item_uuid=order_item_uuid,
-                order_item_data=order_item_data,
-                db=db,
-            )
-            return order_item
-    except OrderItemNotExist:
-        raise OrderItemNotExist()
-    except Exception:
-        raise UnhandledException()
+
+    async with transaction_manager(db=db):
+        sys_user, _ = user_token
+        SetSys.sys_deleted_by(data=order_item_data, sys_user=sys_user)
+        order_item = await serv_oi_d.soft_del_order_item(
+            order_uuid=order_uuid,
+            order_item_uuid=order_item_uuid,
+            order_item_data=order_item_data,
+            db=db,
+        )
+        return order_item

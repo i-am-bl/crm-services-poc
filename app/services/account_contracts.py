@@ -8,7 +8,7 @@ import app.schemas.account_contracts as s_account_contracts
 
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
-from ..exceptions import AccContractExists, AccContractNotExist
+from ..exceptions import AccContractNotExist
 from ..utilities.utilities import DataUtils as di
 
 
@@ -105,10 +105,9 @@ class AccountContractsServices:
             account_contract = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_CONTRACTS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=account_contract, exception=AccContractNotExist
             )
-            return account_contract
 
         async def get_account_contracts(
             self,
@@ -125,10 +124,9 @@ class AccountContractsServices:
             account_contracts = await Operations.return_all_rows(
                 service=cnst.ACCOUNTS_CONTRACTS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=account_contracts, exception=AccContractNotExist
             )
-            return account_contracts
 
         async def get_account_contracts_ct(
             self,
@@ -138,11 +136,9 @@ class AccountContractsServices:
             statement = AccContractsStms.SelStatements.sel_acc_contr_ct(
                 account_uuid=account_uuid
             )
-            total_count = await Operations.return_count(
+            return await Operations.return_count(
                 service=cnst.ACCOUNTS_CONTRACTS_READ_SERVICE, statement=statement, db=db
             )
-
-            return total_count
 
     class CreateService:
         def __init__(self) -> None:
@@ -161,10 +157,9 @@ class AccountContractsServices:
                 data=account_contract_data,
                 db=db,
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=account_contract, exception=AccContractNotExist
             )
-            return account_contract
 
     class UpdateService:
         def __init__(self) -> None:
@@ -187,10 +182,9 @@ class AccountContractsServices:
                 statement=statement,
                 db=db,
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=account_contract, exception=AccContractNotExist
             )
-            return account_contract
 
     class DelService:
         def __init__(self) -> None:
@@ -213,7 +207,6 @@ class AccountContractsServices:
                 statement=statement,
                 db=db,
             )
-            di.record_not_exist(
+            return di.record_not_exist(
                 instance=account_contract, exception=AccContractNotExist
             )
-            return account_contract
