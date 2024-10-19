@@ -5,11 +5,11 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.models.products as m_products
-import app.schemas.products as s_products
-
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
+from ..exceptions import ProductsExists, ProductsNotExist
+from ..models import products as m_products
+from ..schemas import products as s_products
 from ..utilities.utilities import DataUtils as di
 
 
@@ -27,13 +27,17 @@ class ProductsStatements:
         @staticmethod
         def sel_prod_by_uuid(product_uuid: UUID4):
             products = ProductModel.products
-            statement = Select(products).where(products.uuid == product_uuid)
+            statement = Select(products).where(
+                and_(products.uuid == product_uuid, products.sys_deleted_at == None)
+            )
             return statement
 
         @staticmethod
         def sel_prod_by_name(product_name: str):
             products = ProductModel.products
-            statement = Select(products).where(products.name == product_name)
+            statement = Select(products).where(
+                and_(products.name == product_name, products.sys_deleted_at == None)
+            )
             return statement
 
         @staticmethod
@@ -67,9 +71,7 @@ class ProductsStatements:
             statement = (
                 update(products)
                 .where(
-                    and_(
-                        products.uuid == product_uuid,
-                    )
+                    and_(products.uuid == product_uuid, products.sys_deleted_at == None)
                 )
                 .values(di.set_empty_strs_null(product_data))
                 .returning(products)
@@ -94,8 +96,7 @@ class ProductsServices:
             product = await Operations.return_one_row(
                 service=cnst.PRODUCTS_READ_SERV, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(product)
-            return product
+            return di.record_not_exist(instance=product, exception=ProductsNotExist)
 
         async def get_products(
             self, limit: int, offset: int, db: AsyncSession = Depends(get_db)
@@ -106,7 +107,7 @@ class ProductsServices:
             products = await Operations.return_all_rows(
                 service=cnst.PRODUCTS_READ_SERV, statement=statemenet, db=db
             )
-            return products
+            return di.record_not_exist(instance=products, exception=ProductsNotExist)
 
         async def get_products_ct(self, db: AsyncSession = Depends(get_db)):
             statemenet = ProductsStatements.SelectStatements.sel_prods_ct()
@@ -134,7 +135,7 @@ class ProductsServices:
                 product_exists = await Operations.return_one_row(
                     service=cnst.PRODUCTS_CREATE_SERV, statement=statement, db=db
                 )
-                di.record_exists(model=product_exists)
+                di.record_exists(instance=product_exists, exception=ProductsExists)
                 product = await Operations.add_instance(
                     service=cnst.PRODUCTS_CREATE_SERV,
                     model=products,
@@ -148,7 +149,7 @@ class ProductsServices:
                 data=product_data,
                 db=db,
             )
-            return product
+            return di.record_not_exist(instance=product, exception=ProductsNotExist)
 
     class UpdateService:
         def __init__(self) -> None:
@@ -168,8 +169,7 @@ class ProductsServices:
             product = await Operations.return_one_row(
                 service=cnst.PRODUCTS_UPDATE_SERV, statement=statement, db=db
             )
-            di.rec_not_exist_or_soft_del(product)
-            return product
+            return di.record_not_exist(instance=product, exception=ProductsNotExist)
 
     class DelService:
         def __init__(self) -> None:
@@ -187,5 +187,4 @@ class ProductsServices:
             product = await Operations.return_one_row(
                 service=cnst.PRODUCTS_DEL_SERV, statement=statement, db=db
             )
-            di.record_not_exist(product)
-            return product
+            return di.record_not_exist(instance=product, exception=ProductsNotExist)

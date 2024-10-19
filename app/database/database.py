@@ -1,9 +1,11 @@
+from contextlib import asynccontextmanager
 from typing import List
 
 from config import settings as set
 from fastapi import Depends
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
 from sqlalchemy.orm import declarative_base
 
 from ..utilities.logger import logger
@@ -51,6 +53,12 @@ async def get_db():
             yield db
         finally:
             await db.close()
+
+
+@asynccontextmanager
+async def transaction_manager(db: AsyncSession):
+    async with db.begin():
+        yield db
 
 
 class Operations:

@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from functools import wraps
+from pydoc import resolve
+from typing import Annotated, Any, Callable, Optional
+from urllib import response
 
 import jwt
 from config import settings as set
@@ -8,12 +11,11 @@ from fastapi.security import OAuth2PasswordBearer
 from passlib.hash import pbkdf2_sha256
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.schemas.sys_users as s_sys_user
-import app.schemas.token as s_token
-from app.database.database import get_db
-
 from ..constants import constants as cnst
+from ..database.database import get_db, transaction_manager
 from ..exceptions import InvalidCredentials
+from ..schemas import sys_users as s_sys_user
+from ..schemas import token as s_token
 from ..services.sys_users import SysUsersServices
 from ..utilities.logger import logger
 from ..utilities.utilities import DataUtils as di
@@ -21,6 +23,7 @@ from ..utilities.utilities import DataUtils as di
 serv_sys_user_r = SysUsersServices.ReadService()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=cnst.TOKEN_URL)
+# TODO: clean up this file, some of this is deprecated
 
 
 class PasswordService:
@@ -48,6 +51,17 @@ class TokenService:
         return response.set_cookie(
             key=cnst.TOKEN_KEY, value=token, secure=True, httponly=True
         )
+
+    def set_auth_cookie(self, func: Callable) -> Callable:
+        @wraps(func)
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            response = kwargs.get("response")
+            user_token = kwargs.get("user_token")
+            _, token = user_token
+            await self.set_cookie(response=response, token=token)
+            return await func(*args, **kwargs)
+
+        return wrapper
 
     def exp_helper(self, expires_delta: Optional[timedelta] = None):
         if expires_delta:
@@ -126,23 +140,12 @@ class SessionService:
 
     async def validate_session(
         self,
-        request: Request,
-        response: Response,
+        jwt: str = Cookie(...),
         db: AsyncSession = Depends(get_db),
     ):
         serv_token = TokenService()
-        token = await serv_token.extract_token(request=request)
-        sys_user, valid_token = await serv_token.validate_access_token(
-            token=token, db=db
-        )
-        response.set_cookie(
-            key=cnst.TOKEN_KEY, value=valid_token, secure=True, httponly=True
-        )
-        return sys_user
-
-    # TODO:
-    # credentials_exception = HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail=f"could not validate",
-    #         headers={"WWW-Athenticate": "Bearer"},
-    #     )
+        async with transaction_manager(db=db):
+            sys_user, valid_token = await serv_token.validate_access_token(
+                token=jwt, db=db
+            )
+            return sys_user, valid_token

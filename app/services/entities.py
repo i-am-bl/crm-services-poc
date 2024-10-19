@@ -85,8 +85,7 @@ class EntitiesServices:
             entity = await Operations.return_one_row(
                 service=cnst.ENTITIES_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=entity, exception=entity)
-            return entity
+            return di.record_not_exist(instance=entity, exception=entity)
 
         async def get_entities(
             self,
@@ -105,10 +104,9 @@ class EntitiesServices:
 
         async def get_entity_ct(self, db: AsyncSession = Depends(get_db)):
             statement = EntitiesStatements.SelStatements.sel_entity_ct()
-            entity_ct = await Operations.return_count(
+            return await Operations.return_count(
                 service=cnst.ENTITIES_READ_SERV, statement=statement, db=db
             )
-            return entity_ct
 
     class CreateService:
         def __init__(self) -> None:
@@ -126,8 +124,7 @@ class EntitiesServices:
                 data=entity_data,
                 db=db,
             )
-            di.record_not_exist(instance=entity, exception=EntityNotExist)
-            return entity
+            return di.record_not_exist(instance=entity, exception=EntityNotExist)
 
     class UpdateService:
         def __init__(self) -> None:
@@ -145,8 +142,7 @@ class EntitiesServices:
             entity = await Operations.return_one_row(
                 service=cnst.ENTITIES_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=entity, exception=EntityNotExist)
-            return entity
+            return di.record_not_exist(instance=entity, exception=EntityNotExist)
 
     class DelService:
         def __init__(self) -> None:
@@ -164,5 +160,4 @@ class EntitiesServices:
             entity = await Operations.return_one_row(
                 service=cnst.ENTITIES_DEL_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=entity, exception=EntityNotExist)
-            return entity
+            return di.record_not_exist(instance=entity, exception=EntityNotExist)

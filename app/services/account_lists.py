@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import Depends, status
+from fastapi import Depends
 from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -109,7 +109,7 @@ class AccountListsServices:
         def __init__(self) -> None:
             pass
 
-        async def fget_account_list(
+        async def get_account_list(
             self,
             account_uuid: UUID4,
             account_list_uuid: UUID4,
@@ -121,8 +121,7 @@ class AccountListsServices:
             account_list = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=account_list, exception=AccListNotExist)
-            return account_list
+            return di.record_not_exist(instance=account_list, exception=AccListNotExist)
 
         async def get_account_lists(
             self,
@@ -137,8 +136,9 @@ class AccountListsServices:
             account_lists = await Operations.return_all_rows(
                 service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=account_lists, exception=AccListNotExist)
-            return account_lists
+            return di.record_not_exist(
+                instance=account_lists, exception=AccListNotExist
+            )
 
         async def get_account_list_ct(
             self, account_uuid: UUID4, db: AsyncSession = Depends(get_db)
@@ -146,10 +146,9 @@ class AccountListsServices:
             statement = AccountListsStatements.SelStatements.sel_acc_ls_ct(
                 account_uuid=account_uuid
             )
-            total_count = await Operations.return_count(
+            return await Operations.return_count(
                 service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
             )
-            return total_count
 
     class CreateService:
         def __init__(self) -> None:
@@ -177,10 +176,7 @@ class AccountListsServices:
                 data=account_list_data,
                 db=db,
             )
-
-            di.record_not_exist(instance=account_list, exception=AccListNotExist)
-
-            return account_list
+            return di.record_not_exist(instance=account_list, exception=AccListNotExist)
 
     class UpdateService:
         def __init__(self) -> None:
@@ -201,8 +197,7 @@ class AccountListsServices:
             account_list = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_LISTS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=account_list, exception=AccListNotExist)
-            return account_list
+            return di.record_not_exist(instance=account_list, exception=AccListNotExist)
 
     class DelService:
         def __init__(self) -> None:
@@ -223,5 +218,4 @@ class AccountListsServices:
             account_list = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_LISTS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=account_list, exception=AccListNotExist)
-            return account_list
+            return di.record_not_exist(instance=account_list, exception=AccListNotExist)

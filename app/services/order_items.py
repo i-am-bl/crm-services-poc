@@ -6,13 +6,12 @@ from pydantic import UUID4
 from sqlalchemy import Select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import order_items as m_order_items
-from ..schemas import order_items as s_order_items
-
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
-from ..utilities.utilities import DataUtils as di
 from ..exceptions import OrderItemExists, OrderItemNotExist
+from ..models import order_items as m_order_items
+from ..schemas import order_items as s_order_items
+from ..utilities.utilities import DataUtils as di
 
 
 class OrderItemsModels:
@@ -111,8 +110,7 @@ class OrderItemsServices:
             order_item = await Operations.return_one_row(
                 cnst.ORDERS_ITEMS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
-            return order_item
+            return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
 
         async def get_order_items(
             self,
@@ -127,8 +125,9 @@ class OrderItemsServices:
             order_items = await Operations.return_all_rows(
                 service=cnst.ORDERS_ITEMS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=order_items, exception=OrderItemNotExist)
-            return order_items
+            return di.record_not_exist(
+                instance=order_items, exception=OrderItemNotExist
+            )
 
         async def get_order_items_ct(
             self,
@@ -138,10 +137,9 @@ class OrderItemsServices:
             statement = OrderItemsStatements.SelStatements.sel_order_items_by_order_ct(
                 order_uuid=order_uuid
             )
-            order_items = await Operations.return_count(
+            return await Operations.return_count(
                 service=cnst.ORDERS_ITEMS_READ_SERVICE, statement=statement, db=db
             )
-            return order_items
 
     class CreateService:
         def __init__(self) -> None:
@@ -161,8 +159,7 @@ class OrderItemsServices:
                 data=order_item_data,
                 db=db,
             )
-            di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
-            return order_item
+            return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
 
     class UpdateService:
         def __init__(self) -> None:
@@ -183,8 +180,7 @@ class OrderItemsServices:
             order_item = await Operations.return_one_row(
                 service=cnst.ORDERS_ITEMS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
-            return order_item
+            return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
 
     class DelService:
         def __init__(self) -> None:
@@ -205,5 +201,4 @@ class OrderItemsServices:
             order_item = await Operations.return_one_row(
                 service=cnst.ORDERS_ITEMS_DEL_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
-            return order_item
+            return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)

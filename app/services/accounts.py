@@ -3,12 +3,11 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models import accounts as m_accounts
-from ..schemas import accounts as s_accounts
-
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
 from ..exceptions import AccsNotExist
+from ..models import accounts as m_accounts
+from ..schemas import accounts as s_accounts
 from ..utilities.utilities import DataUtils as di
 
 
@@ -88,8 +87,7 @@ class AccountsServices:
             account = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_READ_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=account, exception=AccsNotExist)
-            return account
+            return di.record_not_exist(instance=account, exception=AccsNotExist)
 
         async def get_accounts(
             self,
@@ -100,10 +98,9 @@ class AccountsServices:
             statement = AccountsStatements.SelStatements.sel_accounts(
                 offset=offset, limit=limit
             )
-            account = await Operations.return_all_rows(
+            return Operations.return_all_rows(
                 service=cnst.ACCOUNTS_READ_SERVICE, statement=statement, db=db
             )
-            return account
 
         async def get_account_ct(self, db: AsyncSession = Depends(get_db)):
             statement = AccountsStatements.SelStatements.sel_count()
@@ -130,8 +127,7 @@ class AccountsServices:
                 data=account_data,
                 db=db,
             )
-            di.record_not_exist(instance=account, exception=AccsNotExist)
-            return account
+            return di.record_not_exist(instance=account, exception=AccsNotExist)
 
     class UpdateService:
         def __init__(self) -> None:
@@ -149,8 +145,7 @@ class AccountsServices:
             account = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=account, exception=AccsNotExist)
-            return account
+            return di.record_not_exist(instance=account, exception=AccsNotExist)
 
     class DelService:
         def __init__(self) -> None:
@@ -168,5 +163,4 @@ class AccountsServices:
             account = await Operations.return_one_row(
                 service=cnst.ACCOUNTS_UPDATE_SERVICE, statement=statement, db=db
             )
-            di.record_not_exist(instance=account, exception=AccsNotExist)
-            return account
+            return di.record_not_exist(instance=account, exception=AccsNotExist)

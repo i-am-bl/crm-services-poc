@@ -27,7 +27,7 @@ class AccountContractsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class AccountContractsRepsone(BaseModel):
+class AccountContractsReponse(BaseModel):
     id: int
     uuid: UUID4
     account_uuid: UUID4
@@ -47,10 +47,10 @@ class AccountContractsPagRepsone(BaseModel):
     page: int
     limit: int
     has_more: bool
-    account_contracts: List[AccountContractsRepsone]
+    account_contracts: List[AccountContractsReponse]
 
 
-class AccountContractsDelRepsone(AccountContractsRepsone):
+class AccountContractsDelRepsone(AccountContractsReponse):
     sys_deleted_at: datetime = TimeStamp
     sys_deleted_by: Optional[UUID4] = None
 

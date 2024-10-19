@@ -1,24 +1,36 @@
 import bcrypt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Response, status
 from passlib.context import CryptContext
 from passlib.hash import pbkdf2_sha256
+from pydantic import UUID4
 
-import app.constants.messages as msg
-
+from ..constants import constants as cnst
+from ..constants import messages as msg
 from .logger import logger
 
 
-class PasswordUtils:
-    def __init__(self) -> None:
-        pass
+class Pagination:
+    pass
 
     @staticmethod
-    def gen_hash(password: str):
-        return pbkdf2_sha256.hash(password)
+    def pagination_offset(page: int, limit: int) -> int:
+        offset = (page - 1) * limit
+        return offset
 
     @staticmethod
-    def validate_hash(password: str, hash: str):
-        return pbkdf2_sha256.verify(password, hash)
+    def has_more(total_count: int, page: int, limit: int) -> bool:
+        return total_count > (page * limit)
+
+
+class AuthUtils:
+    pass
+
+    @staticmethod
+    async def set_cookie(response: Response, token: str, sys_user_uuid: UUID4):
+        logger.info({"message": str(msg.TOKEN_REFRESH), "sub": str(sys_user_uuid)})
+        return response.set_cookie(
+            key=cnst.TOKEN_KEY, value=token, httponly=True, secure=True
+        )
 
 
 class DataUtils:
@@ -46,26 +58,17 @@ class DataUtils:
         return items
 
     @classmethod
-    def soft_deleted(cls, instance: object, exception: Exception):
-        if instance.sys_deleted_at:
-            logger.warning(
-                f"Warning: record does not exist and was removed at {instance.sys_deleted_at}"
-            )
-            raise exception()
-        return True if instance.sys_deleted_at else False
-
-    @classmethod
     def record_exists(cls, instance: object, exception: Exception) -> bool:
         if instance:
             logger.warning(
                 f"Warning: record already exists, a duplicate entry is not allowed for {instance}"
             )
             raise exception()
-
-        return True if instance else False
+        return instance
 
     @classmethod
     def record_not_exist(cls, instance: object, exception: Exception) -> bool:
         if not instance:
+            logger.warning(f"Warning: record not found for {instance}")
             raise exception()
-        return True if instance else False
+        return instance

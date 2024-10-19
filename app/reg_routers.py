@@ -1,5 +1,3 @@
-from fastapi import APIRouter
-
 from .routes.v1.account_contracts import router as account_contracts_router
 from .routes.v1.account_lists import router as account_lists_router
 from .routes.v1.account_products import router as account_products_router

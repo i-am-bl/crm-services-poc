@@ -1,23 +1,23 @@
-from fastapi import APIRouter, Depends, Query, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database.database import get_db
-from ...exceptions import AccsNotExist, UnhandledException
+from ...database.database import get_db, transaction_manager
+from ...exceptions import AccsNotExist
+from ...handlers.handler import handle_exceptions
 from ...schemas import accounts as s_accounts
 from ...services.accounts import AccountsServices
-from ...services.authetication import SessionService
+from ...services.authetication import SessionService, TokenService
 from ...utilities.logger import logger
-from ...utilities.service_utils import pagination_offset
 from ...utilities.sys_users import SetSys
-
-from ...exceptions import UnhandledException, AccsNotExist, AccsExists
+from ...utilities.utilities import Pagination as pg
 
 serv_acc_r = AccountsServices.ReadService()
 serv_acc_c = AccountsServices.CreateService()
 serv_acc_u = AccountsServices.UpdateService()
 serv_acc_d = AccountsServices.DelService()
 serv_session = SessionService()
+serv_token = TokenService()
 
 router = APIRouter()
 
@@ -27,24 +27,19 @@ router = APIRouter()
     response_model=s_accounts.AccountsResponse,
     status_code=status.HTTP_200_OK,
 )
+@serv_token.set_auth_cookie
+@handle_exceptions([AccsNotExist])
 async def get_account(
-    request: Request,
     response: Response,
     account_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
+    user_token: str = Depends(serv_session.validate_session),
 ):
     """get one account by account_uuid"""
-    try:
-        async with db.begin():
-            _ = await serv_session.validate_session(
-                request=request, response=response, db=db
-            )
-            account = await serv_acc_r.get_account(account_uuid=account_uuid, db=db)
-            return account
-    except AccsNotExist:
-        raise AccsNotExist()
-    except Exception:
-        raise UnhandledException()
+
+    async with transaction_manager(db=db):
+        account = await serv_acc_r.get_account(account_uuid=account_uuid, db=db)
+        return account
 
 
 @router.get(
@@ -52,33 +47,28 @@ async def get_account(
     response_model=s_accounts.AccountsPagResponse,
     status_code=status.HTTP_200_OK,
 )
+@serv_token.set_auth_cookie
+@handle_exceptions([AccsNotExist])
 async def get_accounts(
-    request: Request,
     response: Response,
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-):
+    user_token: str = Depends(serv_session.validate_session),
+) -> s_accounts.AccountsPagResponse:
     """get all accounts"""
-    try:
-        async with db.begin():
-            offset = pagination_offset(page=page, limit=limit)
-            _ = await serv_session.validate_session(
-                request=request, response=response, db=db
-            )
-            total_count = await serv_acc_r.get_account_ct(db=db)
-            accounts = await serv_acc_r.get_accounts(db=db, offset=offset, limit=limit)
-            return {
-                "total": total_count,
-                "page": page,
-                "limit": limit,
-                "has_more": total_count > (page * limit),
-                "accounts": accounts,
-            }
-    except AccsNotExist:
-        raise AccsNotExist()
-    except Exception:
-        raise UnhandledException()
+
+    async with transaction_manager(db=db):
+        offset = pg.pagination_offset(page=page, limit=limit)
+        total_count = await serv_acc_r.get_account_ct(db=db)
+        accounts = await serv_acc_r.get_accounts(db=db, offset=offset, limit=limit)
+        return {
+            "total": total_count,
+            "page": page,
+            "limit": limit,
+            "has_more": pg.has_more(total_count=total_count, page=page, limit=limit),
+            "accounts": accounts,
+        }
 
 
 @router.post(
@@ -86,23 +76,21 @@ async def get_accounts(
     response_model=s_accounts.AccountsResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@serv_token.set_auth_cookie
+@handle_exceptions([AccsNotExist])
 async def create_account(
-    request: Request,
     response: Response,
     account_data: s_accounts.AccountsCreate,
     db: AsyncSession = Depends(get_db),
-):
+    user_token: str = Depends(serv_session.validate_session),
+) -> s_accounts.AccountsCreate:
     """create one account"""
-    try:
-        async with db.begin():
-            sys_user = await serv_session.validate_session(
-                request=request, response=response, db=db
-            )
-            SetSys.sys_created_by(data=account_data, sys_user=sys_user)
-            account = await serv_acc_c.create_account(account_data=account_data, db=db)
-            return account
-    except Exception:
-        raise UnhandledException()
+
+    async with transaction_manager(db=db):
+        sys_user, _ = user_token
+        SetSys.sys_created_by(data=account_data, sys_user=sys_user)
+        account = await serv_acc_c.create_account(account_data=account_data, db=db)
+        return account
 
 
 @router.put(
@@ -110,28 +98,24 @@ async def create_account(
     response_model=s_accounts.AccountsResponse,
     status_code=status.HTTP_200_OK,
 )
+@serv_token.set_auth_cookie
+@handle_exceptions([AccsNotExist])
 async def update_account(
-    request: Request,
     response: Response,
     account_uuid: UUID4,
     account_data: s_accounts.AccountsUpdate,
     db: AsyncSession = Depends(get_db),
-):
+    user_token: str = Depends(serv_session.validate_session),
+) -> s_accounts.AccountsUpdate:
     """update one account"""
-    try:
-        async with db.begin():
-            sys_user = await serv_session.validate_session(
-                request=request, response=response, db=db
-            )
-            SetSys.sys_updated_by(data=account_data, sys_user=sys_user)
-            account = await serv_acc_u.update_account(
-                account_uuid=account_uuid, account_data=account_data, db=db
-            )
-            return account
-    except AccsNotExist:
-        raise AccsNotExist()
-    except Exception:
-        raise UnhandledException()
+
+    async with transaction_manager(db=db):
+        sys_user, _ = user_token
+        SetSys.sys_updated_by(data=account_data, sys_user=sys_user)
+        account = await serv_acc_u.update_account(
+            account_uuid=account_uuid, account_data=account_data, db=db
+        )
+        return account
 
 
 @router.delete(
@@ -139,25 +123,21 @@ async def update_account(
     response_model=s_accounts.AccountsDelResponse,
     status_code=status.HTTP_200_OK,
 )
+@serv_token.set_auth_cookie
+@handle_exceptions([AccsNotExist])
 async def soft_del_account(
-    request: Request,
     response: Response,
     account_uuid: UUID4,
     account_data: s_accounts.AccountsDel,
     db: AsyncSession = Depends(get_db),
-):
+    user_token: str = Depends(serv_session.validate_session),
+) -> s_accounts.AccountsDel:
     """soft del one account"""
-    try:
-        async with db.begin():
-            sys_user = await serv_session.validate_session(
-                request=request, response=response, db=db
-            )
-            SetSys.sys_deleted_by(data=account_data, sys_user=sys_user)
-            account = await serv_acc_d.sof_del_account(
-                account_uuid=account_uuid, account_data=account_data, db=db
-            )
-            return account
-    except AccsNotExist:
-        raise AccsNotExist()
-    except Exception:
-        raise UnhandledException()
+
+    async with transaction_manager(db=db):
+        sys_user, _ = user_token
+        SetSys.sys_deleted_by(data=account_data, sys_user=sys_user)
+        account = await serv_acc_d.sof_del_account(
+            account_uuid=account_uuid, account_data=account_data, db=db
+        )
+        return account

@@ -1,4 +1,5 @@
 from math import e
+
 from fastapi import Depends, status
 from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
@@ -9,8 +10,8 @@ import app.schemas.entity_accounts as s_entity_accounts
 
 from ..constants import constants as cnst
 from ..database.database import Operations, get_db
+from ..exceptions import EntityAccExists, EntityAccNotExist
 from ..utilities.utilities import DataUtils as di
-from ..exceptions import EntityAccNotExist, EntityAccExists
 
 
 class EntityAccountsModels:
@@ -118,8 +119,9 @@ class EntityAccountsServices:
             entity_account = await Operations.return_one_row(
                 service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
-            return entity_account
+            return di.record_not_exist(
+                instance=entity_account, exception=EntityAccNotExist
+            )
 
         async def get_entity_accounts(
             self,
@@ -134,8 +136,9 @@ class EntityAccountsServices:
             entity_account = await Operations.return_all_rows(
                 service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
-            return entity_account
+            return di.record_not_exist(
+                instance=entity_account, exception=EntityAccNotExist
+            )
 
         async def get_entity_accounts_ct(
             self,
@@ -145,10 +148,9 @@ class EntityAccountsServices:
             statement = EntityAccountsStatements.SelStatements.sel_entity_acc_ct(
                 entity_uuid=entity_uuid
             )
-            entity_accounts = await Operations.return_count(
+            return await Operations.return_count(
                 service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
             )
-            return entity_accounts
 
     class CreateService:
         def __init__(self) -> None:
@@ -172,7 +174,7 @@ class EntityAccountsServices:
                 service=cnst.ENTITY_ACCOUNTS_CREATE_SERV, statement=statement, db=db
             )
 
-            di.record_exists(instance=entity_account, exception=EntityAccExists)
+            di.record_exists(instance=entity_account_exists, exception=EntityAccExists)
 
             entity_account = await Operations.add_instance(
                 service=cnst.ENTITY_ACCOUNTS_CREATE_SERV,
@@ -180,8 +182,9 @@ class EntityAccountsServices:
                 data=entity_account_data,
                 db=db,
             )
-            di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
-            return entity_account
+            return di.record_not_exist(
+                instance=entity_account, exception=EntityAccNotExist
+            )
 
     class UpdateService:
         def __init__(self) -> None:
@@ -204,8 +207,9 @@ class EntityAccountsServices:
                 statement=statement,
                 db=db,
             )
-            di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
-            return entity_account
+            return di.record_not_exist(
+                instance=entity_account, exception=EntityAccNotExist
+            )
 
     class DelService:
         def __init__(self) -> None:
@@ -228,5 +232,6 @@ class EntityAccountsServices:
                 statement=statement,
                 db=db,
             )
-            di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
-            return entity_account
+            return di.record_not_exist(
+                instance=entity_account, exception=EntityAccNotExist
+            )
