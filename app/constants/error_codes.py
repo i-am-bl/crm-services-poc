@@ -1,3 +1,5 @@
+from tkinter import E
+
 ACCCOUNT_CONTRACT_NOT_EXIST = "account_contract_not_exist"
 ACCCOUNT_CONTRACT_EXISTS = "account_contract_exists"
 
@@ -10,6 +12,9 @@ ACCCOUNT_PRODUCTS_EXISTS = "account_prouduct_exists"
 ACCCOUNT_NOT_EXIST = "account_not_exist"
 ACCCOUNT_EXISTS = "account_exists"
 
+ADDRESSES_NOT_EXIST = "addreses_not_exist"
+ADDRESSES_EXISTS = "addreses_exists"
+
 EMAIL_NOT_EXIST = "email_not_exist"
 EMAIL_EXISTS = "email_exists"
 
@@ -18,6 +23,12 @@ ENTITY_EXISTS = "entity_exists"
 
 ENTITY_ACCOUNT_NOT_EXIST = "entity_account_not_exist"
 ENTITY_ACCOUNT_EXISTS = "entity_account_exists"
+
+ENTITY_INDIV_DATA_INVALID = "entity_indiv_data_invalid"
+ENTITY_NON_INDIV_DATA_INVALID = "entity_non_indiv_data_invalid"
+ENTITY_DATA_INVALID = "entity_data_invalid"
+ENTTIY_TYPE_INVALID = "entity_type_invalid"
+
 
 INVALID_CREDENTIALS = "invalid_credentials"
 

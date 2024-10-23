@@ -27,7 +27,6 @@ class OrderItemsStatements:
         @staticmethod
         def sel_order_item_by_uuid(order_uuid: UUID4, order_item_uuid: UUID4):
             order_items = OrderItemsModels.order_items
-            # TODO: Think about if this needs to be stricter.
             statement = Select(order_items).where(
                 and_(
                     order_items.order_uuid == order_uuid,
@@ -151,7 +150,6 @@ class OrderItemsServices:
             order_item_data: s_order_items.OrderItemsCreate,
             db: AsyncSession = Depends(get_db),
         ):
-            # TODO: override what is in the payload for order_uuid
             order_items = OrderItemsModels.order_items
             order_item = await Operations.add_instances(
                 service=cnst.ORDERS_ITEMS_CREATE_SERVICE,

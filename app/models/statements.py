@@ -10,6 +10,8 @@ from models.sys_base import SysBase
 class InvoiceItems(SysBase):
     """Essentially this is a snap shot table and statements pick up from here."""
 
+    # TODO: setting to abstract for v1
+    __abstract__ = True
     __tablename__ = "om_invoice_items"
     __table_args__ = (
         CheckConstraint(
@@ -35,7 +37,6 @@ class InvoiceItems(SysBase):
         UUID(as_uuid=True), nullable=False
     )
     owner_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
-    adjusted_by_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     original_price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     adjustment_type: Mapped[str] = mapped_column(String(50), nullable=True)

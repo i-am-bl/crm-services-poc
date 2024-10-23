@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import List
+from typing import Annotated, List
 
 from config import settings as set
 from fastapi import Depends
@@ -7,15 +7,12 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
                                     create_async_engine)
 from sqlalchemy.orm import declarative_base
+from typing_extensions import Doc
 
 from ..utilities.logger import logger
 from ..utilities.utilities import DataUtils as di
 
-schema = "fastapi6"
 connection_string = f"{set.db_connector}://{set.db_usrnm}:{set.db_pwd}@{set.db_hst}:{set.db_port}/{set.db_nm}"
-
-print(connection_string)
-
 
 try:
     async_engine = create_async_engine(connection_string, echo=True)
@@ -62,6 +59,12 @@ async def transaction_manager(db: AsyncSession):
 
 
 class Operations:
+    """
+    Class contains utilities that are specific to database interaction.
+    """
+
+    pass
+
     @staticmethod
     async def return_one_row(
         service: str,
@@ -69,10 +72,9 @@ class Operations:
         db: AsyncSession = Depends(get_db),
     ):
         logger.info({"statement": str(statement)})
-        result = await db.execute(statement=statement)
         logger.info(f"Executing database operation for sevice: {service}.")
-        entry = result.scalars().first()
-        return entry
+        result = await db.execute(statement=statement)
+        return result.scalars().first()
 
     @staticmethod
     async def return_all_rows(
@@ -80,11 +82,29 @@ class Operations:
         statement: object,
         db: AsyncSession = Depends(get_db),
     ):
+        """
+        Returns all rows when select * is used.
+        """
         logger.info({"statement": str(statement)})
-        result = await db.execute(statement=statement)
         logger.info(f"Executing database operation for sevice: {service}.")
-        entry = result.scalars().all()
-        return entry
+        result = await db.execute(statement=statement)
+        return result.scalars().all()
+
+    @staticmethod
+    async def return_all_rows_and_values(
+        service: str,
+        statement: object,
+        db: AsyncSession = Depends(get_db),
+    ):
+        """
+        Returns all rows and values when select * is NOT used.
+
+        example: select column1, column2, ... from table
+        """
+        logger.info({"statement": str(statement)})
+        logger.info(f"Executing database operation for sevice: {service}.")
+        result = await db.execute(statement=statement)
+        return result.all()
 
     @staticmethod
     async def return_count(
@@ -92,11 +112,16 @@ class Operations:
         statement: object,
         db: AsyncSession = Depends(get_db),
     ):
+        """
+        Returns one value.
+
+        Specifically used for selecting count for pagination purposes.
+        example: select count(1) from table
+        """
         logger.info({"statement": str(statement)})
-        result = await db.execute(statement=statement)
         logger.info(f"Executing database operation for sevice: {service}.")
-        entry = result.scalar()
-        return entry
+        result = await db.execute(statement=statement)
+        return result.scalar()
 
     @staticmethod
     async def add_instance(
@@ -105,9 +130,12 @@ class Operations:
         data: object,
         db: AsyncSession = Depends(get_db),
     ):
-        # TODO: add error handling in the data layer
+        """
+        Commits one item or inserts one row to the database.
+        """
         logger.info("Dumping data into model.")
         instance = model(**di.m_dumps(data=data))
+        logger.info(f"Executing database operation for sevice: {service}.")
         db.add(instance=instance)
         logger.info(f"Committing entry to the database for service: {service}.")
         return instance
@@ -119,6 +147,9 @@ class Operations:
         data: object,
         db: AsyncSession = Depends(get_db),
     ):
+        """
+        Commits many items or rows to the database.
+        """
         logger.info("Dumping data into model.")
         instances = [model(**di.m_dumps(instance)) for instance in data]
         db.add_all(instances=instances)

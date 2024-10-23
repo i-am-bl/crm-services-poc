@@ -119,7 +119,6 @@ class OrdersServices:
             )
             return di.record_not_exist(instance=order, exception=OrderNotExist)
 
-    # TODO: implement something for updating the invoice fields, will need different schema for this
     class UpdateService:
         def __init__(self) -> None:
             pass

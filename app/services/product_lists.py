@@ -1,3 +1,6 @@
+import uuid
+from typing import List
+
 from fastapi import Depends
 from pydantic import UUID4
 from sqlalchemy import Select, Update, and_, func, update
@@ -54,6 +57,17 @@ class ProductListStatements:
             return statement
 
         @staticmethod
+        def sel_prod_lists_by_uuids(product_list_uuids: List[UUID4]):
+            product_lists = ProductListsModels.product_lists
+            statement = Select(product_lists).where(
+                and_(
+                    product_lists.uuid.in_(product_list_uuids),
+                    product_lists.sys_deleted_at == None,
+                )
+            )
+            return statement
+
+        @staticmethod
         def sel_prod_lists_ct():
             product_lists = ProductListsModels.product_lists
             statement = (
@@ -102,6 +116,20 @@ class ProductListsServices:
             )
             return di.record_not_exist(
                 instance=product_list, exception=ProductListNotExist
+            )
+
+        async def get_product_lists_by_uuids(
+            self, product_list_uuids: List[UUID4], db: AsyncSession = Depends(get_db)
+        ):
+
+            statement = ProductListStatements.SelStatements.sel_prod_lists_by_uuids(
+                product_list_uuids=product_list_uuids
+            )
+            product_lists = await Operations.return_all_rows(
+                service=cnst.PRODUCT_LISTS_READ_SERV, statement=statement, db=db
+            )
+            return di.record_not_exist(
+                instance=product_lists, exception=ProductListNotExist
             )
 
         async def get_product_lists(

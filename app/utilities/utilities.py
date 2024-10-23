@@ -1,3 +1,5 @@
+from typing import List
+
 import bcrypt
 from fastapi import Depends, HTTPException, Response, status
 from passlib.context import CryptContext
@@ -6,7 +8,22 @@ from pydantic import UUID4
 
 from ..constants import constants as cnst
 from ..constants import messages as msg
+from ..exceptions import InvalidCredentials
 from .logger import logger
+
+
+class Password:
+    pass
+
+    @staticmethod
+    def create_hash(password: str):
+        return pbkdf2_sha256.hash(secret=password)
+
+    @staticmethod
+    def validate_hash(password: str, hash: str):
+        if pbkdf2_sha256.verify(secret=password, hash=hash):
+            return True
+        raise InvalidCredentials()
 
 
 class Pagination:
@@ -60,8 +77,9 @@ class DataUtils:
     @classmethod
     def record_exists(cls, instance: object, exception: Exception) -> bool:
         if instance:
+            class_name = exception.__name__
             logger.warning(
-                f"Warning: record already exists, a duplicate entry is not allowed for {instance}"
+                f"Warning: record already exists, a duplicate entry is not allowed for {class_name}"
             )
             raise exception()
         return instance
@@ -69,6 +87,7 @@ class DataUtils:
     @classmethod
     def record_not_exist(cls, instance: object, exception: Exception) -> bool:
         if not instance:
-            logger.warning(f"Warning: record not found for {instance}")
+            class_name = exception.__name__
+            logger.warning(f"Warning: record not found for {class_name}")
             raise exception()
         return instance

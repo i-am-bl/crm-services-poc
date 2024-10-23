@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import Depends, Query
 from pydantic import UUID4
 from sqlalchemy import Select, and_, func, select, update
@@ -8,6 +10,7 @@ from ..database.database import Operations, get_db
 from ..exceptions import AccsNotExist
 from ..models import accounts as m_accounts
 from ..schemas import accounts as s_accounts
+from ..utilities.logger import logger
 from ..utilities.utilities import DataUtils as di
 
 
@@ -26,6 +29,14 @@ class AccountsStatements:
             accounts = AccountsModels.accounts
             statement = Select(accounts).where(
                 and_(accounts.uuid == account_uuid, accounts.sys_deleted_at == None)
+            )
+            return statement
+
+        @staticmethod
+        def sel_accounts_by_uuids(account_uuids: List[UUID4]):
+            accounts = AccountsModels.accounts
+            statement = Select(accounts).where(
+                and_(accounts.uuid.in_(account_uuids), accounts.sys_deleted_at == None)
             )
             return statement
 
@@ -88,6 +99,17 @@ class AccountsServices:
                 service=cnst.ACCOUNTS_READ_SERVICE, statement=statement, db=db
             )
             return di.record_not_exist(instance=account, exception=AccsNotExist)
+
+        async def get_accounts_by_uuids(
+            self, account_uuids: List[UUID4], db: AsyncSession = Depends(get_db)
+        ):
+            statement = AccountsStatements.SelStatements.sel_accounts_by_uuids(
+                account_uuids=account_uuids
+            )
+            accounts = await Operations.return_all_rows(
+                service=cnst.ACCOUNTS_READ_SERVICE, statement=statement, db=db
+            )
+            return di.record_not_exist(instance=accounts, exception=AccsNotExist)
 
         async def get_accounts(
             self,

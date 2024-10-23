@@ -36,7 +36,7 @@ class ProductListsResponse(BaseModel):
     id: int
     uuid: UUID4
     owner_uuid: Optional[UUID4] = None
-    name: ConstrainedStr
+    name: Optional[ConstrainedStr] = None
     start_on: Optional[date]
     end_on: Optional[date]
     sys_created_at: datetime

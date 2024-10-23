@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +11,7 @@ from ...schemas import accounts as s_accounts
 from ...services.accounts import AccountsServices
 from ...services.authetication import SessionService, TokenService
 from ...utilities.logger import logger
-from ...utilities.sys_users import SetSys
+from ...utilities.set_values import SetSys
 from ...utilities.utilities import Pagination as pg
 
 serv_acc_r = AccountsServices.ReadService()
@@ -18,12 +20,11 @@ serv_acc_u = AccountsServices.UpdateService()
 serv_acc_d = AccountsServices.DelService()
 serv_session = SessionService()
 serv_token = TokenService()
-
 router = APIRouter()
 
 
 @router.get(
-    "/v1/account-management/accounts/{account_uuid}/",
+    "/{account_uuid}/",
     response_model=s_accounts.AccountsResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -33,17 +34,18 @@ async def get_account(
     response: Response,
     account_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: str = Depends(serv_session.validate_session),
+    user_token: Tuple = Depends(serv_session.validate_session),
 ):
-    """get one account by account_uuid"""
+    """
+    Get one account by account_uuid.
+    """
 
     async with transaction_manager(db=db):
-        account = await serv_acc_r.get_account(account_uuid=account_uuid, db=db)
-        return account
+        return await serv_acc_r.get_account(account_uuid=account_uuid, db=db)
 
 
 @router.get(
-    "/v1/account-management/accounts/",
+    "/",
     response_model=s_accounts.AccountsPagResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -54,25 +56,28 @@ async def get_accounts(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: str = Depends(serv_session.validate_session),
+    user_token: Tuple = Depends(serv_session.validate_session),
 ) -> s_accounts.AccountsPagResponse:
-    """get all accounts"""
+    """
+    Get many accounts.
+    """
 
     async with transaction_manager(db=db):
         offset = pg.pagination_offset(page=page, limit=limit)
         total_count = await serv_acc_r.get_account_ct(db=db)
         accounts = await serv_acc_r.get_accounts(db=db, offset=offset, limit=limit)
-        return {
-            "total": total_count,
-            "page": page,
-            "limit": limit,
-            "has_more": pg.has_more(total_count=total_count, page=page, limit=limit),
-            "accounts": accounts,
-        }
+        has_more = pg.has_more(total_count=total_count, page=page, limit=limit)
+        return s_accounts.AccountsPagResponse(
+            total=total_count,
+            page=page,
+            limit=limit,
+            has_more=has_more,
+            accounts=accounts,
+        )
 
 
 @router.post(
-    "/v1/account-management/accounts/",
+    "/",
     response_model=s_accounts.AccountsResponse,
     status_code=status.HTTP_201_CREATED,
 )
@@ -84,7 +89,12 @@ async def create_account(
     db: AsyncSession = Depends(get_db),
     user_token: str = Depends(serv_session.validate_session),
 ) -> s_accounts.AccountsCreate:
-    """create one account"""
+    """
+    Create one account.
+
+    This is intended to create a link with an existing entity while opening a new account.
+    Similar behavior can be achieved from the context of the entity.
+    """
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
@@ -94,7 +104,7 @@ async def create_account(
 
 
 @router.put(
-    "/v1/account-management/accounts/{account_uuid}/",
+    "/{account_uuid}/",
     response_model=s_accounts.AccountsResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -107,7 +117,9 @@ async def update_account(
     db: AsyncSession = Depends(get_db),
     user_token: str = Depends(serv_session.validate_session),
 ) -> s_accounts.AccountsUpdate:
-    """update one account"""
+    """
+    Update one account.
+    """
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
@@ -119,7 +131,7 @@ async def update_account(
 
 
 @router.delete(
-    "/v1/account-management/accounts/{account_uuid}/",
+    "/{account_uuid}/",
     response_model=s_accounts.AccountsDelResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -128,13 +140,15 @@ async def update_account(
 async def soft_del_account(
     response: Response,
     account_uuid: UUID4,
-    account_data: s_accounts.AccountsDel,
     db: AsyncSession = Depends(get_db),
     user_token: str = Depends(serv_session.validate_session),
 ) -> s_accounts.AccountsDel:
-    """soft del one account"""
+    """
+    Soft del one account.
+    """
 
     async with transaction_manager(db=db):
+        account_data = s_accounts.AccountsDel()
         sys_user, _ = user_token
         SetSys.sys_deleted_by(data=account_data, sys_user=sys_user)
         account = await serv_acc_d.sof_del_account(

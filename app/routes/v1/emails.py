@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +12,7 @@ from ...handlers.handler import handle_exceptions
 from ...services.authetication import SessionService, TokenService
 from ...services.emails import EmailsServices
 from ...utilities.logger import logger
-from ...utilities.sys_users import SetSys
+from ...utilities.set_values import SetSys
 from ...utilities.utilities import Pagination as pg
 
 router = APIRouter()
@@ -24,9 +26,10 @@ serv_token = TokenService()
 
 
 @router.get(
-    "/v1/entity-management/entities/{entity_uuid}/emails/{email_uuid}",
+    "/{entity_uuid}/emails/{email_uuid}",
     response_model=s_emails.EmailsRespone,
     status_code=status.HTTP_200_OK,
+    include_in_schema=False,
 )
 @serv_token.set_auth_cookie
 @handle_exceptions([EmailNotExist])
@@ -35,19 +38,18 @@ async def get_email(
     entity_uuid: UUID4,
     email_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: str = Depends(serv_session.validate_session),
+    user_token: Tuple = Depends(serv_session.validate_session),
 ) -> s_emails.EmailsRespone:
     """get one entity email"""
 
     async with transaction_manager(db=db):
-        email = await serv_email_r.get_email(
+        return await serv_email_r.get_email(
             entity_uuid=entity_uuid, email_uuid=email_uuid, db=db
         )
-        return email
 
 
 @router.get(
-    "/v1/entity-management/entities/{entity_uuid}/emails/",
+    "/{entity_uuid}/emails/",
     response_model=s_emails.EmailsPagRespone,
     status_code=status.HTTP_200_OK,
 )
@@ -59,9 +61,11 @@ async def get_emails(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: str = Depends(serv_session.validate_session),
+    user_token: Tuple = Depends(serv_session.validate_session),
 ) -> s_emails.EmailsPagRespone:
-    """get many emails by entity"""
+    """
+    Get many emails by entity.
+    """
 
     async with transaction_manager(db=db):
         offset = pg.pagination_offset(page=page, limit=limit)
@@ -69,17 +73,14 @@ async def get_emails(
         emails = await serv_email_r.get_emails(
             entity_uuid=entity_uuid, limit=limit, offset=offset, db=db
         )
-        return {
-            "total": total_count,
-            "page": page,
-            "limit": limit,
-            "has_more": pg.has_more(total_count=total_count, page=page, limit=limit),
-            "emails": emails,
-        }
+        has_more = pg.has_more(total_count=total_count, page=page, limit=limit)
+        return s_emails.EmailsPagRespone(
+            total=total_count, page=page, limit=limit, has_more=has_more, emails=emails
+        )
 
 
 @router.post(
-    "/v1/entity-management/entities/{entity_uuid}/emails/",
+    "/{entity_uuid}/emails/",
     response_model=s_emails.EmailsRespone,
     status_code=status.HTTP_201_CREATED,
 )
@@ -90,20 +91,22 @@ async def create_email(
     entity_uuid,
     email_data: s_emails.EmailsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: str = Depends(serv_session.validate_session),
+    user_token: Tuple = Depends(serv_session.validate_session),
 ) -> s_emails.EmailsCreate:
+    """
+    Create one email for entity.
+    """
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
         SetSys.sys_created_by(data=email_data, sys_user=sys_user)
-        email = await serv_email_c.create_email(
+        return await serv_email_c.create_email(
             entity_uuid=entity_uuid, email_data=email_data, db=db
         )
-    return email
 
 
 @router.put(
-    "/v1/entity-management/entities/{entity_uuid}/emails/{email_uuid}",
+    "/{entity_uuid}/emails/{email_uuid}",
     response_model=s_emails.EmailsRespone,
     status_code=status.HTTP_200_OK,
 )
@@ -115,24 +118,25 @@ async def update_email(
     email_uuid: UUID4,
     email_data: s_emails.EmailsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: str = Depends(serv_session.validate_session),
+    user_token: Tuple = Depends(serv_session.validate_session),
 ) -> s_emails.EmailsUpdate:
-    """update one email"""
+    """
+    Update one email.
+    """
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
         SetSys.sys_updated_by(data=email_data, sys_user=sys_user)
-        email = await serv_email_u.update_email(
+        return await serv_email_u.update_email(
             entity_uuid=entity_uuid,
             email_uuid=email_uuid,
             email_data=email_data,
             db=db,
         )
-        return email
 
 
 @router.delete(
-    "/v1/entity-management/entities/{entity_uuid}/emails/{email_uuid}",
+    "/{entity_uuid}/emails/{email_uuid}",
     response_model=s_emails.EmailsDelResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -142,19 +146,20 @@ async def soft_del_email(
     response: Response,
     entity_uuid: UUID4,
     email_uuid: UUID4,
-    email_data: s_emails.EmailsDel,
     db: AsyncSession = Depends(get_db),
-    user_token: str = Depends(serv_session.validate_session),
+    user_token: Tuple = Depends(serv_session.validate_session),
 ) -> s_emails.EmailsDel:
-    """soft del one email"""
+    """
+    Soft del one email.
+    """
 
     async with transaction_manager(db=db):
+        email_data = s_emails.EmailsDel()
         sys_user, _ = user_token
         SetSys.sys_deleted_by(data=email_data, sys_user=sys_user)
-        email = await serv_email_d.soft_del_email(
+        return await serv_email_d.soft_del_email(
             entity_uuid=entity_uuid,
             email_uuid=email_uuid,
             email_data=email_data,
             db=db,
         )
-        return email

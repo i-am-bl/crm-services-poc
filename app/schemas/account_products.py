@@ -5,6 +5,7 @@ from pydantic import UUID4, BaseModel
 from sqlalchemy import Boolean
 
 from ._variables import TimeStamp
+from .products import ProductsResponse
 
 
 class AccountProducts(BaseModel):
@@ -52,7 +53,7 @@ class AccountProductsPagRespone(BaseModel):
     page: int
     limit: int
     has_more: bool
-    account_products: Optional[List[AccountProductsRespone]] = None
+    products: Optional[List[ProductsResponse]] = None
 
 
 class AccountProductsDelRespone(AccountProductsRespone):

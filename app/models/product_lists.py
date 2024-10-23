@@ -8,7 +8,6 @@ from .sys_base import SysBase
 
 
 class ProductLists(SysBase):
-    # TODO: think about if this needs to be more agnostic or not, I dont think so
     __tablename__ = "pm_product_lists"
     __table_args__ = {"schema": "sales"}
 
@@ -19,7 +18,6 @@ class ProductLists(SysBase):
         UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
     )
 
-    # optional ownership at the list level on who is maintaining the container of products and prices
     owner_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     name: Mapped[str] = mapped_column(String(100), nullable=False)

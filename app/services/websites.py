@@ -1,6 +1,6 @@
 from fastapi import Depends
 from pydantic import UUID4
-from sqlalchemy import Select, Update, and_
+from sqlalchemy import Select, Update, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import constants as cnst
@@ -32,6 +32,39 @@ class WebsitesStatements:
                     websites.entity_uuid == entity_uuid,
                     websites.uuid == website_uuid,
                     websites.sys_deleted_at == None,
+                )
+            )
+            return statement
+
+        @staticmethod
+        def sel_web_by_entity(entity_uuid: UUID4, offset: int, limit: int):
+            websites = WebsitesModels.websites
+            statement = (
+                Select(websites)
+                .where(
+                    and_(
+                        websites.entity_uuid == entity_uuid,
+                        websites.sys_deleted_at == None,
+                    )
+                )
+                .offset(offset=offset)
+                .limit(limit=limit)
+            )
+            return statement
+
+        @staticmethod
+        def sel_web_by_entity_ct(
+            entity_uuid: UUID4,
+        ):
+            websites = WebsitesModels.websites
+            statement = (
+                Select(func.count())
+                .select_from(websites)
+                .where(
+                    and_(
+                        websites.entity_uuid == entity_uuid,
+                        websites.sys_deleted_at == None,
+                    )
                 )
             )
             return statement
@@ -93,6 +126,35 @@ class WebsitesServices:
                 service=cnst.WEBSITES_READ_SERVICE, statement=statement, db=db
             )
             return di.record_not_exist(instance=website, exception=WebsitesNotExist)
+
+        async def get_websites(
+            self,
+            entity_uuid: UUID4,
+            offset: int,
+            limit: int,
+            db: AsyncSession = Depends(get_db),
+        ):
+
+            statement = WebsitesStatements.SelStatements.sel_web_by_entity(
+                entity_uuid=entity_uuid, offset=offset, limit=limit
+            )
+            websites = await Operations.return_all_rows(
+                service=cnst.WEBSITES_READ_SERVICE, statement=statement, db=db
+            )
+            return di.record_not_exist(instance=websites, exception=WebsitesNotExist)
+
+        async def get_websites_ct(
+            self,
+            entity_uuid: UUID4,
+            db: AsyncSession = Depends(get_db),
+        ):
+
+            statement = WebsitesStatements.SelStatements.sel_web_by_entity_ct(
+                entity_uuid=entity_uuid
+            )
+            return await Operations.return_count(
+                service=cnst.WEBSITES_READ_SERVICE, statement=statement, db=db
+            )
 
     class CreateService:
         def __init__(self) -> None:

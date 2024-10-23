@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import UUID4, BaseModel, field_validator
+from pydantic import UUID4, BaseModel, Field, field_validator
 
 from ._variables import ConstrainedEmailStr, ConstrainedStr, TimeStamp
 
@@ -10,7 +10,10 @@ from ._variables import ConstrainedEmailStr, ConstrainedStr, TimeStamp
 class SysUsers(BaseModel):
     first_name: ConstrainedStr
     last_name: ConstrainedStr
-    email: ConstrainedEmailStr
+    email: ConstrainedEmailStr = Field(
+        description="Email must meet standard email format criteria: \
+            e.g., my.email@domain.com"
+    )
     username: ConstrainedStr
 
     @field_validator("email")
@@ -23,7 +26,14 @@ class SysUsers(BaseModel):
 
 
 class SysUsersCreate(SysUsers):
-    password: ConstrainedStr
+    password: ConstrainedStr = Field(
+        description="Password must meet the following criteris: \
+            greater than or equal to 8 characters in length, \
+                less than or equal to 30 charcters in length, \
+                    at least one lower case character, \
+                        upper case charcter, \
+                            and numerical character."
+    )
     sys_created_at: datetime = TimeStamp
 
     @field_validator("password")
@@ -101,6 +111,7 @@ class SysUsersPagResponse(BaseModel):
     total: int
     page: int
     limit: int
+    has_more: bool
     sys_users: Optional[List[SysUsersResponse]] = None
 
 
