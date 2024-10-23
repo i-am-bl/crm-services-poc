@@ -30,9 +30,9 @@ class NonIndividualsDel(BaseModel):
 
 
 class NonIndividualsResponse(BaseModel):
-    id: int
+    # id: int
     uuid: UUID4
-    entity_uuid: UUID4
+    # entity_uuid: UUID4
     name: ConstrainedStr
     legal_name: Optional[ConstrainedStr] = None
     sys_created_at: datetime

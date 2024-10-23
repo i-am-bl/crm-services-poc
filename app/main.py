@@ -1,14 +1,16 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from pydantic import UUID4
 
 from . import models
 from .constants import constants as cnst
-from .constants.handlers import handlers
+from .constants.error_handlers import handlers
+from .constants.routers import routers
 from .database.database import init_db_table_schema_factory, init_db_tables
-from .handlers.handler import handle_exeception_registration
-from .reg_routers import register_routers
+from .handlers.handler import (handle_exeception_registration,
+                               handle_router_registration)
 
 
 @asynccontextmanager
@@ -19,10 +21,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    lifespan=lifespan, title="CRM", description="backend service for CRM", version="v1"
+    lifespan=lifespan,
+    title="CRM",
+    description="backend service for CRM",
+    version="v1",
 )
 
-register_routers(app=app)
+handle_router_registration(app=app, routers=routers)
 handle_exeception_registration(app=app, handlers=handlers)
-
-# app.include_router()

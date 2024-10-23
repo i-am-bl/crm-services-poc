@@ -8,7 +8,7 @@ from ._variables import TimeStamp
 
 class Invoices(BaseModel):
     order_uuid: UUID4
-    sys_value_status_id: Optional[int] = None
+    sys_value_status_uuid: Optional[UUID4] = None
     transacted_on: Optional[date] = None
     posted_on: Optional[date] = None
     paid_on: Optional[date] = None
@@ -20,7 +20,7 @@ class InvoicesCreate(Invoices):
 
 
 class InvoicesUpdate(BaseModel):
-    sys_value_status_id: Optional[int] = None
+    sys_value_status_uuid: Optional[UUID4] = None
     transacted_on: Optional[date] = None
     posted_on: Optional[date] = None
     paid_on: Optional[date] = None
@@ -37,7 +37,7 @@ class InvoicesResponse(BaseModel):
     id: int
     uuid: UUID4
     order_uuid: UUID4
-    sys_value_status_id: Optional[int] = None
+    sys_value_status_uuid: Optional[UUID4] = None
     transacted_on: Optional[date] = None
     posted_on: Optional[date] = None
     paid_on: Optional[date] = None

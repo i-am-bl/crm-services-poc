@@ -1,4 +1,5 @@
-from typing import Annotated, Literal, Optional
+import uu
+from typing import Annotated, List, Literal, Optional
 
 from fastapi import Depends, status
 from pydantic import UUID4
@@ -48,6 +49,14 @@ class ProductsStatements:
                 .where(products.sys_deleted_at == None)
                 .offset(offset=offset)
                 .limit(limit=limit)
+            )
+            return statement
+
+        @staticmethod
+        def sel_prods_by_uuids(product_uuids: List[UUID4]):
+            products = ProductModel.products
+            statement = Select(products).where(
+                and_(products.uuid.in_(product_uuids), products.sys_deleted_at == None)
             )
             return statement
 
@@ -109,6 +118,17 @@ class ProductsServices:
             )
             return di.record_not_exist(instance=products, exception=ProductsNotExist)
 
+        async def get_product_by_uuids(
+            self, product_uuids: List[UUID4], db: AsyncSession = Depends(get_db)
+        ):
+            statemenet = ProductsStatements.SelectStatements.sel_prods_by_uuids(
+                product_uuids=product_uuids
+            )
+            products = await Operations.return_all_rows(
+                service=cnst.PRODUCTS_READ_SERV, statement=statemenet, db=db
+            )
+            return di.record_not_exist(instance=products, exception=ProductsNotExist)
+
         async def get_products_ct(self, db: AsyncSession = Depends(get_db)):
             statemenet = ProductsStatements.SelectStatements.sel_prods_ct()
             products = await Operations.return_count(
@@ -155,8 +175,6 @@ class ProductsServices:
         def __init__(self) -> None:
             pass
 
-        # TODO: needs validation for ensuring product name uniqueness or need to abandon all together and just allow duplicates
-        # if we abandon, need to abandon at the create service layer as well...
         async def update_product(
             self,
             product_uuid: UUID4,

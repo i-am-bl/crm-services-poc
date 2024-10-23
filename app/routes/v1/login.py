@@ -10,7 +10,7 @@ serv_session = SessionService()
 router = APIRouter()
 
 
-@router.post("/v1/system-management/login")
+@router.post("/")
 @handle_exceptions([])
 async def authenticate_sys_user(
     response: Response,
@@ -21,5 +21,4 @@ async def authenticate_sys_user(
     async with transaction_manager(db=db):
         token = await serv_session.create_session(form_data=form_data, db=db)
         response.set_cookie(key="jwt", value=token, httponly=True, secure=True)
-        # TODO: handle this misleading message
         return {"message": "Successfully logged in."}

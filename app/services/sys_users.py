@@ -12,7 +12,8 @@ from ..exceptions import InvalidCredentials, SysUserExists, SysUserNotExist
 from ..models import sys_users as m_sys_user
 from ..schemas import sys_users as s_sys_user
 from ..utilities.logger import logger
-from ..utilities.utilities import DataUtils as di, AuthUtils
+from ..utilities.utilities import DataUtils as di
+from ..utilities.utilities import Password
 
 
 class SysUsersModels:
@@ -43,7 +44,6 @@ class SysUsersStatements:
             statement = Select(sys_users).where(
                 and_(
                     sys_users.username == username,
-                    # TODO: handle disabled users with exception
                     sys_users.disabled_at == None,
                     sys_users.sys_deleted_at == None,
                 )
@@ -156,10 +156,9 @@ class SysUsersServices:
             db: AsyncSession = Depends(get_db),
         ):
             statement = SysUsersStatements.SelStatements.sel_sys_users_ct()
-            sys_users = await Operations.return_count(
+            return await Operations.return_count(
                 service=cnst.SYS_USER_READ_SERV, statement=statement, db=db
             )
-            return sys_users
 
     class CreateService:
         def __init__(self) -> None:
@@ -178,7 +177,9 @@ class SysUsersServices:
                 service=cnst.SYS_USER_CREATE_SERV, statement=statement, db=db
             )
             di.record_exists(instance=user_exists, exception=SysUserExists)
-            sys_user_data.password = AuthUtils.gen_hash(password=sys_user_data.password)
+            sys_user_data.password = Password.create_hash(
+                password=sys_user_data.password
+            )
             sys_user = await Operations.add_instance(
                 service=cnst.SYS_USER_CREATE_SERV,
                 model=sys_users,
@@ -215,8 +216,7 @@ class SysUsersServices:
             sys_user = await Operations.return_one_row(
                 service=cnst.SYS_USER_UPDATE_SERV, statement=statement, db=db
             )
-            di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
-            return sys_user
+            return di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
 
     class DelService:
         async def soft_del_sys_user(

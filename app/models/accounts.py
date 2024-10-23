@@ -8,8 +8,6 @@ from .sys_base import SysBase
 
 
 class Accounts(SysBase):
-    # TODO: add in some more logic and ideas for many to one scenario
-    # we could use a combination of type, decription, or naming
     __tablename__ = "acc_accounts"
     __table_args__ = {"schema": "sales"}
 
@@ -20,7 +18,9 @@ class Accounts(SysBase):
         UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
     )
 
-    sys_value_status_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    sys_value_status_uuid: Mapped[uuid4] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
 
     name: Mapped[str] = mapped_column(String(255), nullable=True)
     start_on: Mapped[date] = mapped_column(Date, nullable=True)

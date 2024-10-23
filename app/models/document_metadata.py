@@ -6,8 +6,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .sys_base import SysBase
 
 
-# TODO: create an api for this table
 class DocumentMetadata(SysBase):
+    # TODO: Marking this as abstract for v1 to exclude from build
+    __abstract__ = True
     __tablename__ = "document_metadata"
     __table_args__ = (
         CheckConstraint(
@@ -27,8 +28,10 @@ class DocumentMetadata(SysBase):
     pareent_id: Mapped[int] = mapped_column(Integer, nullable=True)
     parent_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
     parent_table: Mapped[str] = mapped_column(String(50), nullable=True)
-    sys_value_type_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    sys_value_type_uuid: Mapped[uuid4] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
 
-    # allows for obtional storage depending on the storage choice
+    # allows for obtional storage using a document store
     object_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
     url: Mapped[str] = mapped_column(String(325), nullable=True)

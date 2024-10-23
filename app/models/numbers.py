@@ -19,9 +19,9 @@ class Numbers(SysBase):
 
     entity_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
     # parent_table: Mapped[str] = mapped_column(String(100), nullable=False)
-    sys_value_type_id: Mapped[int] = mapped_column(Integer, nullable=True)
-    # TODO: change some of this to not be nullable
-
+    sys_value_type_uuid: Mapped[uuid4] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
     country_code: Mapped[str] = mapped_column(String(1), nullable=True)
     area_code: Mapped[str] = mapped_column(String(3), nullable=True)
     line_number: Mapped[str] = mapped_column(String(4), nullable=True)

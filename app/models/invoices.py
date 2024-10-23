@@ -18,7 +18,9 @@ class Invoices(SysBase):
     )
 
     order_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
-    sys_value_status_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    sys_value_status_uuid: Mapped[uuid4] = mapped_column(
+        UUID(as_uuid=True), nullable=False
+    )
 
     transacted_on: Mapped[Date] = mapped_column(Date, nullable=True)
     posted_on: Mapped[Date] = mapped_column(Date, nullable=True)

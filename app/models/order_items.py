@@ -28,8 +28,10 @@ class OrderItems(SysBase):
         UUID(as_uuid=True), nullable=False
     )
     owner_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
-    adjusted_by: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=True)
 
+    quantity: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("1")
+    )
     original_price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     adjustment_type: Mapped[str] = mapped_column(String(50), nullable=True)
     price_adjustment: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=True)

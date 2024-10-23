@@ -12,14 +12,28 @@ ACCCOUNT_PRODUCTS_EXISTS = f"Account product {_RECORD_EXISTS}"
 ACCCOUNT_NOT_EXIST = f"Account {_RECORD_NOT_EXIST}"
 ACCCOUNT_EXISTS = f"Account {_RECORD_EXISTS}"
 
+ADDRESSES_NOT_EXIST = f"Address {_RECORD_NOT_EXIST}"
+ADDRESSES_EXISTS = f"Address {_RECORD_EXISTS}"
+
 EMAIL_NOT_EXIST = f"Email {_RECORD_NOT_EXIST}"
 EMAIL_EXISTS = f"Email {_RECORD_EXISTS}"
+
+ENTITY_ACCOUNT_NOT_EXIST = f"Entity account {_RECORD_NOT_EXIST}"
+ENTITY_ACCOUNT_EXISTS = f"Entity account {_RECORD_EXISTS}"
 
 ENTITY_NOT_EXIST = f"Entity {_RECORD_NOT_EXIST}"
 ENTITY_EXISTS = f"Entity {_RECORD_EXISTS}"
 
-ENTITY_ACCOUNT_NOT_EXIST = f"Entity account {_RECORD_NOT_EXIST}"
-ENTITY_ACCOUNT_EXISTS = f"Entity account {_RECORD_EXISTS}"
+ENTITY_DATA_INVALID = "Entity data is invalid, a valid payload must be provided."
+
+ENTITY_INDIV_DATA_INVALID = (
+    "Individual data payload is invalid for entity_type: individual."
+)
+ENTITY_NON_INDIV_DATA_INVALID = (
+    "Non-Individual data payload is invalid for entity_type: non-individual."
+)
+
+ENTITY_TYPE_INVALID = "entity_type is invalid."
 
 INDIVIDUAL_NOT_EXIST = f"Individual {_RECORD_NOT_EXIST}"
 INDIVIDUAL_EXISTS = f"Individual {_RECORD_EXISTS}"

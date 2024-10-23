@@ -2,6 +2,7 @@ from .account_contracts import *
 from .account_lists import *
 from .account_products import *
 from .accounts import *
+from .addresses import *
 from .authentication import *
 from .emails import *
 from .entities import *

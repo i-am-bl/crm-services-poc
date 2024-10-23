@@ -27,9 +27,12 @@ class AccountsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class AccountsResponse(Accounts):
+class AccountsResponse(BaseModel):
     id: int
     uuid: UUID4
+    name: Optional[ConstrainedStr] = None
+    start_on: Optional[date] = None
+    end_on: Optional[date] = None
     sys_created_at: datetime
     sys_created_by: Optional[UUID4] = None
     sys_updated_at: Optional[datetime] = None

@@ -1,43 +1,25 @@
 from datetime import datetime, timedelta, timezone
 from functools import wraps
-from pydoc import resolve
-from typing import Annotated, Any, Callable, Optional
-from urllib import response
+from typing import Any, Callable, Optional
 
 import jwt
 from config import settings as set
 from fastapi import Cookie, Depends, Request, Response
 from fastapi.security import OAuth2PasswordBearer
-from passlib.hash import pbkdf2_sha256
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import constants as cnst
 from ..database.database import get_db, transaction_manager
-from ..exceptions import InvalidCredentials
 from ..schemas import sys_users as s_sys_user
 from ..schemas import token as s_token
 from ..services.sys_users import SysUsersServices
 from ..utilities.logger import logger
 from ..utilities.utilities import DataUtils as di
+from ..utilities.utilities import Password
 
 serv_sys_user_r = SysUsersServices.ReadService()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=cnst.TOKEN_URL)
-# TODO: clean up this file, some of this is deprecated
-
-
-class PasswordService:
-    pass
-
-    @staticmethod
-    def create_hash(password: str):
-        return pbkdf2_sha256.hash(secret=password)
-
-    @staticmethod
-    def validate_hash(password: str, hash: str):
-        if pbkdf2_sha256.verify(secret=password, hash=hash):
-            return True
-        raise InvalidCredentials()
 
 
 class TokenService:
@@ -88,7 +70,6 @@ class TokenService:
     ):
         token_data = jwt.decode(token, set.jwt_secret_key, set.jwt_algorithm)
 
-        # TODO: Decoding exceptions
         sys_user = await serv_sys_user_r.get_sys_user_by_uuid(
             sys_user_uuid=token_data.get("sub"), db=db
         )
@@ -111,9 +92,7 @@ class AuthService:
         sys_user = await serv_sys_user_r.get_sys_user_by_username(
             username=form_data.username, db=db
         )
-        if PasswordService.validate_hash(
-            password=form_data.password, hash=sys_user.password
-        ):
+        if Password.validate_hash(password=form_data.password, hash=sys_user.password):
             return sys_user
 
 
@@ -132,11 +111,7 @@ class SessionService:
             token_claims = await serv_token.create_token_context(
                 sys_user=valid_user, expires_delta=expires_delta
             )
-            access_token = await serv_token.create_access_token(
-                token_claims=token_claims
-            )
-
-            return access_token
+            return await serv_token.create_access_token(token_claims=token_claims)
 
     async def validate_session(
         self,

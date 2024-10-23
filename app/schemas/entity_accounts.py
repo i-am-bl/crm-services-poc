@@ -4,6 +4,8 @@ from typing import List, Optional
 from pydantic import UUID4, BaseModel
 
 from ._variables import ConstrainedStr, TimeStamp
+from .accounts import AccountsResponse
+from .entities import EntitiesIndivNonIndivResponse, EntitiesResponse
 
 
 class EntityAccounts(BaseModel):
@@ -43,7 +45,7 @@ class EntityAccountsResponse(BaseModel):
     id: int
     uuid: UUID4
     entity_uuid: UUID4
-    account_uuid: Optional[UUID4] = None
+    account_uuid: UUID4
     start_on: Optional[date] = None
     end_on: Optional[date] = None
     sys_created_at: datetime = TimeStamp
@@ -60,7 +62,15 @@ class EntityAccountsPagResponse(BaseModel):
     page: int
     limit: int
     has_more: bool
-    entity_accounts: Optional[List[EntityAccountsResponse]] = None
+    accounts: List[AccountsResponse] = None
+
+
+class AccountEntitiesPagResponse(BaseModel):
+    total: int
+    page: int
+    limit: int
+    has_more: bool
+    entities: List[EntitiesIndivNonIndivResponse] = None
 
 
 class EntityAccountsDelResponse(EntityAccountsResponse):
@@ -69,3 +79,8 @@ class EntityAccountsDelResponse(EntityAccountsResponse):
 
     class Config:
         from_attributes = True
+
+
+class EntityAccountAccountRespone(BaseModel):
+    account: AccountsResponse
+    entity_account: EntityAccountsResponse

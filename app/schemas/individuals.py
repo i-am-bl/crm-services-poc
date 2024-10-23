@@ -12,7 +12,7 @@ class Individuals(BaseModel):
 
 
 class IndividualsCreate(Individuals):
-    entity_uuid: UUID4
+    entity_uuid: Optional[UUID4] = None
     sys_created_at: datetime = TimeStamp
     sys_created_by: Optional[UUID4] = None
 
@@ -30,9 +30,9 @@ class IndividualsDel(BaseModel):
 
 
 class IndividualsResponse(BaseModel):
-    id: int
     uuid: UUID4
-    entity_uuid: UUID4
+    first_name: Optional[ConstrainedStr] = None
+    last_name: Optional[ConstrainedStr] = None
     sys_created_at: datetime = TimeStamp
     sys_created_by: Optional[UUID4] = None
     sys_created_at: datetime

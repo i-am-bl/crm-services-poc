@@ -23,7 +23,9 @@ class AcccountContracts(SysBase):
     document_metadata_uuid: Mapped[uuid4] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )
-    sys_value_type_id: Mapped[int] = mapped_column(Integer, nullable=True)
+    sys_value_type_uuid: Mapped[uuid4] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
 
     start_on: Mapped[date] = mapped_column(Date, nullable=True)
     end_on: Mapped[date] = mapped_column(Date, nullable=True)

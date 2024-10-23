@@ -7,6 +7,8 @@ from .sys_base import SysBase
 
 
 class Contacts(SysBase):
+    # TODO: marking this as abstract until finished, excluding for v1
+    __abstract__ = True
     __tablename__ = "em_contacts"
     __table_args__ = {"schema": "sales"}
 
@@ -22,4 +24,6 @@ class Contacts(SysBase):
     child_table: Mapped[str] = mapped_column(String(50), nullable=True)
     child_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
 
-    sys_value_type_id: Mapped[str] = mapped_column(String(100), nullable=True)
+    sys_value_type_uuid: Mapped[uuid4] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
