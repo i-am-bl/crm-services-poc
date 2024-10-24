@@ -418,7 +418,7 @@ class EntitiesServices:
 
 ### Models
 
-SQL Alchemy, an ORM (Object Relationship Mapping), was leverage for database interation. In `./models`, each file consists of a data model or database table. Through inheritance, an abstract class efficiently distributes fields that were designed to exist on every table. Fields include sys_fields for capturing a reference to a user that took a write action on the record and time of action.
+SQL Alchemy, an ORM (Object Relational Mapping), was leverage for database interation. In `./models`, each file consists of a data model or database table. Through inheritance, an abstract class efficiently distributes fields that were designed to exist on every table. Fields include sys_fields for capturing a reference to a user that took a write action on the record and time of action.
 
 The concept of soft deletes was incorporated into the data design, preserving referential integrity. Soft deleted records are filtered at the API level.
 
