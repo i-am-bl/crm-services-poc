@@ -252,8 +252,8 @@ As an Operation Manager, I want to safeguard my staff from creating billing erro
 
 ### KPIs (Key Performance Indicators)
 
-- Decrease in instances of incorrect billing by 80%
-- Decrease in instances of missed renewal dates of contracts by 80%.
+- Instances of incorrect billing.
+- Instances of missed contract renewal dates.
 
 ### Acceptance Criteria
 
