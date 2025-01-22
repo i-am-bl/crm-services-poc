@@ -1,22 +1,52 @@
-from typing import Tuple
+from typing import Callable, Tuple
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...database.database import get_db, transaction_manager
+from ...database.database import Operations, get_db, transaction_manager
 from ...exceptions import AccContractExists, AccContractNotExist
 from ...handlers.handler import handle_exceptions
-from ...schemas import account_contracts as s_account_contracts
-from ...services.account_contracts import AccountContractsServices
+from ...models import (
+    account_contracts as account_contract_mdls,
+    sys_users as sys_user_mdl,
+)
+from ...schemas import account_contracts as account_contract_schms
+from ...services import account_contracts as account_contract_srvcs
 from ...services.authetication import SessionService, TokenService
-from ...utilities.set_values import SetSys
-from ...utilities.utilities import Pagination as pg
+from ...statements.account_contracts import (
+    account_contract_stms,
+    AccountContractStms,
+)
+from ...utilities import pagination
+from ...utilities import sys_values
 
-serv_acc_contr_r = AccountContractsServices.ReadService()
-serv_acc_contr_c = AccountContractsServices.CreateService()
-serv_acc_contr_u = AccountContractsServices.UpdateService()
-serv_acc_contr_d = AccountContractsServices.DelService()
+_account_contracts_stms: AccountContractStms = account_contract_stms(
+    account_contracts_mdl=account_contract_mdls.AcccountContracts
+)
+
+# Service instances
+srvc_create_account_contracts: account_contract_srvcs.CreateSrvc = (
+    account_contract_srvcs.account_contract_create_srvc(
+        operations=Operations, model=account_contract_mdls.AcccountContracts
+    )
+)
+srvc_read_account_contracts: account_contract_srvcs.ReadSrvc = (
+    account_contract_srvcs.account_contract_read_srvc(
+        operations=Operations, statements=_account_contracts_stms
+    )
+)
+srvc_update_account_contracts: account_contract_srvcs.UpdateSrvc = (
+    account_contract_srvcs.account_contract_update_srvc(
+        operations=Operations, statements=_account_contracts_stms
+    )
+)
+srvc_delete_account_contracts: account_contract_srvcs.DeleteSrvc = (
+    account_contract_srvcs.account_contract_delete_srvc(
+        operations=Operations, statements=_account_contracts_stms
+    )
+)
+
 serv_session = SessionService()
 serv_token = TokenService()
 router = APIRouter()
@@ -24,7 +54,7 @@ router = APIRouter()
 
 @router.get(
     "/{account_uuid}/account-contracts/{account_contract_uuid}/",
-    response_model=s_account_contracts.AccountContractsReponse,
+    response_model=account_contract_schms.AccountContractsReponse,
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
@@ -35,12 +65,19 @@ async def get_account_contract(
     account_uuid: UUID4,
     account_contract_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_contracts.AccountContractsReponse:
-    """get one account contract"""
+    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
+        serv_session.validate_session
+    ),
+    account_contract_read_srvc: account_contract_srvcs.ReadSrvc = Depends(
+        srvc_read_account_contracts
+    ),
+) -> account_contract_schms.AccountContractsReponse:
+    """
+    Fetch one account contract by account and account contract uuid.
+    """
 
     async with transaction_manager(db=db):
-        return await serv_acc_contr_r.get_account_contract(
+        return await account_contract_read_srvc.get_acct_cntrct(
             account_uuid=account_uuid,
             account_contract_uuid=account_contract_uuid,
             db=db,
@@ -49,7 +86,7 @@ async def get_account_contract(
 
 @router.get(
     "/{account_uuid}/account-contracts/",
-    response_model=s_account_contracts.AccountContractsPagRepsone,
+    response_model=account_contract_schms.AccountContractsPagRepsone,
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
@@ -60,22 +97,29 @@ async def get_account_contracts(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_contracts.AccountContractsPagRepsone:
+    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
+        serv_session.validate_session
+    ),
+    account_contract_read_srvc: account_contract_srvcs.ReadSrvc = Depends(
+        srvc_read_account_contracts
+    ),
+) -> account_contract_schms.AccountContractsPagRepsone:
     """
-    Get many account contracts by account.
+    Fetch all account contracts by account uuid.
     """
 
     async with transaction_manager(db=db):
-        offset = pg.pagination_offset(page=page, limit=limit)
-        total_count = await serv_acc_contr_r.get_account_contracts_ct(
+        offset = pagination.page_offset(page=page, limit=limit)
+        total_count = await account_contract_read_srvc.get_account_contracts_count(
             account_uuid=account_uuid, db=db
         )
-        account_contracts = await serv_acc_contr_r.get_account_contracts(
+        account_contracts = await account_contract_read_srvc.get_account_contracts(
             account_uuid=account_uuid, limit=limit, offset=offset, db=db
         )
-        has_more = pg.has_more(total_count=total_count, page=page, limit=limit)
-        return s_account_contracts.AccountContractsPagRepsone(
+        has_more = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        return account_contract_schms.AccountContractsPagRepsone(
             total=total_count,
             page=page,
             limit=limit,
@@ -86,7 +130,7 @@ async def get_account_contracts(
 
 @router.post(
     "/{account_uuid}/account-contracts/",
-    response_model=s_account_contracts.AccountContractsReponse,
+    response_model=account_contract_schms.AccountContractsReponse,
     status_code=status.HTTP_201_CREATED,
 )
 @serv_token.set_auth_cookie
@@ -94,18 +138,23 @@ async def get_account_contracts(
 async def create_account_contract(
     response: Response,
     account_uuid: UUID4,
-    account_contract_data: s_account_contracts.AccountContractsCreate,
+    account_contract_data: account_contract_schms.AccountContractsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_contracts.AccountContractsCreate:
+    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
+        serv_session.validate_session
+    ),
+    account_contract_create_srvc: account_contract_srvcs.CreateSrvc = Depends(
+        srvc_create_account_contracts
+    ),
+) -> account_contract_schms.AccountContractsCreate:
     """
     Create one account contract.
     """
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        SetSys.sys_created_by(data=account_contract_data, sys_user=sys_user)
-        return await serv_acc_contr_c.create_account_contract(
+        sys_values.sys_created_by(data=account_contract_data, sys_user=sys_user)
+        return await account_contract_create_srvc.create_account_contract(
             account_uuid=account_uuid,
             account_contract_data=account_contract_data,
             db=db,
@@ -114,7 +163,7 @@ async def create_account_contract(
 
 @router.put(
     "/{account_uuid}/account-contracts/{account_contract_uuid}/",
-    response_model=s_account_contracts.AccountContractsReponse,
+    response_model=account_contract_schms.AccountContractsReponse,
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
@@ -123,18 +172,23 @@ async def update_account_contract(
     response: Response,
     account_uuid: UUID4,
     account_contract_uuid: UUID4,
-    account_contract_data: s_account_contracts.AccountContractsUpdate,
+    account_contract_data: account_contract_schms.AccountContractsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_contracts.AccountContractsUpdate:
+    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
+        serv_session.validate_session
+    ),
+    account_contract_update_srvc: account_contract_srvcs.UpdateSrvc = Depends(
+        srvc_update_account_contracts
+    ),
+) -> account_contract_schms.AccountContractsUpdate:
     """
     Update one account contract.
     """
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        SetSys.sys_updated_by(data=account_contract_data, sys_user=sys_user)
-        return await serv_acc_contr_u.update_account_contract(
+        sys_values.sys_updated_by(data=account_contract_data, sys_user=sys_user)
+        return await account_contract_update_srvc.update_account_contract(
             account_uuid=account_uuid,
             account_contract_uuid=account_contract_uuid,
             account_contract_data=account_contract_data,
@@ -144,27 +198,32 @@ async def update_account_contract(
 
 @router.delete(
     "/{account_uuid}/account-contracts/{account_contract_uuid}/",
-    response_model=s_account_contracts.AccountContractsDelRepsone,
+    response_model=account_contract_schms.AccountContractsDelRepsone,
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
 @handle_exceptions([AccContractNotExist])
-async def soft_del_account_contract(
+async def soft_delete_account_contract(
     response: Response,
     account_uuid: UUID4,
     account_contract_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_contracts.AccountContractsDel:
+    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
+        serv_session.validate_session
+    ),
+    account_contracts_delete_srvc: account_contract_srvcs.DeleteSrvc = Depends(
+        srvc_delete_account_contracts
+    ),
+) -> account_contract_schms.AccountContractsDel:
     """
-    Soft del one account contract.
+    Soft delete one account contract.
     """
 
     async with transaction_manager(db=db):
-        account_contract_data = s_account_contracts.AccountContractsDel()
+        account_contract_data = account_contract_schms.AccountContractsDel()
         sys_user, _ = user_token
-        SetSys.sys_deleted_by(data=account_contract_data, sys_user=sys_user)
-        return await serv_acc_contr_d.soft_del_account_contract(
+        sys_values.sys_deleted_by(data=account_contract_data, sys_user=sys_user)
+        return await account_contracts_delete_srvc.soft_delete_account_contract(
             account_uuid=account_uuid,
             account_contract_uuid=account_contract_uuid,
             account_contract_data=account_contract_data,

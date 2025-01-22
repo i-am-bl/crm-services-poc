@@ -1,4 +1,4 @@
-from .account_contracts import AcccountContracts
+from .account_contracts import AccountContracts
 from .account_lists import AccountLists
 from .account_products import AccountProducts
 from .accounts import Accounts
