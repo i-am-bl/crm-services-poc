@@ -46,7 +46,7 @@ class NumbersDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class NumbersResponse(BaseModel):
+class NumbersRes(BaseModel):
     id: int
     uuid: UUID4
     entity_uuid: UUID4
@@ -59,15 +59,15 @@ class NumbersResponse(BaseModel):
         from_attributes: True
 
 
-class NumbersPagResponse(BaseModel):
+class NumbersPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    numbers: Optional[List[NumbersResponse]] = None
+    numbers: Optional[List[NumbersRes]] = None
 
 
-class NumbersDelResponse(Numbers):
+class NumbersDelRes(Numbers):
     id: int
     uuid: UUID4
     entity_uuid: UUID4
