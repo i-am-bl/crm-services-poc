@@ -11,6 +11,7 @@ from ..models.individuals import Individuals
 from ..models.invoices import Invoices
 from ..models.non_individuals import NonIndividuals
 from ..models.numbers import Numbers
+from ..models.orders import Orders
 from ..statements.account_contracts import AccountContractStms
 from ..statements.account_lists import AccountListsStms
 from ..statements.accounts import AccountsStms
@@ -20,6 +21,7 @@ from ..statements.individuals import IndividualsStms
 from ..statements.invoices import InvoicesStms
 from ..statements.non_individuals import NonInvdividualsStms
 from ..statements.numbers import NumberStms
+from ..statements.orders import OrdersStms
 
 
 class StatementsContainer(TypedDict):
@@ -32,6 +34,7 @@ class StatementsContainer(TypedDict):
     invoice_stms: InvoicesStms
     non_individuals: NonInvdividualsStms
     numbers_stms: NumberStms
+    orders_stms: OrdersStms
 
 
 container: StatementsContainer = {
@@ -46,4 +49,5 @@ container: StatementsContainer = {
     "invoice_stms": lambda: InvoicesStms(model=Invoices),
     "non_individuals": lambda: NonInvdividualsStms(model=NonIndividuals),
     "numbers_stms": lambda: NumberStms(model=Numbers),
+    "orders_stms": lambda: OrdersStms(model=Orders),
 }

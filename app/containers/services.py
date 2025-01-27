@@ -11,6 +11,7 @@ from ..models.individuals import Individuals
 from ..models.non_individuals import NonIndividuals
 from ..models.invoices import Invoices
 from ..models.numbers import Numbers
+from ..models.orders import Orders
 from ..services import account_contracts as account_contracts_srvcs
 from ..services import account_lists as account_lists_srvcs
 from ..services import accounts as accounts_srvcs
@@ -20,6 +21,7 @@ from ..services import individuals as individuals_srvcs
 from ..services import invoices as invoices_srvcs
 from ..services import non_individuals as non_individual_srvcs
 from ..services import numbers as numbers_srvcs
+from ..services import orders as orders_srvcs
 
 
 class ServicesContainer(TypedDict):
@@ -68,6 +70,11 @@ class ServicesContainer(TypedDict):
     numbers_read: numbers_srvcs.ReadSrvc
     numbers_update: numbers_srvcs.UpdateSrvc
     numbers_delete: numbers_srvcs.DelSrvc
+    # orders services
+    orders_create: orders_srvcs.CreateSrvc
+    orders_read: orders_srvcs.ReadSrvc
+    orders_update: orders_srvcs.UpdateSrvc
+    orders_delete: orders_srvcs.DelSrvc
 
 
 container: ServicesContainer = {
@@ -235,6 +242,22 @@ container: ServicesContainer = {
     ),
     "numbers_delete": lambda: numbers_srvcs.DelSrvc(
         statements=statements_container["numbers_stms"],
+        db_operations=database_container["operations"],
+    ),
+    # orders services
+    "orders_create": lambda: orders_srvcs.CreateSrvc(
+        db_operations=database_container["operations"], model=Orders
+    ),
+    "orders_read": lambda: orders_srvcs.ReadSrvc(
+        statements=statements_container["orders_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "orders_update": lambda: orders_srvcs.UpdateSrvc(
+        statements=statements_container["orders_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "orders_delete": lambda: orders_srvcs.DelSrvc(
+        statements=statements_container["orders_stms"],
         db_operations=database_container["operations"],
     ),
 }

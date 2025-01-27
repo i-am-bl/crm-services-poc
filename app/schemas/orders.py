@@ -32,7 +32,7 @@ class OrdersDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class OrdersResponse(BaseModel):
+class OrdersRes(BaseModel):
     id: int
     uuid: UUID4
     account_uuid: UUID4
@@ -49,15 +49,15 @@ class OrdersResponse(BaseModel):
         from_attributes = True
 
 
-class OrdersPagResponse(BaseModel):
+class OrdersPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    orders: Optional[List[OrdersResponse]] = None
+    orders: Optional[List[OrdersRes]] = None
 
 
-class OrdersDelResponse(OrdersResponse):
+class OrdersDelRes(OrdersRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None
 
