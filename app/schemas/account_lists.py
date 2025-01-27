@@ -29,7 +29,7 @@ class AccountListsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class AccountListsResponse(BaseModel):
+class AccountListsRes(BaseModel):
     id: int
     uuid: UUID4
     account_uuid: UUID4
@@ -45,7 +45,7 @@ class AccountListsResponse(BaseModel):
         from_attributes = True
 
 
-class AccountListsPagResponse(BaseModel):
+class AccountListsPgRes(BaseModel):
     total: int
     page: int
     limit: int
@@ -53,7 +53,7 @@ class AccountListsPagResponse(BaseModel):
     product_lists: Optional[List[ProductListsResponse]] = None
 
 
-class AccountListsDelResponse(AccountListsResponse):
+class AccountListsDelRes(AccountListsRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None
 

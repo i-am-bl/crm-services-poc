@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .sys_base import SysBase
 
 
-class AcccountContracts(SysBase):
+class AccountContracts(SysBase):
     __tablename__ = "acc_account_contracts"
     __table_args__ = {"schema": "sales"}
 

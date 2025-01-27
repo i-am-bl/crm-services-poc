@@ -1,25 +1,30 @@
 from typing import Annotated, List, Tuple
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
-from httpx import Auth
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...containers.services import container as service_container
 from ...database.database import get_db, transaction_manager
 from ...exceptions import AccListExists, AccListNotExist, ProductsNotExist
 from ...handlers.handler import handle_exceptions
-from ...schemas import account_lists as s_account_lists
-from ...services.account_lists import AccountListsServices
+from ...models.sys_users import SysUsers
+from ...schemas.account_lists import (
+    AccountListsCreate,
+    AccountListsDelRes,
+    AccountListsUpdate,
+    AccountListsRes,
+    AccountListsPgRes,
+    AccountListsDel,
+)
+from ...services.account_lists import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.authetication import SessionService, TokenService
 from ...services.product_lists import ProductListsServices
 from ...utilities.logger import logger
-from ...utilities.set_values import SetSys
+from ...utilities import pagination
+from ...utilities import sys_values
 from ...utilities.utilities import Pagination as pg
 
-serv_acc_ls_r = AccountListsServices.ReadService()
-serv_acc_ls_c = AccountListsServices.CreateService()
-serv_acc_ls_u = AccountListsServices.UpdateService()
-serv_acc_ls_d = AccountListsServices.DelService()
 serv_prod_r = ProductListsServices.ReadService()
 serv_session = SessionService()
 serv_token = TokenService()
@@ -29,7 +34,7 @@ router = APIRouter()
 
 @router.get(
     "/{account_uuid}/account-lists/{account_list_uuid}/",
-    response_model=s_account_lists.AccountListsResponse,
+    response_model=AccountListsRes,
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
@@ -39,22 +44,25 @@ async def get_account_list(
     account_uuid: UUID4,
     account_list_uuid: UUID4,
     response: Response,
-    user_token: Tuple = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
     db: AsyncSession = Depends(get_db),
-) -> s_account_lists.AccountListsResponse:
+    account_lists_read_srvc: ReadSrvc = Depends(
+        service_container["account_lists_read"]
+    ),
+) -> AccountListsRes:
     """
     Get one account list.
     """
 
     async with transaction_manager(db=db):
-        return await serv_acc_ls_r.get_account_list(
+        return await account_lists_read_srvc.get_account_list(
             account_uuid=account_uuid, account_list_uuid=account_list_uuid, db=db
         )
 
 
 @router.get(
     "/{account_uuid}/account-lists/",
-    response_model=s_account_lists.AccountListsPagResponse,
+    response_model=AccountListsPgRes,
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
@@ -65,8 +73,11 @@ async def get_account_lists(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_lists.AccountListsPagResponse:
+    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    account_lists_read_srvc: ReadSrvc = Depends(
+        service_container["account_lists_read"]
+    ),
+) -> AccountListsPgRes:
     """
     Get many account lists by account.
 
@@ -75,10 +86,10 @@ async def get_account_lists(
 
     async with transaction_manager(db=db):
         offset = pg.pagination_offset(page=page, limit=limit)
-        total_count = await serv_acc_ls_r.get_account_list_ct(
+        total_count = await account_lists_read_srvc.get_account_list_ct(
             account_uuid=account_uuid, db=db
         )
-        account_lists = await serv_acc_ls_r.get_account_lists(
+        account_lists = await account_lists_read_srvc.get_account_lists(
             account_uuid=account_uuid, limit=limit, offset=offset, db=db
         )
         product_list_uuids = []
@@ -87,12 +98,15 @@ async def get_account_lists(
         product_lists = await serv_prod_r.get_product_lists_by_uuids(
             product_list_uuids=product_list_uuids, db=db
         )
-        logger.info(">>> uuid list %s", product_list_uuids)
+
         if not isinstance(product_lists, list):
             product_lists = [product_lists]
-        has_more = pg.has_more(total_count=total_count, page=page, limit=limit)
+        has_more = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        # TODO: Replace this with an aggregator or orchestrator
 
-        return s_account_lists.AccountListsPagResponse(
+        return AccountListsPgRes(
             total=total_count,
             page=page,
             limit=limit,
@@ -103,7 +117,7 @@ async def get_account_lists(
 
 @router.post(
     "/{account_uuid}/account-lists/",
-    response_model=s_account_lists.AccountListsResponse,
+    response_model=AccountListsRes,
     status_code=status.HTTP_201_CREATED,
 )
 @serv_token.set_auth_cookie
@@ -111,25 +125,28 @@ async def get_account_lists(
 async def create_account_list(
     response: Response,
     account_uuid: UUID4,
-    account_list_data: s_account_lists.AccountListsCreate,
+    account_list_data: AccountListsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_lists.AccountListsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    account_lists_create_srvc: CreateSrvc = Depends(
+        service_container["account_lists_create"]
+    ),
+) -> AccountListsRes:
     """
     Create one account list link to an existing product list..
     """
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        SetSys.sys_created_by(data=account_list_data, sys_user=sys_user)
-        return await serv_acc_ls_c.create_account_list(
+        sys_values.sys_created_by(data=account_list_data, sys_user=sys_user.uuid)
+        return await account_lists_create_srvc.create_account_list(
             account_uuid=account_uuid, account_list_data=account_list_data, db=db
         )
 
 
 @router.put(
     "/{account_uuid}/account-lists/{account_list_uuid}/",
-    response_model=s_account_lists.AccountListsResponse,
+    response_model=AccountListsRes,
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
@@ -138,18 +155,21 @@ async def update_account_list(
     response: Response,
     account_uuid: UUID4,
     account_list_uuid: UUID4,
-    account_list_data: s_account_lists.AccountListsUpdate,
-    user_token: Tuple = Depends(serv_session.validate_session),
+    account_list_data: AccountListsUpdate,
+    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
     db: AsyncSession = Depends(get_db),
-) -> s_account_lists.AccountListsResponse:
+    account_lists_udpate_srvc: UpdateSrvc = Depends(
+        service_container["account_lists_update"]
+    ),
+) -> AccountListsRes:
     """
     Update one account list link to a product list.
     """
 
     async with transaction_manager(db=db):
         sys_user, token = user_token
-        SetSys.sys_updated_by(data=account_list_data, sys_user=sys_user)
-        return await serv_acc_ls_u.update_account_list(
+        sys_values.sys_updated_by(data=account_list_data, sys_user=sys_user.uuid)
+        return await account_lists_udpate_srvc.update_account_list(
             account_uuid=account_uuid,
             account_list_uuid=account_list_uuid,
             account_list_data=account_list_data,
@@ -159,7 +179,7 @@ async def update_account_list(
 
 @router.delete(
     "/{account_uuid}/account-lists/{account_list_uuid}/",
-    response_model=s_account_lists.AccountListsDelResponse,
+    response_model=AccountListsDelRes,
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
@@ -169,18 +189,21 @@ async def soft_del_account_list(
     response: Response,
     account_uuid: UUID4,
     account_list_uuid: UUID4,
-    user_token: Tuple = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
     db: AsyncSession = Depends(get_db),
-) -> s_account_lists.AccountListsDelResponse:
+    account_lists_delete_srvc: DelSrvc = Depends(
+        service_container["account_lists_delete"]
+    ),
+) -> AccountListsDelRes:
     """
     Soft delete one account list link to a product list.
     """
 
     async with transaction_manager(db=db):
-        account_list_data = s_account_lists.AccountListsDel()
+        account_list_data = AccountListsDel()
         sys_user, _ = user_token
-        SetSys.sys_deleted_by(data=account_list_data, sys_user=sys_user)
-        return await serv_acc_ls_d.soft_del_account_list(
+        sys_values.sys_deleted_by(data=account_list_data, sys_user=sys_user.uuid)
+        return await account_lists_delete_srvc.soft_del_account_list(
             account_uuid=account_uuid,
             account_list_uuid=account_list_uuid,
             account_list_data=account_list_data,

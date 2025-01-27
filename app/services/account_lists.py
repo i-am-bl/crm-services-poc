@@ -1,3 +1,4 @@
+from token import OP
 from typing import List
 
 from fastapi import Depends
@@ -5,217 +6,198 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.models.account_lists as m_account_lists
-import app.schemas.account_lists as s_account_lists
-
 from ..constants import constants as cnst
-from ..database.database import Operations, get_db
 from ..exceptions import AccListExists, AccListNotExist
+from ..models.account_lists import AccountLists
+from ..schemas.account_lists import (
+    AccountListsCreate,
+    AccountListsDel,
+    AccountListsDelRes,
+    AccountListsUpdate,
+    AccountListsRes,
+    AccountListsPgRes,
+)
+from ..statements.account_lists import AccountListsStms
+from ..database.operations import Operations
+from ..utilities import pagination
 from ..utilities.utilities import DataUtils as di
 
 
-class AccountListsModels:
-    account_lists = m_account_lists.AccountLists
+class ReadSrvc:
+    def __init__(self, statements: AccountListsStms, db_operations: Operations) -> None:
+        self._statements: AccountListsStms = statements
+        self._db_ops: Operations = db_operations
+
+    @property
+    def statements(self) -> AccountListsStms:
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
+
+    async def get_account_list(
+        self,
+        account_uuid: UUID4,
+        account_list_uuid: UUID4,
+        db: AsyncSession,
+    ) -> AccountListsRes:
+        statement = self._statements.get_account_list(
+            account_uuid=account_uuid, account_list_uuid=account_list_uuid
+        )
+        account_list = await self._db_ops.return_one_row(
+            service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=account_list, exception=AccListNotExist)
+
+    async def get_account_lists(
+        self,
+        account_uuid: UUID4,
+        limit: int,
+        offset: int,
+        db: AsyncSession,
+    ) -> AccountLists:
+        statement = self._statements.get_account_lists_account(
+            account_uuid=account_uuid, limit=limit, offset=offset
+        )
+        account_lists = await Operations.return_all_rows(
+            service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=account_lists, exception=AccListNotExist)
+
+    async def get_account_list_ct(self, account_uuid: UUID4, db: AsyncSession) -> int:
+        statement = self._statements.get_account_list_count(account_uuid=account_uuid)
+        return await Operations.return_count(
+            service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
+        )
+
+    async def paginated_account_lists(
+        self, account_uuid: UUID4, page: int, limit: int, db: AsyncSession
+    ) -> AccountListsPgRes:
+
+        offset: int = pagination.page_offset(page=page, limit=limit)
+        total_count: int = await self.get_account_list_ct(
+            account_uuid=account_uuid, db=db
+        )
+        account_lists = await self.get_account_lists(account_uuid=account_uuid, db=db)
+        has_more: bool = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        # TODO: research the product lists in this context.
+        return AccountListsPgRes(
+            total=total_count,
+            page=page,
+            limit=limit,
+            has_moare=has_more,
+            product_lists=None,
+        )
 
 
-class AccountListsStatements:
-    pass
+class CreateSrvc:
+    def __init__(
+        self,
+        statements: AccountListsStms,
+        model: AccountLists,
+        db_operations: Operations,
+    ) -> None:
+        self._statements: AccountListsStms = statements
+        self._account_lists: AccountLists = model
+        self._db_ops: Operations = db_operations
 
-    class SelStatements:
-        pass
+    @property
+    def statements(self) -> AccountListsStms:
+        return self._statements
 
-        @staticmethod
-        def sel_acc_ls_by_uuid(account_uuid: UUID4, account_list_uuid: UUID4):
-            account_lists = AccountListsModels.account_lists
-            statement = Select(account_lists).where(
-                and_(
-                    account_lists.account_uuid == account_uuid,
-                    account_lists.uuid == account_list_uuid,
-                    account_lists.sys_deleted_at == None,
-                )
-            )
-            return statement
+    @property
+    def account_lists(self) -> AccountLists:
+        return self._account_lists
 
-        @staticmethod
-        def sel_acc_ls_by_acc(account_uuid: UUID4, limit: int, offset: int):
-            account_lists = AccountListsModels.account_lists
-            statement = (
-                Select(account_lists)
-                .where(
-                    and_(
-                        account_lists.account_uuid == account_uuid,
-                        account_lists.sys_deleted_at == None,
-                    )
-                )
-                .offset(offset=offset)
-                .limit(limit=limit)
-            )
-            return statement
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        @staticmethod
-        def sel_acc_ls_ct(account_uuid: UUID4):
-            account_lists = AccountListsModels.account_lists
-            statement = (
-                Select(func.count())
-                .select_from(account_lists)
-                .where(
-                    and_(
-                        account_lists.account_uuid == account_uuid,
-                        account_lists.sys_deleted_at == None,
-                    )
-                )
-            )
-            return statement
+    async def create_account_list(
+        self,
+        account_uuid: UUID4,
+        account_list_data: AccountListsCreate,
+        db: AsyncSession,
+    ) -> AccountListsRes:
+        account_lists = self._account_lists
+        statement = self._statements.get_account_lists_product_list(
+            account_uuid=account_uuid,
+            product_list_uuid=account_list_data.product_list_uuid,
+        )
+        account_list_exists = await self._db_ops.return_one_row(
+            service=cnst.ACCOUNTS_LISTS_CREATE_SERVICE, statement=statement, db=db
+        )
+        di.record_exists(instance=account_list_exists, exception=AccListExists)
 
-        @staticmethod
-        def sel_acc_ls_by_acc_prd(account_uuid: UUID4, product_list_uuid: UUID4):
-            account_lists = AccountListsModels.account_lists
-            statement = Select(account_lists).where(
-                and_(
-                    account_lists.account_uuid == account_uuid,
-                    account_lists.product_list_uuid == product_list_uuid,
-                    account_lists.sys_deleted_at == None,
-                )
-            )
-            return statement
-
-    class UpdateStatements:
-        pass
-
-        @staticmethod
-        def update_acc_ls_by_uuid(
-            account_uuid: UUID4, account_list_uuid: UUID4, account_list_data: object
-        ):
-            account_lists = AccountListsModels.account_lists
-            statement = (
-                update(account_lists)
-                .where(
-                    and_(
-                        account_lists.account_uuid == account_uuid,
-                        account_lists.uuid == account_list_uuid,
-                        account_lists.sys_deleted_at == None,
-                    )
-                )
-                .values(di.set_empty_strs_null(values=account_list_data))
-                .returning(account_lists)
-            )
-            return statement
+        account_list = await self._db_ops.add_instance(
+            service=cnst.ACCOUNTS_LISTS_CREATE_SERVICE,
+            model=account_lists,
+            data=account_list_data,
+            db=db,
+        )
+        return di.record_not_exist(instance=account_list, exception=AccListNotExist)
 
 
-class AccountListsServices:
-    pass
+class UpdateSrvc:
+    def __init__(self, statements: AccountListsStms, db_operations: Operations) -> None:
+        self._statements: AccountListsStms = statements
+        self._db_ops: Operations = db_operations
 
-    class ReadService:
-        def __init__(self) -> None:
-            pass
+    @property
+    def statements(self) -> AccountListsStms:
+        return self._statements
 
-        async def get_account_list(
-            self,
-            account_uuid: UUID4,
-            account_list_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = AccountListsStatements.SelStatements.sel_acc_ls_by_uuid(
-                account_uuid=account_uuid, account_list_uuid=account_list_uuid
-            )
-            account_list = await Operations.return_one_row(
-                service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=account_list, exception=AccListNotExist)
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        async def get_account_lists(
-            self,
-            account_uuid: UUID4,
-            limit: int,
-            offset: int,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = AccountListsStatements.SelStatements.sel_acc_ls_by_acc(
-                account_uuid=account_uuid, limit=limit, offset=offset
-            )
-            account_lists = await Operations.return_all_rows(
-                service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=account_lists, exception=AccListNotExist
-            )
+    async def update_account_list(
+        self,
+        account_uuid: UUID4,
+        account_list_uuid: UUID4,
+        account_list_data: AccountListsUpdate,
+        db: AsyncSession,
+    ) -> AccountListsRes:
+        statement = self._statements.update_account_list(
+            account_uuid=account_uuid,
+            account_list_uuid=account_list_uuid,
+            account_list_data=account_list_data,
+        )
+        account_list = await self._db_ops.return_one_row(
+            service=cnst.ACCOUNTS_LISTS_UPDATE_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=account_list, exception=AccListNotExist)
 
-        async def get_account_list_ct(
-            self, account_uuid: UUID4, db: AsyncSession = Depends(get_db)
-        ):
-            statement = AccountListsStatements.SelStatements.sel_acc_ls_ct(
-                account_uuid=account_uuid
-            )
-            return await Operations.return_count(
-                service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
-            )
 
-    class CreateService:
-        def __init__(self) -> None:
-            pass
+class DelSrvc:
+    def __init__(self, statements: AccountListsStms, db_operations: Operations) -> None:
+        self._statements: AccountListsStms = statements
+        self._db_ops: Operations = db_operations
 
-        async def create_account_list(
-            self,
-            account_uuid: UUID4,
-            account_list_data: s_account_lists.AccountListsCreate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            account_lists = AccountListsModels.account_lists
-            statement = AccountListsStatements.SelStatements.sel_acc_ls_by_acc_prd(
-                account_uuid=account_uuid,
-                product_list_uuid=account_list_data.product_list_uuid,
-            )
-            account_list_exists = await Operations.return_one_row(
-                service=cnst.ACCOUNTS_LISTS_CREATE_SERVICE, statement=statement, db=db
-            )
-            di.record_exists(instance=account_list_exists, exception=AccListExists)
+    @property
+    def statements(self):
+        return self._statements
 
-            account_list = await Operations.add_instance(
-                service=cnst.ACCOUNTS_LISTS_CREATE_SERVICE,
-                model=account_lists,
-                data=account_list_data,
-                db=db,
-            )
-            return di.record_not_exist(instance=account_list, exception=AccListNotExist)
+    @property
+    def db_operations(self):
+        return self._db_ops
 
-    class UpdateService:
-        def __init__(self) -> None:
-            pass
-
-        async def update_account_list(
-            self,
-            account_uuid: UUID4,
-            account_list_uuid: UUID4,
-            account_list_data: s_account_lists.AccountListsUpdate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = AccountListsStatements.UpdateStatements.update_acc_ls_by_uuid(
-                account_uuid=account_uuid,
-                account_list_uuid=account_list_uuid,
-                account_list_data=account_list_data,
-            )
-            account_list = await Operations.return_one_row(
-                service=cnst.ACCOUNTS_LISTS_UPDATE_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=account_list, exception=AccListNotExist)
-
-    class DelService:
-        def __init__(self) -> None:
-            pass
-
-        async def soft_del_account_list(
-            self,
-            account_uuid: UUID4,
-            account_list_uuid: UUID4,
-            account_list_data: s_account_lists.AccountListsDel,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = AccountListsStatements.UpdateStatements.update_acc_ls_by_uuid(
-                account_uuid=account_uuid,
-                account_list_uuid=account_list_uuid,
-                account_list_data=account_list_data,
-            )
-            account_list = await Operations.return_one_row(
-                service=cnst.ACCOUNTS_LISTS_UPDATE_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=account_list, exception=AccListNotExist)
+    async def soft_del_account_list(
+        self,
+        account_uuid: UUID4,
+        account_list_uuid: UUID4,
+        account_list_data: AccountListsDel,
+        db: AsyncSession,
+    ) -> AccountListsDelRes:
+        statement = self._statements.update_account_list(
+            account_uuid=account_uuid,
+            account_list_uuid=account_list_uuid,
+            account_list_data=account_list_data,
+        )
+        account_list = await self._db_ops.return_one_row(
+            service=cnst.ACCOUNTS_LISTS_UPDATE_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=account_list, exception=AccListNotExist)

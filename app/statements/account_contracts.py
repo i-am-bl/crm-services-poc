@@ -6,8 +6,21 @@ from ..utilities.utilities import DataUtils as di
 
 
 class AccountContractStms:
+    """
+    A class responsible for constructing SQLAlchemy queries and statements for managing account contracts.
+
+    ivars:
+    ivar: _account_contracts: AccountContracts: An instance of AccountContracts
+    """
+
     def __init__(self, model: AccountContracts):
         self._account_contacts: AccountContracts = model
+        """
+        Initializes the AccountContractStms class.
+
+        :param model: AccountContracts: An instance of AccountContracts.
+        :return None
+        """
 
     def get_account_contract(
         self, account_uuid: UUID4, account_contract_uuid: UUID4

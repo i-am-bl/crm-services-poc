@@ -1,4 +1,3 @@
-from math import e
 from typing import List
 
 from pydantic import UUID4

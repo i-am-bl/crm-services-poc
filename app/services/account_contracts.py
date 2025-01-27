@@ -8,8 +8,9 @@ from ..constants import constants as cnst
 from ..database.operations import Operations
 from ..exceptions import AccContractNotExist
 from ..models import AccountContracts
-
+from ..schemas import account_contracts as account_contract_schms
 from ..statements.account_contracts import AccountContractStms
+from ..utilities import pagination
 from ..utilities.utilities import DataUtils as di
 
 
@@ -36,12 +37,9 @@ class ReadSrvc:
         """
         Initializes the ReadService class.
 
-        :param statements: An instance of AccountContractStms.
-        :type statements: AccountContractStms
-        :param db_operations: A utility class for database operations.
-        :type db_operations: Operations
-        :return: None
-        :rtype: None
+        :param statements: AccountContractStms: An instance of AccountContractStms.
+        :param db_operations: Operations: A utility class for database operations.
+        :return: None: None
         """
         self._statements = statements
         self._db_ops = db_operations
@@ -131,6 +129,32 @@ class ReadSrvc:
         statement = self._statements.account_contracts_count(account_uuid=account_uuid)
         return await self._db_ops.return_count(
             service=cnst.ACCOUNTS_CONTRACTS_READ_SERVICE, statement=statement, db=db
+        )
+
+    async def paginated_account_contracts(
+        self, account_uuid: UUID4, page: int, limit: int, db: AsyncSession
+    ) -> account_contract_schms.AccountContractsPagRepsone:
+        """
+        Fetches a paginated list of account contracts for a specific account.
+
+        This method is has a dependency on
+        """
+        offset = pagination.page_offset(page=page, limit=limit)
+        total_count = await self.get_account_contracts_count(
+            account_uuid=account_uuid, db=db
+        )
+        account_contracts = await self.get_account_contracts(
+            account_uuid=account_uuid, limit=limit, offset=offset, db=db
+        )
+        has_more = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        return account_contract_schms.AccountContractsPagRepsone(
+            total=total_count,
+            page=page,
+            limit=limit,
+            has_more=has_more,
+            account_contracts=account_contracts,
         )
 
 
@@ -333,6 +357,20 @@ class DeleteSrvc:
 
 
 # Factory functions
+def account_contract_create_srvc(
+    operations: Operations, model: AccountContracts
+) -> CreateSrvc:
+    """
+    Factory function to create an instance of CreateService.
+
+    :param operations: A utility class for database operations.
+    :type operations: Operations
+    :return: An instance of CreateService.
+    :rtype: CreateService
+    """
+    return CreateSrvc(db_operations=operations, model=model)
+
+
 def account_contract_read_srvc(
     statements: AccountContractStms, operations: Operations
 ) -> ReadSrvc:
@@ -347,20 +385,6 @@ def account_contract_read_srvc(
     :returnType: ReadService
     """
     return ReadSrvc(statements=statements, db_operations=operations)
-
-
-def account_contract_create_srvc(
-    operations: Operations, model: AccountContracts
-) -> CreateSrvc:
-    """
-    Factory function to create an instance of CreateService.
-
-    :param operations: A utility class for database operations.
-    :type operations: Operations
-    :return: An instance of CreateService.
-    :rtype: CreateService
-    """
-    return CreateSrvc(db_operations=operations, model=model)
 
 
 def account_contract_update_srvc(

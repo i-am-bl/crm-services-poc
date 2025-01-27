@@ -27,7 +27,7 @@ class AccountsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class AccountsResponse(BaseModel):
+class AccountsRes(BaseModel):
     id: int
     uuid: UUID4
     name: Optional[ConstrainedStr] = None
@@ -42,18 +42,18 @@ class AccountsResponse(BaseModel):
         from_attributes = True
 
 
-class AccountsPagResponse(Accounts):
+class AccountsPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    accounts: List[AccountsResponse]
+    accounts: List[AccountsRes]
 
     class Config:
         from_attributes = True
 
 
-class AccountsDelResponse(AccountsResponse):
+class AccountsDelRes(AccountsRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None
 
