@@ -17,6 +17,7 @@ from ..services import emails as emails_srvcs
 from ..services import entities as entities_srvcs
 from ..services import individuals as individuals_srvcs
 from ..services import invoices as invoices_srvcs
+from ..services import non_individuals as non_individual_srvcs
 
 
 class ServicesContainer(TypedDict):
@@ -55,6 +56,11 @@ class ServicesContainer(TypedDict):
     invoices_read: invoices_srvcs.ReadSrvc
     invoices_update: invoices_srvcs.UpdateSrvc
     invoices_delete: invoices_srvcs.DelSrvc
+    # non-individual services
+    non_individuals_create: non_individual_srvcs.CreateSrvc
+    non_individuals_read: non_individual_srvcs.ReadSrvc
+    non_individuals_update: non_individual_srvcs.UpdateSrvc
+    non_individuals_delete: non_individual_srvcs.DelSrvc
 
 
 container: ServicesContainer = {
@@ -186,6 +192,24 @@ container: ServicesContainer = {
     ),
     "invoices_delete": lambda: invoices_srvcs.DelSrvc(
         statements=statements_container["invoice_stms"],
+        db_operations=database_container["operations"],
+    ),
+    # non-individual services
+    "non_individuals_create": lambda: non_individual_srvcs.CreateSrvc(
+        statements=statements_container["non_individuals"],
+        db_operations=database_container["operations"],
+        model=NonIndividuals,
+    ),
+    "non_individuals_read": lambda: non_individual_srvcs.ReadSrvc(
+        statements=statements_container["non_individuals"],
+        db_operations=database_container["operations"],
+    ),
+    "non_individuals_update": lambda: non_individual_srvcs.UpdateSrvc(
+        statements=statements_container["non_individuals"],
+        db_operations=database_container["operations"],
+    ),
+    "non_individuals_delete": lambda: non_individual_srvcs.DelSrvc(
+        statements=statements_container["non_individuals"],
         db_operations=database_container["operations"],
     ),
 }

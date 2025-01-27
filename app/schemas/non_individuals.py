@@ -44,7 +44,7 @@ class NonIndividualsRes(BaseModel):
         from_attributes = True
 
 
-class NonIndividualsDelResponse(NonIndividualsRes):
+class NonIndividualsDelRes(NonIndividualsRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None
 
