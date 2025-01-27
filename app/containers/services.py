@@ -12,6 +12,7 @@ from ..models.non_individuals import NonIndividuals
 from ..models.invoices import Invoices
 from ..models.numbers import Numbers
 from ..models.orders import Orders
+from ..models.products import Products
 from ..services import account_contracts as account_contracts_srvcs
 from ..services import account_lists as account_lists_srvcs
 from ..services import accounts as accounts_srvcs
@@ -22,6 +23,7 @@ from ..services import invoices as invoices_srvcs
 from ..services import non_individuals as non_individual_srvcs
 from ..services import numbers as numbers_srvcs
 from ..services import orders as orders_srvcs
+from ..services import products as products_srvcs
 
 
 class ServicesContainer(TypedDict):
@@ -75,6 +77,11 @@ class ServicesContainer(TypedDict):
     orders_read: orders_srvcs.ReadSrvc
     orders_update: orders_srvcs.UpdateSrvc
     orders_delete: orders_srvcs.DelSrvc
+    # products services
+    products_create: products_srvcs.CreateSrvc
+    products_read: products_srvcs.ReadSrvc
+    products_update: products_srvcs.UpdateSrvc
+    products_delete: products_srvcs.DelSrvc
 
 
 container: ServicesContainer = {
@@ -258,6 +265,24 @@ container: ServicesContainer = {
     ),
     "orders_delete": lambda: orders_srvcs.DelSrvc(
         statements=statements_container["orders_stms"],
+        db_operations=database_container["operations"],
+    ),
+    # products services
+    "products_create": lambda: products_srvcs.CreateSrvc(
+        statements=statements_container["products_stms"],
+        db_operations=database_container["operations"],
+        model=Products,
+    ),
+    "products_read": lambda: products_srvcs.ReadSrvc(
+        statements=statements_container["products_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "products_update": lambda: products_srvcs.UpdateSrvc(
+        statements=statements_container["products_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "products_delete": lambda: products_srvcs.DelSrvc(
+        statements=statements_container["products_stms"],
         db_operations=database_container["operations"],
     ),
 }

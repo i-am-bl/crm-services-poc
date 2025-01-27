@@ -1,9 +1,7 @@
 from datetime import UTC, datetime
-from decimal import Decimal
 from typing import List, Optional
 
-from pydantic import UUID4, BaseModel, EmailStr, Field, StringConstraints
-
+from pydantic import UUID4, BaseModel, Field
 from ._variables import ConstrainedStr, TimeStamp
 
 
@@ -41,7 +39,7 @@ class ProductsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class ProductsResponse(BaseModel):
+class ProductsRes(BaseModel):
     id: int
     uuid: UUID4
     name: Optional[ConstrainedStr] = None
@@ -61,15 +59,15 @@ class ProductsResponse(BaseModel):
         from_attributes = True
 
 
-class ProductsPagResponse(BaseModel):
+class ProductsPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    products: Optional[List[ProductsResponse]] = None
+    products: Optional[List[ProductsRes]] = None
 
 
-class ProductsDelResponse(ProductsResponse):
+class ProductsDelRes(ProductsRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None
 

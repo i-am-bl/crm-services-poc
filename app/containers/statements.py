@@ -1,4 +1,4 @@
-from typing import Callable, TypedDict
+from typing import TypedDict
 
 from ..models.account_contracts import AccountContracts
 from ..models.account_lists import AccountLists
@@ -12,6 +12,7 @@ from ..models.invoices import Invoices
 from ..models.non_individuals import NonIndividuals
 from ..models.numbers import Numbers
 from ..models.orders import Orders
+from ..models.products import Products
 from ..statements.account_contracts import AccountContractStms
 from ..statements.account_lists import AccountListsStms
 from ..statements.accounts import AccountsStms
@@ -22,6 +23,7 @@ from ..statements.invoices import InvoicesStms
 from ..statements.non_individuals import NonInvdividualsStms
 from ..statements.numbers import NumberStms
 from ..statements.orders import OrdersStms
+from ..statements.products import ProductsStms
 
 
 class StatementsContainer(TypedDict):
@@ -35,6 +37,7 @@ class StatementsContainer(TypedDict):
     non_individuals: NonInvdividualsStms
     numbers_stms: NumberStms
     orders_stms: OrdersStms
+    products_stms: ProductsStms
 
 
 container: StatementsContainer = {
@@ -50,4 +53,5 @@ container: StatementsContainer = {
     "non_individuals": lambda: NonInvdividualsStms(model=NonIndividuals),
     "numbers_stms": lambda: NumberStms(model=Numbers),
     "orders_stms": lambda: OrdersStms(model=Orders),
+    "products_stms": lambda: ProductsStms(model=Products),
 }
