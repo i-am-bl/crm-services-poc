@@ -1,178 +1,173 @@
-from importlib import invalidate_caches
-from math import e
-
-from fastapi import Depends, status
+from typing import List
 from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import constants as cnst
-from ..database.database import Operations, get_db
+from ..database.operations import Operations
 from ..exceptions import InvoiceExists, InvoiceNotExist
-from ..models import invoices as m_invoices
-from ..schemas import invoices as s_invoices
+from ..models.invoices import Invoices
+from ..schemas.invoices import (
+    InvoicesCreate,
+    InvoicesUpdate,
+    InvoicesRes,
+    InvoicesDel,
+    InvoicesDelRes,
+    InvoicesPgRes,
+)
+from ..statements.invoices import InvoicesStms
+from ..utilities import pagination
 from ..utilities.utilities import DataUtils as di
 
 
-class InvoicesModels:
-    inovices = m_invoices.Invoices
+class ReadSrvc:
+    def __init__(self, statements: InvoicesStms, db_operations: Operations) -> None:
+        self._statements: InvoicesStms = statements
+        self._db_ops: Operations = db_operations
+
+    @property
+    def statements(self) -> InvoicesStms:
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
+
+    async def get_invoice(self, invoice_uuid: UUID4, db: AsyncSession):
+        statement = self._statements.get_invoices(invoice_uuid=invoice_uuid)
+        invoice = await self._db_ops.return_one_row(
+            service=cnst.INVOICES_READ_SERV, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=invoice, exception=InvoiceNotExist)
+
+    async def get_invoices(
+        self, limit: int, offset: int, db: AsyncSession
+    ) -> InvoicesRes:
+        statement = self._statements.get_invoices(limit=limit, offset=offset)
+        invoices: InvoicesRes = await self._db_ops.return_all_rows(
+            service=cnst.INVOICES_READ_SERV, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=invoices, exception=InvoiceNotExist)
+
+    async def get_invoices_ct(self, db: AsyncSession) -> int:
+        statement = self._statements.get_invoices_ct()
+        return await self._db_ops.return_count(
+            service=cnst.INVOICES_READ_SERV, statement=statement, db=db
+        )
+
+    async def paginated_invoices(
+        self, page: int, limit: int, db: AsyncSession
+    ) -> InvoicesPgRes:
+        total_count: int = await self.get_invoices_ct(db=db)
+        offset: int = pagination.page_offset(page=page, limit=limit)
+        has_more: bool = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        invoices: List[InvoicesRes] = await self.get_invoices(
+            limit=limit, offset=offset, db=db
+        )
+        return InvoicesPgRes(
+            total=total_count,
+            page=page,
+            limit=limit,
+            has_more=has_more,
+            invoices=invoices,
+        )
 
 
-class InvoicesStatements:
-    pass
+class CreateSrvc:
+    def __init__(
+        self, statements: InvoicesStms, db_operations: Operations, model: Invoices
+    ) -> None:
+        self._statements: InvoicesStms = statements
+        self._db_ops: Operations = db_operations
+        self._model: Invoices = model
 
-    class SelStatements:
-        pass
+    @property
+    def statements(self) -> InvoicesStms:
+        return self._statements
 
-        @staticmethod
-        def sel_invoices_by_uuid(invoice_uuid: UUID4):
-            invoices = InvoicesModels.inovices
-            statement = Select(invoices).where(
-                and_(invoices.uuid == invoice_uuid, invoices.sys_deleted_at == None)
-            )
-            return statement
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        @staticmethod
-        def sel_invoices_by_order(order_uuid: UUID4):
-            invoices = InvoicesModels.inovices
-            statement = Select(invoices).where(
-                and_(
-                    invoices.order_uuid == order_uuid,
-                    invoices.sys_deleted_at == None,
-                )
-            )
-            return statement
+    @property
+    def model(self) -> Invoices:
+        return self._model
 
-        @staticmethod
-        def sel_invoices(limit: int, offset: int):
-            invoices = InvoicesModels.inovices
-            statement = (
-                Select(invoices)
-                .where(invoices.sys_deleted_at == None)
-                .offset(offset=offset)
-                .limit(limit=limit)
-            )
-            return statement
-
-        @staticmethod
-        def sel_invoices_ct():
-            invoices = InvoicesModels.inovices
-            statement = (
-                Select(func.count())
-                .select_from(invoices)
-                .where(invoices.sys_deleted_at == None)
-            )
-            return statement
-
-    class UpdateStatements:
-        pass
-
-        @staticmethod
-        def update_invoices_by_uuid(invoice_uuid: UUID4, invoice_data: object):
-            invoices = InvoicesModels.inovices
-            statement = (
-                update(invoices)
-                .where(
-                    and_(invoices.uuid == invoice_uuid, invoices.sys_deleted_at == None)
-                )
-                .values(di.set_empty_strs_null(values=invoice_data))
-                .returning(invoices)
-            )
-            return statement
+    async def create_invoice(
+        self,
+        invoice_data: InvoicesCreate,
+        db: AsyncSession,
+    ) -> InvoicesRes:
+        invoices = self._model
+        statement = self._statements.get_invoices_by_order(
+            order_uuid=invoice_data.order_uuid
+        )
+        invoice_exists: InvoicesRes = await self._db_ops.return_one_row(
+            service=cnst.INVOICES_CREATE_SERV, statement=statement, db=db
+        )
+        di.record_exists(instance=invoice_exists, exception=InvoiceExists)
+        invoice = await self._db_ops.add_instance(
+            service=cnst.INVOICES_CREATE_SERV,
+            model=invoices,
+            data=invoice_data,
+            db=db,
+        )
+        return di.record_not_exist(instance=invoice, exception=InvoiceNotExist)
 
 
-class InvoicesServices:
-    pass
+class UpdateSrvc:
+    def __init__(self, statements: InvoicesStms, db_operations: Operations) -> None:
+        self._statements: InvoicesStms = statements
+        self._db_ops: Operations = db_operations
 
-    class ReadService:
-        def __init__(self) -> None:
-            pass
+    @property
+    def statements(self) -> InvoicesStms:
+        return self._statements
 
-        async def get_invoice(
-            self, invoice_uuid: UUID4, db: AsyncSession = Depends(get_db)
-        ):
-            statement = InvoicesStatements.SelStatements.sel_invoices_by_uuid(
-                invoice_uuid=invoice_uuid
-            )
-            invoice = await Operations.return_one_row(
-                service=cnst.INVOICES_READ_SERV, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=invoice, exception=InvoiceNotExist)
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        async def get_invoices(
-            self, limit: int, offset: int, db: AsyncSession = Depends(get_db)
-        ):
-            statement = InvoicesStatements.SelStatements.sel_invoices(
-                limit=limit, offset=offset
-            )
-            invoices = await Operations.return_all_rows(
-                service=cnst.INVOICES_READ_SERV, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=invoices, exception=InvoiceNotExist)
+    async def update_invoice(
+        self,
+        invoice_uuid: UUID4,
+        invoice_data: InvoicesUpdate,
+        db: AsyncSession,
+    ) -> InvoicesRes:
+        statement = self._statements.update_invoices(
+            invoice_uuid=invoice_uuid, invoice_data=invoice_data
+        )
+        invoice: InvoicesRes = await self._db_ops.return_one_row(
+            service=cnst.INVOICES_UPDATE_SERV, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=invoice, exception=InvoiceNotExist)
 
-        async def get_invoices_ct(self, db: AsyncSession = Depends(get_db)):
-            statement = InvoicesStatements.SelStatements.sel_invoices_ct()
-            return await Operations.return_count(
-                service=cnst.INVOICES_READ_SERV, statement=statement, db=db
-            )
 
-    class CreateService:
-        def __init__(self) -> None:
-            pass
+class DelSrvc:
+    def __init__(self, statements: InvoicesStms, db_operations: Operations) -> None:
+        self._statements: InvoicesStms = statements
+        self._db_ops: Operations = db_operations
 
-        async def create_invoice(
-            self,
-            invoice_data: s_invoices.InvoicesCreate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            invoices = InvoicesModels.inovices
-            statement = InvoicesStatements.SelStatements.sel_invoices_by_order(
-                order_uuid=invoice_data.order_uuid
-            )
-            invoice_exists = await Operations.return_one_row(
-                service=cnst.INVOICES_CREATE_SERV, statement=statement, db=db
-            )
-            di.record_exists(instance=invoice_exists, exception=InvoiceExists)
-            invoice = await Operations.add_instance(
-                service=cnst.INVOICES_CREATE_SERV,
-                model=invoices,
-                data=invoice_data,
-                db=db,
-            )
-            return di.record_not_exist(instance=invoice, exception=InvoiceNotExist)
+    @property
+    def statements(self) -> InvoicesStms:
+        return self._statements
 
-    class UpdateService:
-        def __init__(self) -> None:
-            pass
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        async def update_invoice(
-            self,
-            invoice_uuid: UUID4,
-            invoice_data: s_invoices.InvoicesUpdate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = InvoicesStatements.UpdateStatements.update_invoices_by_uuid(
-                invoice_uuid=invoice_uuid, invoice_data=invoice_data
-            )
-            invoice = await Operations.return_one_row(
-                service=cnst.INVOICES_UPDATE_SERV, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=invoice, exception=InvoiceNotExist)
-
-    class DelService:
-        def __init__(self) -> None:
-            pass
-
-        async def soft_del_invoice(
-            self,
-            invoice_uuid: UUID4,
-            invoice_data: s_invoices.InvoicesDel,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = InvoicesStatements.UpdateStatements.update_invoices_by_uuid(
-                invoice_uuid=invoice_uuid, invoice_data=invoice_data
-            )
-            invoice = await Operations.return_one_row(
-                service=cnst.INVOICES_DEL_SERV, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=invoice, exception=InvoiceNotExist)
+    async def soft_del_invoice(
+        self,
+        invoice_uuid: UUID4,
+        invoice_data: InvoicesDel,
+        db: AsyncSession,
+    ) -> InvoicesDelRes:
+        statement = self._statements.update_invoices(
+            invoice_uuid=invoice_uuid, invoice_data=invoice_data
+        )
+        invoice: InvoicesDelRes = await self._db_ops.return_one_row(
+            service=cnst.INVOICES_DEL_SERV, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=invoice, exception=InvoiceNotExist)

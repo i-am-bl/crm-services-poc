@@ -8,12 +8,14 @@ from ..models.entities import Entities
 from ..models.individuals import Individuals
 from ..models.non_individuals import NonIndividuals
 from ..models.individuals import Individuals
-from ..statements.account_contracts import AccountContractStms, account_contract_stms
-from ..statements.account_lists import AccountListsStms, account_lists_stms
-from ..statements.accounts import AccountsStms, account_stms
-from ..statements.emails import EmailsStms, email_stms
-from ..statements.entities import EntitiesStms, entities_stms
+from ..models.invoices import Invoices
+from ..statements.account_contracts import AccountContractStms
+from ..statements.account_lists import AccountListsStms
+from ..statements.accounts import AccountsStms
+from ..statements.emails import EmailsStms
+from ..statements.entities import EntitiesStms
 from ..statements.individuals import IndividualsStms
+from ..statements.invoices import InvoicesStms
 
 
 class StatementsContainer(TypedDict):
@@ -23,6 +25,7 @@ class StatementsContainer(TypedDict):
     emails_stms: EmailsStms
     entites_stms: EntitiesStms
     individuals_stms: IndividualsStms
+    invoice_stms: InvoicesStms
 
 
 container: StatementsContainer = {
@@ -34,4 +37,5 @@ container: StatementsContainer = {
         entities=Entities, individuals=Individuals, non_individuals=NonIndividuals
     ),
     "individuals_stms": lambda: IndividualsStms(model=Individuals),
+    "invoice_stms": lambda: InvoicesStms(model=Invoices),
 }
