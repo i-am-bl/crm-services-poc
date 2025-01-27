@@ -27,7 +27,7 @@ class EmailsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class EmailsRespone(BaseModel):
+class EmailsRes(BaseModel):
     id: int
     uuid: UUID4
     entity_uuid: UUID4
@@ -40,18 +40,18 @@ class EmailsRespone(BaseModel):
         from_attributes: True
 
 
-class EmailsPagRespone(BaseModel):
+class EmailsPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    emails: Optional[List[EmailsRespone]] = None
+    emails: Optional[List[EmailsRes]] = None
 
     class Config:
         from_attributes: True
 
 
-class EmailsDelResponse(EmailsRespone):
+class EmailsDelRes(EmailsRes):
     sys_deleted_at: datetime = TimeStamp
     sys_deleted_by: Optional[UUID4] = None
 
