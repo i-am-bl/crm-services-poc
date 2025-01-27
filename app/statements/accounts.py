@@ -55,7 +55,3 @@ class AccountsStms:
             .values(di.set_empty_strs_null(account_data))
             .returning(accounts)
         )
-
-
-def account_stms(model: Accounts) -> AccountsStms:
-    return AccountsStms(model=model)

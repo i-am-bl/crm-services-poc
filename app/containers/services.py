@@ -6,10 +6,15 @@ from ..models.account_contracts import AccountContracts
 from ..models.account_lists import AccountLists
 from ..models.accounts import Accounts
 from ..models.emails import Emails
+from ..models.entities import Entities
+from ..models.individuals import Individuals
+from ..models.non_individuals import NonIndividuals
 from ..services import account_contracts as account_contracts_srvcs
 from ..services import account_lists as account_lists_srvcs
 from ..services import accounts as accounts_srvcs
 from ..services import emails as emails_srvcs
+from ..services import entities as entities_srvcs
+from ..services import individuals as individuals_srvcs
 
 
 class ServicesContainer(TypedDict):
@@ -33,6 +38,16 @@ class ServicesContainer(TypedDict):
     emails_read: emails_srvcs.ReadSrvc
     emails_update: emails_srvcs.UpdateSrvc
     emails_delete: emails_srvcs.DelSrvc
+    # entities services
+    entities_create: entities_srvcs.CreateSrvc
+    entities_read: entities_srvcs.ReadSrvc
+    entities_update: entities_srvcs.UpdateSrvc
+    entities_delete: entities_srvcs.DelSrvc
+    # individuals services
+    individuals_create: individuals_srvcs.CreateSrvc
+    individuals_read: individuals_srvcs.ReadSrvc
+    individuals_update: individuals_srvcs.UpdateSrvc
+    individuals_delete: individuals_srvcs.DelSrvc
 
 
 container: ServicesContainer = {
@@ -112,4 +127,27 @@ container: ServicesContainer = {
         statements=statements_container["emails_stms"],
         db_operations=database_container["operations"],
     ),
+    # entities services
+    "entities_create": lambda: entities_srvcs.CreateSrvc(
+        statements=statements_container["entites_stms"],
+        db_operations=database_container["operations"],
+        model=Entities,
+    ),
+    "entities_read": lambda: entities_srvcs.ReadSrvc(
+        statements=statements_container["entites_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "entities_update": lambda: entities_srvcs.UpdateSrvc(
+        statements=statements_container["entites_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "entities_delete": lambda: entities_srvcs.DelSrvc(
+        statements=statements_container["entites_stms"],
+        db_operations=database_container["operations"],
+    ),
+    # individuals services
+    "individuals_create": lambda: individuals_srvcs.CreateSrvc(),
+    "individuals_read": lambda: individuals_srvcs.ReadSrvc(),
+    "individuals_update": lambda: individuals_srvcs.UpdateSrvc(),
+    "individuals_delete": lambda: individuals_srvcs.DelSrvc(),
 }

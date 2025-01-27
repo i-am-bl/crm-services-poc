@@ -1,14 +1,13 @@
 from datetime import datetime
 from token import OP
-from typing import Annotated, List, Literal, Optional
+from typing import Annotated, List, Optional
 
-from click import Option
 from pydantic import UUID4, BaseModel
 
 from ..constants.enums import EntityTypes
 from ._variables import TimeStamp
-from .individuals import IndividualsDelResponse, IndividualsResponse
-from .non_individuals import NonIndividualsDelResponse, NonIndividualsResponse
+from .individuals import IndividualsDelRes, IndividualsRes
+from .non_individuals import NonIndividualsDelRes, NonIndividualsRes
 
 
 class Entities(BaseModel):
@@ -31,7 +30,7 @@ class EntitiesDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class EntitiesResponse(Entities):
+class EntitiesRes(Entities):
     id: int
     uuid: UUID4
     sys_created_at: datetime
@@ -43,7 +42,7 @@ class EntitiesResponse(Entities):
         from_attributes = True
 
 
-class EntitiesIndivNonIndivResponse(BaseModel):
+class IndividualNonIndividualRes(BaseModel):
     entity_uuid: Optional[UUID4] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -53,10 +52,10 @@ class EntitiesIndivNonIndivResponse(BaseModel):
         from_attributes = True
 
 
-class EntitiesIndivResponse(Entities):
+class EntitiesIndividualRes(Entities):
     id: int
     uuid: UUID4
-    information: IndividualsResponse
+    information: IndividualsRes
     sys_created_at: datetime
     sys_created_by: Optional[UUID4] = None
     sys_updated_at: Optional[datetime] = None
@@ -66,22 +65,22 @@ class EntitiesIndivResponse(Entities):
         from_attributes = True
 
 
-class EntitiesCombinedResponse(BaseModel):
-    entity: Optional[EntitiesResponse] = None
-    individual: Optional[IndividualsResponse] = None
-    non_individual: Optional[NonIndividualsResponse] = None
+class EntitiesCombinedRes(BaseModel):
+    entity: Optional[EntitiesRes] = None
+    individual: Optional[IndividualsRes] = None
+    non_individual: Optional[NonIndividualsRes] = None
 
 
-class EntitiesPagResponse(BaseModel):
+class EntitiesPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    individuals: Optional[List[IndividualsResponse]] = None
-    non_individuals: Optional[List[NonIndividualsResponse]] = None
+    individuals: Optional[List[IndividualsRes]] = None
+    non_individuals: Optional[List[NonIndividualsRes]] = None
 
 
-class EntitiesDelResponse(EntitiesResponse):
+class EntitiesDelRes(EntitiesRes):
     sys_deleted_at: datetime = TimeStamp
     sys_deleted_by: Optional[UUID4] = None
 
@@ -89,7 +88,7 @@ class EntitiesDelResponse(EntitiesResponse):
         from_attributes = True
 
 
-class EntitiesCombinedDelResponse(BaseModel):
-    entity: Optional[EntitiesDelResponse] = None
-    individual: Optional[IndividualsDelResponse] = None
-    non_individual: Optional[NonIndividualsDelResponse] = None
+class EntitiesCombinedDelRes(BaseModel):
+    entity: Optional[EntitiesDelRes] = None
+    individual: Optional[IndividualsDelRes] = None
+    non_individual: Optional[NonIndividualsDelRes] = None

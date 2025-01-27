@@ -70,7 +70,3 @@ class EmailsStms:
             .values(di.set_empty_strs_null(email_data))
             .returning(emails)
         )
-
-
-def email_stms(model: Emails) -> EmailsStms:
-    return EmailsStms(model=model)

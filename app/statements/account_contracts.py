@@ -98,17 +98,3 @@ class AccountContractStms:
             .values(di.set_empty_strs_null(values=account_contract_data))
             .returning(account_contacts)
         )
-
-
-def account_contract_stms(
-    model: AccountContracts,
-) -> AccountContractStms:
-    """
-    Factory function for creating an instance of the AcctContractStms class
-    while handling the dependencies.
-
-    :param account_contracts_mdl: AccountContracts: An instance of the AccountContracts class.
-    :return: An instance of the AcctContractStms class.
-    :rtype: AcctContractStms
-    """
-    return AccountContractStms(model=model)

@@ -29,7 +29,7 @@ class NonIndividualsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class NonIndividualsResponse(BaseModel):
+class NonIndividualsRes(BaseModel):
     # id: int
     uuid: UUID4
     # entity_uuid: UUID4
@@ -44,7 +44,7 @@ class NonIndividualsResponse(BaseModel):
         from_attributes = True
 
 
-class NonIndividualsDelResponse(NonIndividualsResponse):
+class NonIndividualsDelResponse(NonIndividualsRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None
 

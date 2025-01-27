@@ -29,7 +29,7 @@ class IndividualsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class IndividualsResponse(BaseModel):
+class IndividualsRes(BaseModel):
     uuid: UUID4
     first_name: Optional[ConstrainedStr] = None
     last_name: Optional[ConstrainedStr] = None
@@ -44,15 +44,15 @@ class IndividualsResponse(BaseModel):
         from_attributes = True
 
 
-class IndividualsPagResponse(BaseModel):
+class IndividualsPgRes(BaseModel):
     total: int
     page: int
     liimt: int
     has_more: bool
-    individuals: Optional[List[IndividualsResponse]] = None
+    individuals: Optional[List[IndividualsRes]] = None
 
 
-class IndividualsDelResponse(IndividualsResponse):
+class IndividualsDelRes(IndividualsRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None
 

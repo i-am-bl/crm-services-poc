@@ -106,7 +106,3 @@ class AccountListsStms:
             .values(di.set_empty_strs_null(values=account_list_data))
             .returning(account_lists)
         )
-
-
-def account_lists_stms(model: AccountLists) -> AccountListsStms:
-    return AccountListsStms(model=model)
