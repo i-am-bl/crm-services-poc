@@ -1,31 +1,29 @@
-from typing import Annotated, List, Tuple
+from typing import Tuple
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...containers.orchestrators import container as orchs_container
 from ...containers.services import container as service_container
 from ...database.database import get_db, transaction_manager
 from ...exceptions import AccListExists, AccListNotExist, ProductsNotExist
 from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
+from ...orchestrators.account_lists import AccountListsReadOrch
 from ...schemas.account_lists import (
     AccountListsCreate,
     AccountListsDelRes,
+    AccountListsOrchPgRes,
     AccountListsUpdate,
     AccountListsRes,
-    AccountListsPgRes,
     AccountListsDel,
 )
 from ...services.account_lists import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.authetication import SessionService, TokenService
-from ...services.product_lists import ProductListsServices
-from ...utilities.logger import logger
-from ...utilities import pagination
-from ...utilities import sys_values
-from ...utilities.utilities import Pagination as pg
 
-serv_prod_r = ProductListsServices.ReadService()
+from ...utilities import sys_values
+
 serv_session = SessionService()
 serv_token = TokenService()
 
@@ -62,7 +60,7 @@ async def get_account_list(
 
 @router.get(
     "/{account_uuid}/account-lists/",
-    response_model=AccountListsPgRes,
+    response_model=AccountListsOrchPgRes,
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
@@ -74,10 +72,10 @@ async def get_account_lists(
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
-    account_lists_read_srvc: ReadSrvc = Depends(
-        service_container["account_lists_read"]
+    account_lists_read_orch: AccountListsReadOrch = Depends(
+        orchs_container["accounts_lists_read_orch"]
     ),
-) -> AccountListsPgRes:
+) -> AccountListsOrchPgRes:
     """
     Get many account lists by account.
 
@@ -85,33 +83,8 @@ async def get_account_lists(
     """
 
     async with transaction_manager(db=db):
-        offset = pg.pagination_offset(page=page, limit=limit)
-        total_count = await account_lists_read_srvc.get_account_list_ct(
-            account_uuid=account_uuid, db=db
-        )
-        account_lists = await account_lists_read_srvc.get_account_lists(
-            account_uuid=account_uuid, limit=limit, offset=offset, db=db
-        )
-        product_list_uuids = []
-        for value in account_lists:
-            product_list_uuids.append(value.product_list_uuid)
-        product_lists = await serv_prod_r.get_product_lists_by_uuids(
-            product_list_uuids=product_list_uuids, db=db
-        )
-
-        if not isinstance(product_lists, list):
-            product_lists = [product_lists]
-        has_more = pagination.has_more_items(
-            total_count=total_count, page=page, limit=limit
-        )
-        # TODO: Replace this with an aggregator or orchestrator
-
-        return AccountListsPgRes(
-            total=total_count,
-            page=page,
-            limit=limit,
-            has_moare=has_more,
-            product_lists=product_lists,
+        return await account_lists_read_orch.paginated_product_lists(
+            account_uuid=account_uuid, page=page, limit=limit, db=db
         )
 
 

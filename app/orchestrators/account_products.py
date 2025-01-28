@@ -36,7 +36,7 @@ class AccountProductsReadOrch:
         has_more = pagination.has_more_items(
             total_count=total_count, page=page, limit=limit
         )
-        account_products = await self.account_products_read_srvc.get_account_products(
+        account_products = await self._account_products_read_srvc.get_account_products(
             account_uuid=account_uuid, offset=offset, limit=limit, db=db
         )
         product_uuids = [

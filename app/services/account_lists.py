@@ -1,9 +1,6 @@
-from token import OP
 from typing import List
 
-from fastapi import Depends
 from pydantic import UUID4
-from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import constants as cnst
@@ -56,18 +53,18 @@ class ReadSrvc:
         limit: int,
         offset: int,
         db: AsyncSession,
-    ) -> AccountLists:
+    ) -> List[AccountLists]:
         statement = self._statements.get_account_lists_account(
             account_uuid=account_uuid, limit=limit, offset=offset
         )
-        account_lists = await Operations.return_all_rows(
+        account_lists: List[AccountLists] = await self._db_ops.return_all_rows(
             service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
         )
         return di.record_not_exist(instance=account_lists, exception=AccListNotExist)
 
     async def get_account_list_ct(self, account_uuid: UUID4, db: AsyncSession) -> int:
         statement = self._statements.get_account_list_count(account_uuid=account_uuid)
-        return await Operations.return_count(
+        return await self._db_ops.return_count(
             service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
         )
 
