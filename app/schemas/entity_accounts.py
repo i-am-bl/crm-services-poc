@@ -3,9 +3,9 @@ from typing import List, Optional
 
 from pydantic import UUID4, BaseModel
 
-from ._variables import ConstrainedStr, TimeStamp
-from .accounts import AccountsResponse
-from .entities import EntitiesIndivNonIndivResponse, EntitiesResponse
+from ._variables import TimeStamp
+from .accounts import AccountsRes
+from .entities import IndividualNonIndividualRes
 
 
 class EntityAccounts(BaseModel):
@@ -20,7 +20,8 @@ class EntityAccountsCreate(EntityAccounts):
     sys_created_by: Optional[UUID4] = None
 
 
-class EntityAccountsAccountCreate(BaseModel):
+class AccountEntityCreate(BaseModel):
+    # TODO: Need to give this more thought, there could be a cleaner way for this
     entity_uuid: UUID4
     account_uuid: Optional[UUID4] = None
     start_on: Optional[date] = None
@@ -41,7 +42,7 @@ class EntityAccountsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class EntityAccountsResponse(BaseModel):
+class EntityAccountsRes(BaseModel):
     id: int
     uuid: UUID4
     entity_uuid: UUID4
@@ -57,23 +58,23 @@ class EntityAccountsResponse(BaseModel):
         from_attributes = True
 
 
-class EntityAccountsPagResponse(BaseModel):
+class EntityAccountsPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    accounts: List[AccountsResponse] = None
+    accounts: List[AccountsRes] = None
 
 
-class AccountEntitiesPagResponse(BaseModel):
+class AccountEntitiesPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    entities: List[EntitiesIndivNonIndivResponse] = None
+    entities: List[IndividualNonIndividualRes] = None
 
 
-class EntityAccountsDelResponse(EntityAccountsResponse):
+class EntityAccountsDelRes(EntityAccountsRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None
 
@@ -81,6 +82,6 @@ class EntityAccountsDelResponse(EntityAccountsResponse):
         from_attributes = True
 
 
-class EntityAccountAccountRespone(BaseModel):
-    account: AccountsResponse
-    entity_account: EntityAccountsResponse
+class EntityAccountParentRes(BaseModel):
+    account: AccountsRes
+    entity_account: EntityAccountsRes

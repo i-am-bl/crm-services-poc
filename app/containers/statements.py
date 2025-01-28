@@ -9,6 +9,7 @@ from ..models.account_lists import AccountLists
 from ..models.accounts import Accounts
 from ..models.addresses import Addresses
 from ..models.emails import Emails
+from ..models.entity_accounts import EntityAccounts
 from ..models.entities import Entities
 from ..models.individuals import Individuals
 from ..models.non_individuals import NonIndividuals
@@ -29,6 +30,7 @@ from ..statements.account_lists import AccountListsStms
 from ..statements.accounts import AccountsStms
 from ..statements.addresses import AddressesStms
 from ..statements.emails import EmailsStms
+from ..statements.entity_accounts import EntityAccountsStms
 from ..statements.entities import EntitiesStms
 from ..statements.individuals import IndividualsStms
 from ..statements.invoice_items import InvoiceItemsStms
@@ -50,6 +52,7 @@ class StatementsContainer(TypedDict):
     accounts_stms: AccountsStms
     addresses_stms: AddressesStms
     emails_stms: EmailsStms
+    entity_accounts_stms: EntityAccountsStms
     entites_stms: EntitiesStms
     individuals_stms: IndividualsStms
     invoice_items_stms: InvoiceItemsStms
@@ -71,6 +74,7 @@ container: StatementsContainer = {
     "accounts_stms": lambda: AccountsStms(model=Accounts),
     "addresses_stms": lambda: AddressesStms(model=Addresses),
     "emails_stms": lambda: EmailsStms(model=Emails),
+    "entity_accounts_stms": lambda: EntityAccountsStms(model=EntityAccounts),
     "entites_stms": lambda: EntitiesStms(
         entities=Entities, individuals=Individuals, non_individuals=NonIndividuals
     ),

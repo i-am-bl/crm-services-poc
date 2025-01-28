@@ -18,7 +18,7 @@ from ...schemas.addresses import (
 )
 from ...services.addresses import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.authetication import SessionService, TokenService
-from ...utilities.set_values import SetField, SetSys
+from ...utilities.set_values import SetField
 from ...utilities import sys_values
 
 serv_session = SessionService()
