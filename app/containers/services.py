@@ -13,6 +13,7 @@ from ..models.invoices import Invoices
 from ..models.numbers import Numbers
 from ..models.orders import Orders
 from ..models.products import Products
+from ..models.websites import Websites
 from ..services import account_contracts as account_contracts_srvcs
 from ..services import account_lists as account_lists_srvcs
 from ..services import accounts as accounts_srvcs
@@ -24,6 +25,7 @@ from ..services import non_individuals as non_individual_srvcs
 from ..services import numbers as numbers_srvcs
 from ..services import orders as orders_srvcs
 from ..services import products as products_srvcs
+from ..services import websites as websites_srvcs
 
 
 class ServicesContainer(TypedDict):
@@ -82,6 +84,11 @@ class ServicesContainer(TypedDict):
     products_read: products_srvcs.ReadSrvc
     products_update: products_srvcs.UpdateSrvc
     products_delete: products_srvcs.DelSrvc
+    # websites services
+    websites_create: websites_srvcs.CreateSrvc
+    websites_read: websites_srvcs.ReadSrvc
+    websites_update: websites_srvcs.UpdateSrvc
+    websites_delete: websites_srvcs.DelSrvc
 
 
 container: ServicesContainer = {
@@ -283,6 +290,24 @@ container: ServicesContainer = {
     ),
     "products_delete": lambda: products_srvcs.DelSrvc(
         statements=statements_container["products_stms"],
+        db_operations=database_container["operations"],
+    ),
+    # websites services
+    "websites_create": lambda: websites_srvcs.CreateSrvc(
+        statements=statements_container["websites_stms"],
+        db_operations=database_container["operations"],
+        model=Websites,
+    ),
+    "websites_read": lambda: websites_srvcs.ReadSrvc(
+        statements=statements_container["websites_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "websites_update": lambda: websites_srvcs.UpdateSrvc(
+        statements=statements_container["websites_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "websites_delete": lambda: websites_srvcs.DelSrvc(
+        statements=statements_container["websites_stms"],
         db_operations=database_container["operations"],
     ),
 }

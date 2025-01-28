@@ -13,6 +13,7 @@ from ..models.non_individuals import NonIndividuals
 from ..models.numbers import Numbers
 from ..models.orders import Orders
 from ..models.products import Products
+from ..models.websites import Websites
 from ..statements.account_contracts import AccountContractStms
 from ..statements.account_lists import AccountListsStms
 from ..statements.accounts import AccountsStms
@@ -24,6 +25,7 @@ from ..statements.non_individuals import NonInvdividualsStms
 from ..statements.numbers import NumberStms
 from ..statements.orders import OrdersStms
 from ..statements.products import ProductsStms
+from ..statements.websites import WebsitesStms
 
 
 class StatementsContainer(TypedDict):
@@ -38,6 +40,7 @@ class StatementsContainer(TypedDict):
     numbers_stms: NumberStms
     orders_stms: OrdersStms
     products_stms: ProductsStms
+    websites_stms: Websites
 
 
 container: StatementsContainer = {
@@ -54,4 +57,5 @@ container: StatementsContainer = {
     "numbers_stms": lambda: NumberStms(model=Numbers),
     "orders_stms": lambda: OrdersStms(model=Orders),
     "products_stms": lambda: ProductsStms(model=Products),
+    "websites_stms": lambda: WebsitesStms(model=Websites),
 }

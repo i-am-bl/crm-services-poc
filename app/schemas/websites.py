@@ -26,12 +26,12 @@ class WebsitesUpdate(BaseModel):
     sys_updated_by: Optional[UUID4] = None
 
 
-class WebsitesSoftDel(BaseModel):
+class WebsitesDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
     sys_deleted_at: datetime = TimeStamp
 
 
-class WebsitesResponse(BaseModel):
+class WebsitesRes(BaseModel):
     id: int
     uuid: UUID4
     entity_uuid: UUID4
@@ -47,15 +47,15 @@ class WebsitesResponse(BaseModel):
         from_attributes = True
 
 
-class WebsitesPagResponse(BaseModel):
+class WebsitesPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    websites: Optional[List[WebsitesResponse]] = None
+    websites: Optional[List[WebsitesRes]] = None
 
 
-class WebsiteDelReponse(WebsitesResponse):
+class WebsiteDelRes(WebsitesRes):
     sys_deleted_by: Optional[UUID4] = None
     sys_deleted_at: datetime
 
