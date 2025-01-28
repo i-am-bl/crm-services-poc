@@ -32,7 +32,7 @@ class ProductListsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class ProductListsResponse(BaseModel):
+class ProductListsRes(BaseModel):
     id: int
     uuid: UUID4
     owner_uuid: Optional[UUID4] = None
@@ -48,15 +48,15 @@ class ProductListsResponse(BaseModel):
         from_attributes = True
 
 
-class ProductListsPagResponse(BaseModel):
+class ProductListsPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    product_lists: Optional[List[ProductListsResponse]] = None
+    product_lists: Optional[List[ProductListsRes]] = None
 
 
-class ProductListsDelResponse(ProductListsResponse):
+class ProductListsDelRes(ProductListsRes):
     sys_deleted_at: Optional[datetime]
     sys_deleted_by: Optional[UUID4] = None
 

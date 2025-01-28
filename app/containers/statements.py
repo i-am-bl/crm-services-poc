@@ -12,6 +12,7 @@ from ..models.invoices import Invoices
 from ..models.non_individuals import NonIndividuals
 from ..models.numbers import Numbers
 from ..models.orders import Orders
+from ..models.product_lists import ProductLists
 from ..models.products import Products
 from ..models.sys_users import SysUsers
 from ..models.websites import Websites
@@ -25,6 +26,7 @@ from ..statements.invoices import InvoicesStms
 from ..statements.non_individuals import NonInvdividualsStms
 from ..statements.numbers import NumberStms
 from ..statements.orders import OrdersStms
+from ..statements.product_lists import ProductListStms
 from ..statements.products import ProductsStms
 from ..statements.sys_users import SysUsersStms
 from ..statements.websites import WebsitesStms
@@ -41,6 +43,7 @@ class StatementsContainer(TypedDict):
     non_individuals: NonInvdividualsStms
     numbers_stms: NumberStms
     orders_stms: OrdersStms
+    product_lists: ProductListStms
     products_stms: ProductsStms
     sys_users_stms: SysUsersStms
     websites_stms: Websites
@@ -59,6 +62,7 @@ container: StatementsContainer = {
     "non_individuals": lambda: NonInvdividualsStms(model=NonIndividuals),
     "numbers_stms": lambda: NumberStms(model=Numbers),
     "orders_stms": lambda: OrdersStms(model=Orders),
+    "product_lists": lambda: ProductListStms(model=ProductLists),
     "products_stms": lambda: ProductsStms(model=Products),
     "websites_stms": lambda: WebsitesStms(model=Websites),
     "sys_users_stms": lambda: SysUsersStms(model=SysUsers),
