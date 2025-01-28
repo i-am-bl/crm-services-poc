@@ -12,7 +12,6 @@ from ...models.sys_users import SysUsers
 from ...schemas.account_products import (
     AccountProductsCreate,
     AccountProductsDel,
-    AccountProductsPgRes,
     AccountProductsPgProductsRes,
     AccountProductsRes,
     AccountProductsUpdate,
@@ -20,7 +19,6 @@ from ...schemas.account_products import (
 from ...services import account_products as account_products_srvcs
 from ...services.authetication import SessionService, TokenService
 from ...services import products as products_srvcs
-from ...utilities.set_values import SetSys
 from ...utilities import pagination
 from ...utilities import sys_values
 
