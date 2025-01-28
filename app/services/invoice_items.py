@@ -21,7 +21,7 @@ from ..utilities import pagination
 from ..utilities.utilities import DataUtils as di
 
 
-class ReadService:
+class ReadSrvc:
     def __init__(self, statements: InvoiceItemsStms, db_operations: Operations) -> None:
         self._statements: InvoiceItemsStms = statements
         self._db_ops: Operations = db_operations
@@ -87,7 +87,7 @@ class ReadService:
         return InvoiceItemsPgRes(total=total_count)
 
 
-class CreateService:
+class CreateSrvc:
     def __init__(
         self,
         statements: InvoiceItemsStms,
@@ -126,7 +126,7 @@ class CreateService:
         return di.record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
 
 
-class UpdateService:
+class UpdateSrvc:
     def __init__(self, statements: InvoiceItemsStms, db_operations: Operations) -> None:
         self._statements: InvoiceItemsStms = statements
         self._db_ops: Operations = db_operations
@@ -157,7 +157,7 @@ class UpdateService:
         return di.record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
 
 
-class DelService:
+class DelSrvc:
     def __init__(self, statements: InvoiceItemsStms, db_operations: Operations) -> None:
         self._statements: InvoiceItemsStms = statements
         self._db_ops: Operations = db_operations

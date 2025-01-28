@@ -4,6 +4,7 @@ from .database import container as database_container
 from .statements import container as statements_container
 from ..models.account_contracts import AccountContracts
 from ..models.account_lists import AccountLists
+from ..models.addresses import Addresses
 from ..models.accounts import Accounts
 from ..models.emails import Emails
 from ..models.entities import Entities
@@ -22,6 +23,7 @@ from ..models.websites import Websites
 from ..services import account_contracts as account_contracts_srvcs
 from ..services import account_lists as account_lists_srvcs
 from ..services import accounts as accounts_srvcs
+from ..services import addresses as addresses_srvcs
 from ..services import emails as emails_srvcs
 from ..services import entities as entities_srvcs
 from ..services import individuals as individuals_srvcs
@@ -54,6 +56,11 @@ class ServicesContainer(TypedDict):
     accounts_read: accounts_srvcs.ReadSrvc
     accounts_update: accounts_srvcs.UpdateSrvc
     accounts_delete: accounts_srvcs.DelSrvc
+    # addresses services
+    addresses_create: addresses_srvcs.CreateSrvc
+    addresses_read: addresses_srvcs.ReadSrvc
+    addresses_update: addresses_srvcs.UpdateSrvc
+    addresses_delete: addresses_srvcs.DelSrvc
     # emails services
     emails_create: emails_srvcs.CreateSrvc
     emails_read: emails_srvcs.ReadSrvc
@@ -185,6 +192,24 @@ container: ServicesContainer = {
         statements=statements_container["accounts_stms"],
         db_operations=database_container["operations"],
     ),
+    # addresses services
+    "addresses_create": lambda: addresses_srvcs.CreateSrvc(
+        statements=statements_container["addresses_stms"],
+        db_operations=database_container["operations"],
+        model=Addresses,
+    ),
+    "addresses_read": lambda: addresses_srvcs.ReadSrvc(
+        statements=statements_container["addresses_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "addresses_update": lambda: addresses_srvcs.UpdateSrvc(
+        statements=statements_container["addresses_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "addresses_delete": lambda: addresses_srvcs.DelSrvc(
+        statements=statements_container["addresses_stms"],
+        db_operations=database_container["operations"],
+    ),
     # emails services
     "emails_create": lambda: emails_srvcs.CreateSrvc(
         statements=statements_container["emails_stms"],
@@ -225,7 +250,7 @@ container: ServicesContainer = {
     "individuals_create": lambda: individuals_srvcs.CreateSrvc(
         statements=statements_container["invoice_stms"],
         db_operations=database_container["operations"],
-        model=Invoices,
+        model=Individuals,
     ),
     "individuals_read": lambda: individuals_srvcs.ReadSrvc(
         statements=statements_container["invoice_stms"],

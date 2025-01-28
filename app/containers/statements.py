@@ -7,6 +7,7 @@ from bk_workspace.py_services.fastapi_6.app.constants.constants import (
 from ..models.account_contracts import AccountContracts
 from ..models.account_lists import AccountLists
 from ..models.accounts import Accounts
+from ..models.addresses import Addresses
 from ..models.emails import Emails
 from ..models.entities import Entities
 from ..models.individuals import Individuals
@@ -26,6 +27,7 @@ from ..models.websites import Websites
 from ..statements.account_contracts import AccountContractStms
 from ..statements.account_lists import AccountListsStms
 from ..statements.accounts import AccountsStms
+from ..statements.addresses import AddressesStms
 from ..statements.emails import EmailsStms
 from ..statements.entities import EntitiesStms
 from ..statements.individuals import IndividualsStms
@@ -46,6 +48,7 @@ class StatementsContainer(TypedDict):
     account_contracts_stms: AccountContractStms
     account_lists_stms: AccountListsStms
     accounts_stms: AccountsStms
+    addresses_stms: AddressesStms
     emails_stms: EmailsStms
     entites_stms: EntitiesStms
     individuals_stms: IndividualsStms
@@ -66,6 +69,7 @@ container: StatementsContainer = {
     "account_contracts_stms": lambda: AccountContractStms(model=AccountContracts),
     "account_lists_stms": lambda: AccountListsStms(model=AccountLists),
     "accounts_stms": lambda: AccountsStms(model=Accounts),
+    "addresses_stms": lambda: AddressesStms(model=Addresses),
     "emails_stms": lambda: EmailsStms(model=Emails),
     "entites_stms": lambda: EntitiesStms(
         entities=Entities, individuals=Individuals, non_individuals=NonIndividuals

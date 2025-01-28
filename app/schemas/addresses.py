@@ -39,7 +39,7 @@ class AddressesDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class AddressesResponse(BaseModel):
+class AddressesRes(BaseModel):
     id: int
     uuid: UUID4
     parent_uuid: UUID4
@@ -61,7 +61,7 @@ class AddressesResponse(BaseModel):
         from_attributes = True
 
 
-class AddressesDelResponse(AddressesResponse):
+class AddressesDelRes(AddressesRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None
 
@@ -69,9 +69,9 @@ class AddressesDelResponse(AddressesResponse):
         from_attributes = True
 
 
-class AddressesPagResponse(BaseModel):
+class AddressesPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    addresses: Optional[List[AddressesResponse]] = None
+    addresses: Optional[List[AddressesRes]] = None

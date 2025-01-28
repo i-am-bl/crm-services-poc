@@ -1,261 +1,225 @@
-from typing import Literal
+from typing import Literal, List
 
-from fastapi import Depends
 from pydantic import UUID4
-from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import constants as cnst
-from ..database.database import Operations, get_db
+from ..database.operations import Operations
 from ..exceptions import AddressExists, AddressNotExist
-from ..models import addresses as m_addresses
-from ..schemas import addresses as s_addresses
-from ..utilities.logger import logger
+from ..models.addresses import Addresses
+from ..schemas.addresses import (
+    AddressesCreate,
+    AddressesDel,
+    AddressesDelRes,
+    AddressesPgRes,
+    AddressesRes,
+    AddressesUpdate,
+)
+from ..statements.addresses import AddressesStms
+from ..utilities import pagination
 from ..utilities.utilities import DataUtils as di
 
 
-class AddressesModels:
-    addresses = m_addresses.Addresses
+class ReadSrvc:
+    def __init__(self, statements: AddressesStms, db_operations: Operations) -> None:
+        self._statements: AddressesStms = statements
+        self._db_ops: Operations = db_operations
+
+    @property
+    def statements(self) -> Addresses:
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
+
+    async def get_address(
+        self,
+        parent_uuid: UUID4,
+        parent_table: Literal["entities", "accounts"],
+        address_uuid: UUID4,
+        db: AsyncSession,
+    ) -> AddressesRes:
+        statement = self._statements.get_address(
+            parent_uuid=parent_uuid,
+            address_uuid=address_uuid,
+            parent_table=parent_table,
+        )
+        address: AddressesRes = await self._db_ops.return_one_row(
+            service=cnst.ADDRESSES_READ_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=address, exception=AddressNotExist)
+
+    async def get_addresses(
+        self,
+        parent_uuid: UUID4,
+        parent_table: Literal["entities", "accounts"],
+        limit: int,
+        offset: int,
+        db: AsyncSession,
+    ) -> List[AddressesRes]:
+        statement = self._statements.get_address_by_entity(
+            parent_uuid=parent_uuid,
+            parent_table=parent_table,
+            offset=offset,
+            limit=limit,
+        )
+        addresses: List[AddressesRes] = await self._db_ops.return_all_rows(
+            service=cnst.ADDRESSES_READ_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=addresses, exception=AddressNotExist)
+
+    async def get_addresses_ct(
+        self,
+        parent_uuid: UUID4,
+        parent_table: Literal["entities", "accounts"],
+        db: AsyncSession,
+    ) -> int:
+        statement = self._statements.get_addresses_ct(
+            parent_uuid=parent_uuid, parent_table=parent_table
+        )
+        return await self._db_ops.return_count(
+            service=cnst.ADDRESSES_READ_SERVICE, statement=statement, db=db
+        )
+
+    async def paginated_addresses(
+        self,
+        parent_uuid: UUID4,
+        parent_table: Literal["entities", "accounts"],
+        limit: int,
+        page: int,
+        db: AsyncSession,
+    ) -> AddressesPgRes:
+        total_count = await self.get_addresses_ct(
+            parent_uuid=parent_uuid, parent_table=parent_table, db=db
+        )
+        offset = pagination.page_offset(page=page, limit=limit)
+        has_more = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        addresses = await self.get_addresses(
+            parent_uuid=parent_uuid,
+            parent_table=parent_table,
+            offset=offset,
+            limit=limit,
+            db=db,
+        )
+        return AddressesPgRes(
+            total=total_count,
+            page=page,
+            limit=limit,
+            has_more=has_more,
+            addresses=addresses,
+        )
 
 
-class AddressesStatements:
-    pass
+class CreateSrvc:
+    def __init__(
+        self, statements: AddressesStms, db_operations: Operations, model: Addresses
+    ) -> None:
+        self._statements: AddressesStms = statements
+        self._db_ops: Operations = db_operations
+        self._model: Addresses = model
 
-    class SelStatements:
-        pass
+    @property
+    def statements(self) -> Addresses:
+        return self._statements
 
-        @staticmethod
-        def sel_address_by_uuid(
-            parent_uuid: UUID4,
-            parent_table: Literal["entities", "accounts"],
-            address_uuid: UUID4,
-        ):
-            addresses = AddressesModels.addresses
-            statement = Select(addresses).where(
-                and_(
-                    addresses.parent_uuid == parent_uuid,
-                    addresses.uuid == address_uuid,
-                    addresses.parent_table == parent_table,
-                    addresses.sys_deleted_at == None,
-                )
-            )
-            return statement
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        @staticmethod
-        def sel_address_by_address(
-            parent_uuid: UUID4,
-            address_line1: str,
-            address_line2: str,
-            city: str,
-        ):
-            addresses = AddressesModels.addresses
-            statement = Select(addresses).where(
-                and_(
-                    addresses.parent_uuid == parent_uuid,
-                    addresses.address_line1 == address_line1,
-                    addresses.address_line2 == address_line2,
-                    addresses.city == city,
-                    addresses.sys_deleted_at == None,
-                )
-            )
-            return statement
+    @property
+    def model(self) -> Addresses:
+        return self._model
 
-        @staticmethod
-        def sel_address_by_entity(
-            parent_uuid: UUID4,
-            parent_table: Literal["entities", "accounts"],
-            offset: int,
-            limit: int,
-        ):
-            addresses = AddressesModels.addresses
-            statement = (
-                (
-                    Select(addresses).where(
-                        and_(
-                            addresses.parent_uuid == parent_uuid,
-                            addresses.parent_table == parent_table,
-                            addresses.sys_deleted_at == None,
-                        )
-                    )
-                )
-                .offset(offset=offset)
-                .limit(limit=limit)
-            )
-            return statement
-
-        @staticmethod
-        def sel_address_by_entity_ct(
-            parent_uuid: UUID4,
-            parent_table: Literal["entities", "accounts"],
-        ):
-            addresses = AddressesModels.addresses
-            statement = (
-                Select(func.count())
-                .select_from(addresses)
-                .where(
-                    and_(
-                        addresses.parent_uuid == parent_uuid,
-                        addresses.parent_table == parent_table,
-                        addresses.sys_deleted_at == None,
-                    )
-                )
-            )
-            return statement
-
-    class UpdateStatements:
-        pass
-
-        @staticmethod
-        def Update_address_by_uuid(
-            parent_uuid: UUID4,
-            addresses_uuid: UUID4,
-            parent_table: Literal["entities", "accounts"],
-            address_data: object,
-        ):
-            addresses = AddressesModels.addresses
-            statement = (
-                update(addresses)
-                .where(
-                    and_(
-                        addresses.parent_uuid == parent_uuid,
-                        addresses.parent_table == parent_table,
-                        addresses.uuid == addresses_uuid,
-                        addresses.sys_deleted_at == None,
-                    )
-                )
-                .values(di.set_empty_strs_null(values=address_data))
-                .returning(addresses)
-            )
-            return statement
-
-
-class AddressesServices:
-    pass
-
-    class ReadService:
-        def __init__(self) -> None:
-            pass
-
-        async def get_address(
-            self,
-            parent_uuid: UUID4,
-            parent_table: Literal["entities", "accounts"],
-            address_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = AddressesStatements.SelStatements.sel_address_by_uuid(
-                parent_uuid=parent_uuid,
-                address_uuid=address_uuid,
-                parent_table=parent_table,
-            )
-            address = await Operations.return_one_row(
-                service=cnst.ADDRESSES_READ_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=address, exception=AddressNotExist)
-
-        async def get_addresses(
-            self,
-            parent_uuid: UUID4,
-            parent_table: Literal["entities", "accounts"],
-            limit: int,
-            offset: int,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = AddressesStatements.SelStatements.sel_address_by_entity(
-                parent_uuid=parent_uuid,
-                parent_table=parent_table,
-                offset=offset,
-                limit=limit,
-            )
-            addresses = await Operations.return_all_rows(
-                service=cnst.ADDRESSES_READ_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=addresses, exception=AddressNotExist)
-
-        async def get_addresses_ct(
-            self,
-            entity_uuid: UUID4,
-            parent_table: Literal["entities", "accounts"],
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = AddressesStatements.SelStatements.sel_address_by_entity_ct(
-                entity_uuid=entity_uuid, parent_table=parent_table
-            )
-            return await Operations.return_count(
-                service=cnst.ADDRESSES_READ_SERVICE, statement=statement, db=db
-            )
-
-    class CreateService:
-        def __init__(self) -> None:
-            pass
-
-        async def create_address(
-            self,
-            parent_uuid: UUID4,
-            address_data: s_addresses.AddressesCreate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            addresses = AddressesModels.addresses
-            statement = AddressesStatements.SelStatements.sel_address_by_address(
-                parent_uuid=parent_uuid,
-                address_line1=address_data.address_line1,
-                address_line2=address_data.address_line2,
-                city=address_data.city,
-            )
-            address_exists = await Operations.return_one_row(
-                service=cnst.ADDRESSES_CREATE_SERVICE, statement=statement, db=db
-            )
-            if not di.record_exists(instance=address_exists, exception=AddressExists):
-                address = await Operations.add_instance(
-                    service=cnst.ADDRESSES_CREATE_SERVICE,
-                    model=addresses,
-                    data=address_data,
-                    db=db,
-                )
-                return di.record_not_exist(instance=address, exception=AddressNotExist)
-
-    class UpdateService:
-        def __init__(self) -> None:
-            pass
-
-        async def update_address(
-            self,
-            parent_uuid: UUID4,
-            parent_table: Literal["entities", "accounts"],
-            address_uuid: UUID4,
-            address_data: s_addresses.AddressesUpdate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = AddressesStatements.UpdateStatements.Update_address_by_uuid(
-                parent_uuid=parent_uuid,
-                parent_table=parent_table,
-                addresses_uuid=address_uuid,
-                address_data=address_data,
-            )
-            address = await Operations.return_one_row(
-                service=cnst.ADDRESSES_UPDATE_SERVICE, statement=statement, db=db
+    async def create_address(
+        self,
+        parent_uuid: UUID4,
+        address_data: AddressesCreate,
+        db: AsyncSession,
+    ) -> AddressesRes:
+        addresses = self._model
+        statement = self._statements.get_address_by_address(
+            parent_uuid=parent_uuid,
+            address_line1=address_data.address_line1,
+            address_line2=address_data.address_line2,
+            city=address_data.city,
+        )
+        address_exists: AddressesRes = await self._db_ops.return_one_row(
+            service=cnst.ADDRESSES_CREATE_SERVICE, statement=statement, db=db
+        )
+        if not di.record_exists(instance=address_exists, exception=AddressExists):
+            address: AddressesRes = await self._db_ops.add_instance(
+                service=cnst.ADDRESSES_CREATE_SERVICE,
+                model=addresses,
+                data=address_data,
+                db=db,
             )
             return di.record_not_exist(instance=address, exception=AddressNotExist)
 
-    class DelService:
-        def __init__(self) -> None:
-            pass
 
-        async def soft_del_address(
-            self,
-            parent_uuid: UUID4,
-            parent_table: Literal["entities", "accounts"],
-            address_uuid: UUID4,
-            address_data: s_addresses.AddressesDel,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = AddressesStatements.UpdateStatements.Update_address_by_uuid(
-                parent_uuid=parent_uuid,
-                parent_table=parent_table,
-                addresses_uuid=address_uuid,
-                address_data=address_data,
-            )
-            address = await Operations.return_one_row(
-                service=cnst.ADDRESSES_DEL_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=address, exception=AddressNotExist)
+class UpdateSrvc:
+    def __init__(self, statements: AddressesStms, db_operations: Operations) -> None:
+        self._statements: AddressesStms = statements
+        self._db_ops: Operations = db_operations
+
+    @property
+    def statements(self) -> Addresses:
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
+
+    async def update_address(
+        self,
+        parent_uuid: UUID4,
+        parent_table: Literal["entities", "accounts"],
+        address_uuid: UUID4,
+        address_data: AddressesUpdate,
+        db: AsyncSession,
+    ) -> AddressesRes:
+        statement = self._statements.update_address(
+            parent_uuid=parent_uuid,
+            parent_table=parent_table,
+            addresses_uuid=address_uuid,
+            address_data=address_data,
+        )
+        address: AddressesRes = await self._db_ops.return_one_row(
+            service=cnst.ADDRESSES_UPDATE_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=address, exception=AddressNotExist)
+
+
+class DelSrvc:
+    def __init__(self, statements: AddressesStms, db_operations: Operations) -> None:
+        self._statements: AddressesStms = statements
+        self._db_ops: Operations = db_operations
+
+    @property
+    def statements(self) -> Addresses:
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
+
+    async def soft_del_address(
+        self,
+        parent_uuid: UUID4,
+        parent_table: Literal["entities", "accounts"],
+        address_uuid: UUID4,
+        address_data: AddressesDel,
+        db: AsyncSession,
+    ) -> AddressesDelRes:
+        statement = self._statements.update_address(
+            parent_uuid=parent_uuid,
+            parent_table=parent_table,
+            addresses_uuid=address_uuid,
+            address_data=address_data,
+        )
+        address: AddressesDelRes = await self._db_ops.return_one_row(
+            service=cnst.ADDRESSES_DEL_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=address, exception=AddressNotExist)
