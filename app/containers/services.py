@@ -1,4 +1,4 @@
-from typing import Callable, TypedDict
+from typing import TypedDict
 
 from .database import container as database_container
 from .statements import container as statements_container
