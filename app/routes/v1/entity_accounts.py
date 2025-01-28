@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...containers.orchestrators import container as orchs_container
 from ...containers.services import container as services_container
 from ...database.database import get_db, transaction_manager
 from ...exceptions import (
@@ -15,12 +16,20 @@ from ...exceptions import (
 )
 from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
+from ...orchestrators.entity_accounts import EntityAccountsReadOrch
 from ...schemas.accounts import AccountsCreate
-from ...schemas.entity_accounts import AccountEntityCreate, EntityAccountsCreate, EntityAccountsDel, EntityAccountsPgRes, EntityAccountsUpdate,EntityAccountsRes,  
+from ...schemas.entity_accounts import (
+    AccountEntityCreate,
+    EntityAccountsCreate,
+    EntityAccountsDel,
+    EntityAccountsPgRes,
+    EntityAccountsUpdate,
+    EntityAccountsRes,
+)
 from ...services import accounts as accounts_srvcs
 from ...services.authetication import SessionService, TokenService
 from ...services import entities as entities_srvcs
-from ...services import entity_accounts as entity_accounts_srvcs  
+from ...services import entity_accounts as entity_accounts_srvcs
 from ...utilities import pagination
 from ...utilities.set_values import SetField
 from ...utilities import sys_values
@@ -44,7 +53,9 @@ async def get_entity_account(
     entity_account_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
-    entity_accounts_read_srvc:entity_accounts_srvcs.ReadSrvc=Depends(services_container["entity_accounts_read"])
+    entity_accounts_read_srvc: entity_accounts_srvcs.ReadSrvc = Depends(
+        services_container["entity_accounts_read"]
+    ),
 ) -> EntityAccountsRes:
     """get active account relationship"""
 
@@ -68,8 +79,9 @@ async def get_entity_accounts(
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
-    entity_accounts_read_srvc:entity_accounts_srvcs.ReadSrvc=Depends(services_container["entity_accounts_read"]),
-    accounts_read_srvc:accounts_srvcs.ReadSrvc=Depends(services_container["accounts_read"])
+    entity_accounts_read_orch: EntityAccountsReadOrch = Depends(
+        orchs_container["entity_accounts_read_orch"]
+    ),
 ) -> EntityAccountsPgRes:
     """
     Get many active account relationships by entity.
@@ -78,29 +90,8 @@ async def get_entity_accounts(
     """
 
     async with transaction_manager(db=db):
-        # TODO: need an orchestrator for this
-        offset = pagination.page_offset(page=page, limit=limit)
-        total_count = await entity_accounts_read_srvc.get_entity_accounts_ct(
-            entity_uuid=entity_uuid, db=db
-        )
-        entity_accounts = await entity_accounts_read_srvc.get_entity_accounts(
-            entity_uuid=entity_uuid, limit=limit, offset=offset, db=db
-        )
-        account_uuids = []
-        for value in entity_accounts:
-            account_uuids.append(value.account_uuid)
-        accounts = await accounts_read_srvc.get_accounts_by_uuids(
-            account_uuids=account_uuids, db=db
-        )
-        if not isinstance(accounts, list):
-            accounts = [accounts]
-        has_more = pagination.has_more_items(total_count=total_count, page=page, limit=limit)
-        return EntityAccountsPgRes(
-            total=total_count,
-            page=page,
-            limit=limit,
-            has_more=has_more,
-            accounts=accounts,
+        return await entity_accounts_read_orch.paginated_entity_accounts(
+            entity_uuid=entity_uuid, page=page, limit=limit, db=db
         )
 
 
@@ -117,7 +108,9 @@ async def create_entity_account(
     entity_account_data: EntityAccountsCreate,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
-    entity_accounts_create_srvc:entity_accounts_srvcs.CreateSrvc=Depends(services_container["entity_accounts_create"])
+    entity_accounts_create_srvc: entity_accounts_srvcs.CreateSrvc = Depends(
+        services_container["entity_accounts_create"]
+    ),
 ) -> EntityAccountsRes:
     """
     create new account relationship with existing account.
@@ -147,8 +140,12 @@ async def create_entity_account_account(
     entity_account_data: AccountEntityCreate,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
-    entity_accounts_create_srvc:entity_accounts_srvcs.CreateSrvc=Depends(services_container["entity_accounts_create"]),
-    accounts_create_srvc:accounts_srvcs.CreateSrvc=Depends(services_container["accounts_create"])
+    entity_accounts_create_srvc: entity_accounts_srvcs.CreateSrvc = Depends(
+        services_container["entity_accounts_create"]
+    ),
+    accounts_create_srvc: accounts_srvcs.CreateSrvc = Depends(
+        services_container["accounts_create"]
+    ),
 ) -> EntityAccountsRes:
     """
     Create new account relationship with no existing account.
@@ -160,7 +157,9 @@ async def create_entity_account_account(
         # TODO: need an orchestrator for this
         sys_user, token = user_token
         sys_values.sys_created_by(data=account_data, sys_user=sys_user.uuid)
-        account = await accounts_create_srvc.create_account(account_data=account_data, db=db)
+        account = await accounts_create_srvc.create_account(
+            account_data=account_data, db=db
+        )
         await db.flush()
 
         sys_values.sys_created_by(data=entity_account_data, sys_user=sys_user.uuid)
@@ -171,9 +170,7 @@ async def create_entity_account_account(
             entity_uuid=entity_uuid, entity_account_data=entity_account_data, db=db
         )
         await db.flush()
-        return EntityAccountsRes(
-            account=account, entity_account=entity_account
-        )
+        return EntityAccountsRes(account=account, entity_account=entity_account)
 
 
 @router.put(
@@ -190,7 +187,9 @@ async def update_entity_account(
     entity_account_data: EntityAccountsUpdate,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
-    entity_accounts_update_srvc:entity_accounts_srvcs.UpdateSrvc=Depends(services_container["entity_accounts_update"])
+    entity_accounts_update_srvc: entity_accounts_srvcs.UpdateSrvc = Depends(
+        services_container["entity_accounts_update"]
+    ),
 ) -> EntityAccountsRes:
     """
     Update existing account relationship.
@@ -220,7 +219,9 @@ async def soft_del_entity_account(
     entity_account_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
-    entity_accounts_update_srvc:entity_accounts_srvcs.DelSrvc=Depends(services_container["entity_accounts_update"])
+    entity_accounts_update_srvc: entity_accounts_srvcs.DelSrvc = Depends(
+        services_container["entity_accounts_update"]
+    ),
 ) -> None:
     """
     Soft delete account relationship with entity.

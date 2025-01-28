@@ -63,7 +63,7 @@ class EntityAccountsPgRes(BaseModel):
     page: int
     limit: int
     has_more: bool
-    accounts: List[AccountsRes] = None
+    data: List[AccountsRes] = None
 
 
 class AccountEntitiesPgRes(BaseModel):

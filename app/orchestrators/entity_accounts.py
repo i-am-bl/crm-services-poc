@@ -43,15 +43,35 @@ class EntityAccountsReadOrch:
         account_entities = await self.entity_accounts_read_srvc.get_account_entities(
             account_uuid=account_uuid, offset=offset, limit=limit, db=db
         )
-        if not isinstance(entities, list):
-            entities = [entities]
         entity_uuids = [account_entity.uuid for account_entity in account_entities]
         entities = await self.entities_read_srvc.get_entities_by_uuids(
             entity_uuids=entity_uuids, db=db
         )
+        if not isinstance(entities, list):
+            entities = [entities]
         return AccountEntitiesPgRes(
             total=total_count, page=page, limit=limit, has_more=has_more, data=entities
         )
 
-    async def paginated_entity_accounts(self) -> EntityAccountsPgRes:
-        return EntityAccountsPgRes()
+    async def paginated_entity_accounts(
+        self, entity_uuid: UUID4, page: int, limit: int, db: AsyncSession
+    ) -> EntityAccountsPgRes:
+        total_count = await self.entity_accounts_read_srvc.get_entity_accounts_ct(
+            entity_uuid=entity_uuid, db=db
+        )
+        offset = pagination.page_offset(page=page, limit=limit)
+        has_more = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        entity_accounts = await self.entity_accounts_read_srvc.get_entity_accounts(
+            entity_uuid=entity_uuid, offset=offset, limit=limit, db=db
+        )
+        account_uuids = [entity_account.uuid for entity_account in entity_accounts]
+        accounts = await self.accounts_read_srvc.get_accounts_by_uuids(
+            account_uuids=account_uuids, db=db
+        )
+        if not isinstance(accounts, list):
+            accounts = [accounts]
+        return EntityAccountsPgRes(
+            total=total_count, page=page, limit=limit, has_more=has_more, data=accounts
+        )
