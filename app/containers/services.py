@@ -4,8 +4,9 @@ from .database import container as database_container
 from .statements import container as statements_container
 from ..models.account_contracts import AccountContracts
 from ..models.account_lists import AccountLists
-from ..models.addresses import Addresses
+from ..models.account_products import AccountProducts
 from ..models.accounts import Accounts
+from ..models.addresses import Addresses
 from ..models.emails import Emails
 from ..models.entity_accounts import EntityAccounts
 from ..models.entities import Entities
@@ -23,6 +24,7 @@ from ..models.sys_users import SysUsers
 from ..models.websites import Websites
 from ..services import account_contracts as account_contracts_srvcs
 from ..services import account_lists as account_lists_srvcs
+from ..services import account_products as account_products_srvcs
 from ..services import accounts as accounts_srvcs
 from ..services import addresses as addresses_srvcs
 from ..services import emails as emails_srvcs
@@ -53,6 +55,11 @@ class ServicesContainer(TypedDict):
     account_lists_read: account_lists_srvcs.ReadSrvc
     account_lists_update: account_lists_srvcs.UpdateSrvc
     account_lists_delete: account_lists_srvcs.DeleteSrvc
+    # account products services
+    account_products_create: account_products_srvcs.CreateSrvc
+    account_products_read: account_products_srvcs.ReadSrvc
+    account_products_update: account_products_srvcs.UpdateSrvc
+    account_products_delete: account_products_srvcs.DelSrvc
     # account services
     accounts_create: accounts_srvcs.CreateSrvc
     accounts_read: accounts_srvcs.ReadSrvc
@@ -181,6 +188,24 @@ container: ServicesContainer = {
     ),
     "account_lists_delete": lambda: account_lists_srvcs.DelSrvc(
         statements=statements_container["account_lists_stms"],
+        db_operations=database_container["operations"],
+    ),
+    # account products services
+    "account_products_create": lambda: account_products_srvcs.CreateSrvc(
+        statements=statements_container["account_products_stms"],
+        db_operations=database_container["operations"],
+        model=AccountProducts,
+    ),
+    "account_products_read": lambda: account_products_srvcs.ReadSrvc(
+        statements=statements_container["account_products_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "account_products_update": lambda: account_products_srvcs.UpdateSrvc(
+        statements=statements_container["account_products_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "account_products_delete": lambda: account_products_srvcs.DelSrvc(
+        statements=statements_container["account_products_stms"],
         db_operations=database_container["operations"],
     ),
     # account services

@@ -1,241 +1,225 @@
-from fastapi import Depends
+from typing import List
 from pydantic import UUID4
-from sqlalchemy import Select, and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.models.account_products as m_account_products
-import app.schemas.account_products as s_account_products
-
+from ..statements.accounts_products import AccountProductsStms
 from ..constants import constants as cnst
-from ..database.database import Operations, get_db
-from ..exceptions import (AccProductsExists, AccProductstNotExist,
-                          UnhandledException)
+from ..database.operations import Operations
+from ..exceptions import AccProductsExists, AccProductstNotExist
+from ..models.account_products import AccountProducts
+from ..schemas.account_products import (
+    AccountProductsCreate,
+    AccountProductsDel,
+    AccountProductsDelRes,
+    AccountProductsPgRes,
+    AccountProductsRes,
+    AccountProductsUpdate,
+)
+from ..utilities import pagination
 from ..utilities.utilities import DataUtils as di
 
 
-class AccountProductsModels:
-    account_products = m_account_products.AccountProducts
+class ReadSrvc:
+    def __init__(
+        self, statements: AccountProductsStms, db_operations: Operations
+    ) -> None:
+        self._statements: AccountProductsStms = statements
+        self._db_ops: Operations = db_operations
+
+    @property
+    def statements(self) -> AccountProductsStms:
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
+
+    async def get_account_product(
+        self,
+        account_uuid: UUID4,
+        account_product_uuid: UUID4,
+        db: AsyncSession,
+    ) -> AccountProductsRes:
+        statement = self._statements.get_accout_product(
+            account_uuid=account_uuid, account_product_uuid=account_product_uuid
+        )
+        account_product = await self._db_ops.return_one_row(
+            service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(
+            instance=account_product, exception=AccProductstNotExist
+        )
+
+    async def get_account_products(
+        self,
+        account_uuid: UUID4,
+        limit: int,
+        offset: int,
+        db: AsyncSession,
+    ) -> List[AccountProductsRes]:
+        statement = self._statements.get_account_products(
+            account_uuid=account_uuid, limit=limit, offset=offset
+        )
+        account_products: List[AccountProductsRes] = await self._db_ops.return_all_rows(
+            service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(
+            instance=account_products, exception=AccProductstNotExist
+        )
+
+    async def get_account_product_ct(
+        self, account_uuid: UUID4, db: AsyncSession
+    ) -> int:
+        statement = self._statements.get_account_products_ct(account_uuid=account_uuid)
+        return await self._db_ops.return_count(
+            service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
+        )
+
+    async def paginated_products(
+        self,
+        account_uuid: UUID4,
+        page: int,
+        limit: int,
+        db: AsyncSession,
+    ) -> AccountProductsPgRes:
+
+        total_count = await self.get_account_product_ct(
+            account_uuid=account_uuid, db=db
+        )
+        offset = pagination.page_offset(page=page, limit=limit)
+        has_more = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        account_products = await self.get_account_products(
+            account_uuid=account_uuid, offset=offset, limit=limit, db=db
+        )
+        return AccountProductsPgRes(
+            total=total_count,
+            page=page,
+            limit=limit,
+            has_more=has_more,
+            products=account_products,
+        )
 
 
-class AccountProductStatements:
-    pass
+class CreateSrvc:
+    def __init__(
+        self,
+        statements: AccountProductsStms,
+        db_operations: Operations,
+        model: AccountProducts,
+    ) -> None:
+        self._statements: AccountProductsStms = statements
+        self._db_ops: Operations = db_operations
+        self._model: AccountProducts = model
 
-    class SelStatements:
-        pass
+    @property
+    def statements(self) -> AccountProductsStms:
+        return self._statements
 
-        @staticmethod
-        def sel_acc_prod_by_uuid(account_uuid: UUID4, account_product_uuid: UUID4):
-            account_products = AccountProductsModels.account_products
-            statement = Select(account_products).where(
-                and_(
-                    account_products.account_uuid == account_uuid,
-                    account_products.uuid == account_product_uuid,
-                    account_products.sys_deleted_at == None,
-                )
-            )
-            return statement
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        @staticmethod
-        def sel_acc_prod_by_prod_uuid(account_uuid: UUID4, product_uuid: UUID4):
-            account_products = AccountProductsModels.account_products
-            statement = Select(account_products).where(
-                and_(
-                    account_products.account_uuid == account_uuid,
-                    account_products.product_uuid == product_uuid,
-                    account_products.sys_deleted_at == None,
-                )
-            )
-            return statement
+    @property
+    def model(self) -> AccountProducts:
+        return self._model
 
-        @staticmethod
-        def sel_acc_prod_by_acc_uuid(account_uuid: UUID4, limit: int, offset: int):
-            account_products = AccountProductsModels.account_products
-            statement = (
-                Select(account_products)
-                .where(
-                    and_(
-                        account_products.account_uuid == account_uuid,
-                        account_products.sys_deleted_at == None,
-                    )
-                )
-                .offset(offset=offset)
-                .limit(limit=limit)
-            )
-            return statement
-
-        @staticmethod
-        def sel_acc_prod_by_acc_ct(account_uuid: UUID4):
-            account_products = AccountProductsModels.account_products
-            statement = (
-                Select(func.count())
-                .select_from(account_products)
-                .where(
-                    and_(
-                        account_products.account_uuid == account_uuid,
-                        account_products.sys_deleted_at == None,
-                    )
-                )
-            )
-            return statement
-
-    class UpdateStatements:
-        pass
-
-        @staticmethod
-        def update_acc_prod_by_uuid(
-            account_uuid: UUID4,
-            account_product_uuid: UUID4,
-            account_product_data: object,
-        ):
-            account_products = AccountProductsModels.account_products
-            statement = (
-                update(account_products)
-                .where(
-                    and_(
-                        account_products.account_uuid == account_uuid,
-                        account_products.uuid == account_product_uuid,
-                        account_products.sys_deleted_at == None,
-                    )
-                )
-                .values(di.set_empty_strs_null(values=account_product_data))
-                .returning(account_products)
-            )
-            return statement
+    async def create_account_product(
+        self,
+        account_uuid: UUID4,
+        account_product_data: AccountProductsCreate,
+        db: AsyncSession,
+    ) -> AccountProductsRes:
+        accont_products = self._model
+        statement = self._statements.validate_account_product(
+            account_uuid=account_uuid,
+            product_uuid=account_product_data.product_uuid,
+        )
+        account_product_exists: AccountProductsRes = await self._db_ops.return_one_row(
+            service=cnst.ACCOUNTS_PRODUCTS_CREATE_SERVICE,
+            statement=statement,
+            db=db,
+        )
+        di.record_exists(instance=account_product_exists, exception=AccProductsExists)
+        account_product: AccountProductsRes = await self._db_ops.add_instance(
+            service=cnst.ACCOUNTS_PRODUCTS_CREATE_SERVICE,
+            model=accont_products,
+            data=account_product_data,
+            db=db,
+        )
+        return di.record_not_exist(
+            instance=account_product, exception=AccProductstNotExist
+        )
 
 
-class AccountProductsServices:
-    pass
+class UpdateSrvc:
+    def __init__(
+        self, statements: AccountProductsStms, db_operations: Operations
+    ) -> None:
+        self._statements: AccountProductsStms = statements
+        self._db_ops: Operations = db_operations
 
-    class ReadService:
-        def __init__(self) -> None:
-            pass
+    @property
+    def statements(self) -> AccountProductsStms:
+        return self._statements
 
-        async def get_account_product(
-            self,
-            account_uuid: UUID4,
-            account_product_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = AccountProductStatements.SelStatements.sel_acc_prod_by_uuid(
-                account_uuid=account_uuid, account_product_uuid=account_product_uuid
-            )
-            account_product = await Operations.return_one_row(
-                service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=account_product, exception=AccProductstNotExist
-            )
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        async def get_account_products(
-            self,
-            account_uuid: UUID4,
-            limit: int,
-            offset: int,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = AccountProductStatements.SelStatements.sel_acc_prod_by_acc_uuid(
-                account_uuid=account_uuid, limit=limit, offset=offset
-            )
-            account_products = await Operations.return_all_rows(
-                service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=account_products, exception=AccProductstNotExist
-            )
+    async def update_account_product(
+        self,
+        account_uuid: UUID4,
+        account_product_uuid: UUID4,
+        account_product_data: AccountProductsUpdate,
+        db: AsyncSession,
+    ) -> AccountProductsRes:
+        statement = self._statements.update_account_product(
+            account_uuid=account_uuid,
+            account_product_uuid=account_product_uuid,
+            account_product_data=account_product_data,
+        )
+        account_product: AccountProductsRes = await self._db_ops.return_one_row(
+            service=cnst.ACCOUNTS_PRODUCTS_UPDATE_SERVICE,
+            statement=statement,
+            db=db,
+        )
+        return di.record_not_exist(
+            instance=account_product, exception=AccProductstNotExist
+        )
 
-        async def get_account_product_ct(
-            self, account_uuid: UUID4, db: AsyncSession = Depends(get_db)
-        ):
-            statement = AccountProductStatements.SelStatements.sel_acc_prod_by_acc_ct(
-                account_uuid=account_uuid
-            )
-            return await Operations.return_count(
-                service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
-            )
 
-    class CreateService:
-        def __init__(self) -> None:
-            pass
+class DelSrvc:
+    def __init__(
+        self, statements: AccountProductsStms, db_operations: Operations
+    ) -> None:
+        self._statements: AccountProductsStms = statements
+        self._db_ops: Operations = db_operations
 
-        async def create_account_product(
-            self,
-            account_uuid: UUID4,
-            account_product_data: s_account_products.AccountProductsCreate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            accont_products = AccountProductsModels.account_products
-            statement = (
-                AccountProductStatements.SelStatements.sel_acc_prod_by_prod_uuid(
-                    account_uuid=account_uuid,
-                    product_uuid=account_product_data.product_uuid,
-                )
-            )
-            account_product_exists = await Operations.return_one_row(
-                service=cnst.ACCOUNTS_PRODUCTS_CREATE_SERVICE,
-                statement=statement,
-                db=db,
-            )
-            di.record_exists(
-                instance=account_product_exists, exception=AccProductsExists
-            )
-            account_product = await Operations.add_instance(
-                service=cnst.ACCOUNTS_PRODUCTS_CREATE_SERVICE,
-                model=accont_products,
-                data=account_product_data,
-                db=db,
-            )
-            return di.record_not_exist(
-                instance=account_product, exception=AccProductstNotExist
-            )
+    @property
+    def statements(self) -> AccountProductsStms:
+        return self._statements
 
-    class UpdateService:
-        def __init__(self) -> None:
-            pass
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        async def update_account_product(
-            self,
-            account_uuid: UUID4,
-            account_product_uuid: UUID4,
-            account_product_data: s_account_products.AccountProductsUpdate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = (
-                AccountProductStatements.UpdateStatements.update_acc_prod_by_uuid(
-                    account_uuid=account_uuid,
-                    account_product_uuid=account_product_uuid,
-                    account_product_data=account_product_data,
-                )
-            )
-            account_product = await Operations.return_one_row(
-                service=cnst.ACCOUNTS_PRODUCTS_UPDATE_SERVICE,
-                statement=statement,
-                db=db,
-            )
-            return di.record_not_exist(
-                instance=account_product, exception=AccProductstNotExist
-            )
-
-    class DelService:
-        def __init__(self) -> None:
-            pass
-
-        async def soft_del_account_product(
-            self,
-            account_uuid: UUID4,
-            account_product_uuid: UUID4,
-            account_product_data: s_account_products.AccountProductsDel,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = (
-                AccountProductStatements.UpdateStatements.update_acc_prod_by_uuid(
-                    account_uuid=account_uuid,
-                    account_product_uuid=account_product_uuid,
-                    account_product_data=account_product_data,
-                )
-            )
-            account_product = await Operations.return_one_row(
-                service=cnst.ACCOUNTS_PRODUCTS_DEL_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=account_product, exception=AccProductstNotExist
-            )
+    async def soft_del_account_product(
+        self,
+        account_uuid: UUID4,
+        account_product_uuid: UUID4,
+        account_product_data: AccountProductsDel,
+        db: AsyncSession,
+    ) -> AccountProductsDelRes:
+        statement = self._statements.update_account_product(
+            account_uuid=account_uuid,
+            account_product_uuid=account_product_uuid,
+            account_product_data=account_product_data,
+        )
+        account_product: AccountProductsDelRes = await self._db_ops.return_one_row(
+            service=cnst.ACCOUNTS_PRODUCTS_DEL_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(
+            instance=account_product, exception=AccProductstNotExist
+        )

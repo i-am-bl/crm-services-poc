@@ -2,7 +2,6 @@ from datetime import date, datetime
 from typing import List, Optional
 
 from pydantic import UUID4, BaseModel
-from sqlalchemy import Boolean
 
 from ._variables import TimeStamp
 from .products import ProductsResponse
@@ -32,7 +31,7 @@ class AccountProductsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class AccountProductsRespone(BaseModel):
+class AccountProductsRes(BaseModel):
     id: int
     uuid: UUID4
     account_uuid: UUID4
@@ -48,7 +47,7 @@ class AccountProductsRespone(BaseModel):
         from_attributes = True
 
 
-class AccountProductsPagRespone(BaseModel):
+class AccountProductsPgProductsRes(BaseModel):
     total: int
     page: int
     limit: int
@@ -56,7 +55,16 @@ class AccountProductsPagRespone(BaseModel):
     products: Optional[List[ProductsResponse]] = None
 
 
-class AccountProductsDelRespone(AccountProductsRespone):
+class AccountProductsPgRes(BaseModel):
+    total: int
+    page: int
+    limit: int
+    has_more: bool
+    # TODO: Standardize this to be data
+    account_products: Optional[List[AccountProductsRes]] = None
+
+
+class AccountProductsDelRes(AccountProductsRes):
     sys_deleted_at: Optional[datetime] = None
     sys_deleted_by: Optional[UUID4] = None
 
