@@ -4,22 +4,22 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...containers.orchestrators import container as orchs_container
 from ...containers.services import container as services_container
 from ...database.database import get_db, transaction_manager
 from ...exceptions import AccProductsExists, AccProductstNotExist, ProductsNotExist
 from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
+from ...orchestrators.account_products import AccountProductsReadOrch
 from ...schemas.account_products import (
     AccountProductsCreate,
     AccountProductsDel,
-    AccountProductsPgProductsRes,
+    AccountProductsOrchPgRes,
     AccountProductsRes,
     AccountProductsUpdate,
 )
 from ...services import account_products as account_products_srvcs
 from ...services.authetication import SessionService, TokenService
-from ...services import products as products_srvcs
-from ...utilities import pagination
 from ...utilities import sys_values
 
 serv_session = SessionService()
@@ -58,7 +58,7 @@ async def get_account_products(
 
 @router.get(
     "/{account_uuid}/account-products/",
-    response_model=AccountProductsPgProductsRes,
+    response_model=AccountProductsOrchPgRes,
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
@@ -70,43 +70,17 @@ async def get_account_products(
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
-    account_products_read_srvc: account_products_srvcs.ReadSrvc = Depends(
-        services_container["account_products_read"]
+    account_products_read_orchs: AccountProductsReadOrch = Depends(
+        orchs_container["account_products_read_orch"]
     ),
-    products_read_srvcs: products_srvcs.ReadSrvc = Depends(
-        services_container["products_read"]
-    ),
-) -> AccountProductsPgProductsRes:
+) -> AccountProductsOrchPgRes:
     """
     Get all active products linked to the account.
     """
     # TODO: need an orchestrator for this
     async with transaction_manager(db=db):
-        offset = pagination.page_offset(page=page, limit=limit)
-        total_count = await account_products_read_srvc.get_account_product_ct(
-            account_uuid=account_uuid, db=db
-        )
-        account_products = await account_products_read_srvc.get_account_products(
-            account_uuid=account_uuid, limit=limit, offset=offset, db=db
-        )
-        product_uuids = []
-        for value in account_products:
-            product_uuids.append(value.product_uuid)
-        products = await products_read_srvcs.get_product_by_uuids(
-            product_uuids=product_uuids, db=db
-        )
-        if not isinstance(products, list):
-            products = [products]
-        has_more = pagination.has_more_items(
-            total_count=total_count, limit=limit, page=page
-        )
-
-        return AccountProductsPgProductsRes(
-            total=total_count,
-            page=page,
-            limit=limit,
-            has_more=has_more,
-            products=products,
+        return await account_products_read_orchs.paginated_products(
+            account_uuid=account_uuid, page=page, limit=limit, db=db
         )
 
 

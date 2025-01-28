@@ -47,12 +47,12 @@ class AccountProductsRes(BaseModel):
         from_attributes = True
 
 
-class AccountProductsPgProductsRes(BaseModel):
+class AccountProductsOrchPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    products: Optional[List[ProductsResponse]] = None
+    data: Optional[List[ProductsResponse]] = None
 
 
 class AccountProductsPgRes(BaseModel):
