@@ -1,4 +1,3 @@
-import re
 from datetime import datetime
 from typing import List, Optional
 
@@ -91,7 +90,7 @@ class SysUsersDisable(BaseModel):
     disabled_at: datetime = TimeStamp
 
 
-class SysUsersResponse(BaseModel):
+class SysUsersRes(BaseModel):
     id: int
     uuid: UUID4
     first_name: ConstrainedStr
@@ -107,15 +106,15 @@ class SysUsersResponse(BaseModel):
         from_attributes = True
 
 
-class SysUsersPagResponse(BaseModel):
+class SysUsersPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    sys_users: Optional[List[SysUsersResponse]] = None
+    sys_users: Optional[List[SysUsersRes]] = None
 
 
-class SysUsersDelResponse(SysUsersResponse):
+class SysUsersDelRes(SysUsersRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None
 
