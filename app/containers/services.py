@@ -46,10 +46,10 @@ from ..services import websites as websites_srvcs
 
 class ServicesContainer(TypedDict):
     # account contract services
-    account_contracts_create: Callable[[], account_contracts_srvcs.CreateSrvc]
-    account_contracts_read: Callable[[], account_contracts_srvcs.ReadSrvc]
-    account_contracts_update: Callable[[], account_contracts_srvcs.UpdateSrvc]
-    account_contracts_delete: Callable[[], account_contracts_srvcs.DeleteSrvc]
+    account_contracts_create: account_contracts_srvcs.CreateSrvc
+    account_contracts_read: account_contracts_srvcs.ReadSrvc
+    account_contracts_update: account_contracts_srvcs.UpdateSrvc
+    account_contracts_delete: account_contracts_srvcs.DeleteSrvc
     # account list services
     account_lists_create: account_lists_srvcs.CreateSrvc
     account_lists_read: account_lists_srvcs.ReadSrvc
@@ -149,28 +149,20 @@ class ServicesContainer(TypedDict):
 
 container: ServicesContainer = {
     # account contract services
-    "account_contracts_create": lambda: (
-        account_contracts_srvcs.account_contract_create_srvc(
-            operations=database_container["operations"], model=AccountContracts
-        )
+    "account_contracts_create": lambda: account_contracts_srvcs.CreateSrvc(
+        operations=database_container["operations"], model=AccountContracts
     ),
-    "account_contracts_read": lambda: (
-        account_contracts_srvcs.account_contract_read_srvc(
-            operations=database_container["operations"],
-            statements=statements_container["account_contracts_stms"],
-        )
+    "account_contracts_read": lambda: account_contracts_srvcs.ReadSrvc(
+        operations=database_container["operations"],
+        statements=statements_container["account_contracts_stms"],
     ),
-    "account_contracts_update": lambda: (
-        account_contracts_srvcs.account_contract_update_srvc(
-            operations=database_container["operations"],
-            statements=statements_container["account_contracts_stms"],
-        )
+    "account_contracts_update": lambda: account_contracts_srvcs.UpdateSrvc(
+        operations=database_container["operations"],
+        statements=statements_container["account_contracts_stms"],
     ),
-    "account_contracts_delete": lambda: (
-        account_contracts_srvcs.account_contract_delete_srvc(
-            operations=database_container["operations"],
-            statements=statements_container["account_contracts_stms"],
-        )
+    "account_contracts_delete": lambda: account_contracts_srvcs.DeleteSrvc(
+        operations=database_container["operations"],
+        statements=statements_container["account_contracts_stms"],
     ),
     # account list services
     "account_lists_create": lambda: account_lists_srvcs.CreateSrvc(

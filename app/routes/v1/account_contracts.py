@@ -11,8 +11,14 @@ from ...handlers.handler import handle_exceptions
 from ...models import (
     sys_users as sys_user_mdl,
 )
-from ...schemas import account_contracts as account_contract_schms
-from ...services import account_contracts as account_contract_srvcs
+from ...schemas.account_contracts import (
+    AccountContractsCreate,
+    AccountContractsDel,
+    AccountContractsPgRes,
+    AccountContractsRes,
+    AccountContractsUpdate,
+)
+from ...services.account_contracts import ReadSrvc, CreateSrvc, UpdateSrvc, DeleteSrvc
 from ...services.authetication import SessionService, TokenService
 from ...utilities import sys_values
 
@@ -23,7 +29,7 @@ router = APIRouter()
 
 @router.get(
     "/{account_uuid}/account-contracts/{account_contract_uuid}/",
-    response_model=account_contract_schms.AccountContractsReponse,
+    response_model=AccountContractsRes,
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
@@ -37,10 +43,10 @@ async def get_account_contract(
     user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
         serv_session.validate_session
     ),
-    account_contract_read_srvc: account_contract_srvcs.ReadSrvc = Depends(
+    account_contract_read_srvc: ReadSrvc = Depends(
         services_container["account_contracts_read"]
     ),
-) -> account_contract_schms.AccountContractsReponse:
+) -> AccountContractsRes:
     """
     Fetch one account contract by account and account contract uuid.
     """
@@ -55,7 +61,7 @@ async def get_account_contract(
 
 @router.get(
     "/{account_uuid}/account-contracts/",
-    response_model=account_contract_schms.AccountContractsPagRepsone,
+    response_model=AccountContractsPgRes,
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
@@ -69,10 +75,10 @@ async def get_account_contracts(
     user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
         serv_session.validate_session
     ),
-    account_contract_read_srvc: account_contract_srvcs.ReadSrvc = Depends(
+    account_contract_read_srvc: ReadSrvc = Depends(
         services_container["account_contracts_read"]
     ),
-) -> account_contract_schms.AccountContractsPagRepsone:
+) -> AccountContractsPgRes:
     """
     Fetch all account contracts by account uuid.
     """
@@ -85,7 +91,7 @@ async def get_account_contracts(
 
 @router.post(
     "/{account_uuid}/account-contracts/",
-    response_model=account_contract_schms.AccountContractsReponse,
+    response_model=AccountContractsRes,
     status_code=status.HTTP_201_CREATED,
 )
 @serv_token.set_auth_cookie
@@ -93,16 +99,16 @@ async def get_account_contracts(
 async def create_account_contract(
     response: Response,
     account_uuid: UUID4,
-    account_contract_data: account_contract_schms.AccountContractsCreate,
+    account_contract_data: AccountContractsCreate,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
         serv_session.validate_session
     ),
-    account_contract_create_srvc: account_contract_srvcs.CreateSrvc = Depends(
+    account_contract_create_srvc: CreateSrvc = Depends(
         services_container["account_contracts_create"]
     ),
     set_sys_created_by: sys_values.SysFieldSetter = Depends(sys_values.sys_created_by),
-) -> account_contract_schms.AccountContractsCreate:
+) -> AccountContractsCreate:
     """
     Create one account contract.
     """
@@ -119,7 +125,7 @@ async def create_account_contract(
 
 @router.put(
     "/{account_uuid}/account-contracts/{account_contract_uuid}/",
-    response_model=account_contract_schms.AccountContractsReponse,
+    response_model=AccountContractsRes,
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
@@ -128,16 +134,16 @@ async def update_account_contract(
     response: Response,
     account_uuid: UUID4,
     account_contract_uuid: UUID4,
-    account_contract_data: account_contract_schms.AccountContractsUpdate,
+    account_contract_data: AccountContractsUpdate,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
         serv_session.validate_session
     ),
-    account_contract_update_srvc: account_contract_srvcs.UpdateSrvc = Depends(
+    account_contract_update_srvc: UpdateSrvc = Depends(
         services_container["account_contracts_update"]
     ),
     set_sys_updated_by: sys_values.SysFieldSetter = Depends(sys_values.sys_updated_by),
-) -> account_contract_schms.AccountContractsUpdate:
+) -> AccountContractsUpdate:
     """
     Update one account contract.
     """
@@ -155,8 +161,8 @@ async def update_account_contract(
 
 @router.delete(
     "/{account_uuid}/account-contracts/{account_contract_uuid}/",
-    response_model=account_contract_schms.AccountContractsDelRepsone,
-    status_code=status.HTTP_200_OK,
+    response_model=None,
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 @serv_token.set_auth_cookie
 @handle_exceptions([AccContractNotExist])
@@ -168,20 +174,20 @@ async def soft_delete_account_contract(
     user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
         serv_session.validate_session
     ),
-    account_contracts_delete_srvc: account_contract_srvcs.DeleteSrvc = Depends(
+    account_contracts_delete_srvc: DeleteSrvc = Depends(
         services_container["account_contracts_delete"]
     ),
     set_sys_deleted_by: sys_values.SysFieldSetter = Depends(sys_values.sys_deleted_by),
-) -> account_contract_schms.AccountContractsDel:
+) -> None:
     """
     Soft delete one account contract.
     """
 
     async with transaction_manager(db=db):
-        account_contract_data = account_contract_schms.AccountContractsDel()
+        account_contract_data = AccountContractsDel()
         sys_user, _ = user_token
         set_sys_deleted_by(data=account_contract_data, sys_user=sys_user.uuid)
-        return await account_contracts_delete_srvc.soft_delete_account_contract(
+        await account_contracts_delete_srvc.soft_delete_account_contract(
             account_uuid=account_uuid,
             account_contract_uuid=account_contract_uuid,
             account_contract_data=account_contract_data,

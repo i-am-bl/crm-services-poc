@@ -8,7 +8,14 @@ from ..constants import constants as cnst
 from ..database.operations import Operations
 from ..exceptions import AccContractNotExist
 from ..models import AccountContracts
-from ..schemas import account_contracts as account_contract_schms
+from ..schemas.account_contracts import (
+    AccountContractsDelRes,
+    AccountContractsRes,
+    AccountContractsCreate,
+    AccountContractsDel,
+    AccountContractsUpdate,
+    AccountContractsPgRes,
+)
 from ..statements.account_contracts import AccountContractStms
 from ..utilities import pagination
 from ..utilities.utilities import DataUtils as di
@@ -49,7 +56,7 @@ class ReadSrvc:
         account_uuid: UUID4,
         account_contract_uuid: UUID4,
         db: AsyncSession,
-    ) -> AccountContracts:
+    ) -> AccountContractsRes:
         """
         Fetches an account contract from the database.
 
@@ -67,7 +74,7 @@ class ReadSrvc:
             account_uuid=account_uuid, account_contract_uuid=account_contract_uuid
         )
 
-        account_contract = await self._db_ops.return_one_row(
+        account_contract: AccountContractsRes = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_CONTRACTS_READ_SERVICE, statement=statement, db=db
         )
         return di.record_not_exist(
@@ -80,7 +87,7 @@ class ReadSrvc:
         limit: int,
         offset: int,
         db: AsyncSession,
-    ) -> AccountContracts:
+    ) -> AccountContractsRes:
         """
         Fetches account contracts from the database by account.
 
@@ -102,7 +109,7 @@ class ReadSrvc:
             limit=limit,
             offset=offset,
         )
-        account_contracts = await self._db_ops.return_all_rows(
+        account_contracts: AccountContractsRes = await self._db_ops.return_all_rows(
             service=cnst.ACCOUNTS_CONTRACTS_READ_SERVICE, statement=statement, db=db
         )
         return di.record_not_exist(
@@ -133,7 +140,7 @@ class ReadSrvc:
 
     async def paginated_account_contracts(
         self, account_uuid: UUID4, page: int, limit: int, db: AsyncSession
-    ) -> account_contract_schms.AccountContractsPagRepsone:
+    ) -> AccountContractsPgRes:
         """
         Fetches a paginated list of account contracts for a specific account.
 
@@ -149,7 +156,7 @@ class ReadSrvc:
         has_more = pagination.has_more_items(
             total_count=total_count, page=page, limit=limit
         )
-        return account_contract_schms.AccountContractsPagRepsone(
+        return AccountContractsPgRes(
             total=total_count,
             page=page,
             limit=limit,
@@ -192,9 +199,9 @@ class CreateSrvc:
     async def create_account_contract(
         self,
         account_uuid: UUID4,
-        account_contract_data: schema.AccountContractsCreate,
+        account_contract_data: AccountContractsCreate,
         db: AsyncSession,
-    ) -> AccountContracts:
+    ) -> AccountContractsRes:
         """
         Creates an account contract in the database.
 
@@ -209,7 +216,7 @@ class CreateSrvc:
         :raises AccContractNotExist: If the account contract does not exist.
         """
 
-        account_contract = await self._db_ops.add_instance(
+        account_contract: AccountContractsRes = await self._db_ops.add_instance(
             service=cnst.ACCOUNTS_CONTRACTS_CREATE_SERVICE,
             model=self._account_contracts_model,
             data=account_contract_data,
@@ -255,9 +262,9 @@ class UpdateSrvc:
         self,
         account_uuid: UUID4,
         account_contract_uuid: UUID4,
-        account_contract_data: schema.AccountContractsUpdate,
+        account_contract_data: AccountContractsUpdate,
         db: AsyncSession,
-    ) -> AccountContracts:
+    ) -> AccountContractsRes:
         """
         Updates an account contract in the database.
 
@@ -278,7 +285,7 @@ class UpdateSrvc:
             account_contract_uuid=account_contract_uuid,
             account_contract_data=account_contract_data,
         )
-        account_contract = await self._db_ops.return_one_row(
+        account_contract: AccountContractsRes = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_CONTRACTS_UPDATE_SERVICE,
             statement=statement,
             db=db,
@@ -323,9 +330,9 @@ class DeleteSrvc:
         self,
         account_uuid: UUID4,
         account_contract_uuid: UUID4,
-        account_contract_data: schema.AccountContractsDel,
+        account_contract_data: AccountContractsDel,
         db: AsyncSession,
-    ) -> AccountContracts:
+    ) -> AccountContractsDelRes:
         """
         Soft deletes an account contract in the database.
 
@@ -346,7 +353,7 @@ class DeleteSrvc:
             account_contract_uuid=account_contract_uuid,
             account_contract_data=account_contract_data,
         )
-        account_contract = await self._db_ops.return_one_row(
+        account_contract: AccountContractsDelRes = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_CONTRACTS_UPDATE_SERVICE,
             statement=statement,
             db=db,
@@ -354,66 +361,3 @@ class DeleteSrvc:
         return di.record_not_exist(
             instance=account_contract, exception=AccContractNotExist
         )
-
-
-# Factory functions
-def account_contract_create_srvc(
-    operations: Operations, model: AccountContracts
-) -> CreateSrvc:
-    """
-    Factory function to create an instance of CreateService.
-
-    :param operations: A utility class for database operations.
-    :type operations: Operations
-    :return: An instance of CreateService.
-    :rtype: CreateService
-    """
-    return CreateSrvc(db_operations=operations, model=model)
-
-
-def account_contract_read_srvc(
-    statements: AccountContractStms, operations: Operations
-) -> ReadSrvc:
-    """
-    Factory function to create an instance of ReadService.
-
-    :param statements: An instance of AccountContractStms.
-    :type statements: AccountContractStms
-    :param operations: A utility class for database operations.
-    :type operations: Operations
-    :return: An instance of ReadService.
-    :returnType: ReadService
-    """
-    return ReadSrvc(statements=statements, db_operations=operations)
-
-
-def account_contract_update_srvc(
-    statements: AccountContractStms, operations: Operations
-) -> UpdateSrvc:
-    """
-    Factory function to create an instance of UpdateService.
-
-    :param statements: An instance of AccountContractStms.
-    :type statements: AccountContractStms
-    :param operations: A utility class for database operations.
-    :type operations: Operations
-    :return: An instance of UpdateService.
-    :rtype: UpdateService
-    """
-    return UpdateSrvc(statements=statements, db_operations=operations)
-
-
-def account_contract_delete_srvc(
-    statements: AccountContractStms, operations: Operations
-) -> DeleteSrvc:
-    """
-    Factory function to create an instance of DeleteService.
-
-    :param statements: An instance of AccountContractStms.
-    :type statements: AccountContractStms
-    :param operations: A utility class for database operations.
-    :type operations: Operations
-    :return: An instance of DelService.
-    :rtype: DelService
-    """
-    return DeleteSrvc(statements=statements, db_operations=operations)
