@@ -11,7 +11,9 @@ from ..models.individuals import Individuals
 from ..models.non_individuals import NonIndividuals
 from ..models.invoices import Invoices
 from ..models.numbers import Numbers
+from ..models.order_items import OrderItems
 from ..models.orders import Orders
+from ..models.product_list_items import ProductListItems
 from ..models.product_lists import ProductLists
 from ..models.products import Products
 from ..models.sys_users import SysUsers
@@ -25,7 +27,9 @@ from ..services import individuals as individuals_srvcs
 from ..services import invoices as invoices_srvcs
 from ..services import non_individuals as non_individual_srvcs
 from ..services import numbers as numbers_srvcs
+from ..services import order_items as order_items_srvcs
 from ..services import orders as orders_srvcs
+from ..services import product_list_items as product_list_items_srvcs
 from ..services import product_lists as product_lists_srvcs
 from ..services import products as products_srvcs
 from ..services import sys_users as sys_users_srvcs
@@ -78,11 +82,21 @@ class ServicesContainer(TypedDict):
     numbers_read: numbers_srvcs.ReadSrvc
     numbers_update: numbers_srvcs.UpdateSrvc
     numbers_delete: numbers_srvcs.DelSrvc
+    # order items services
+    order_items_create: order_items_srvcs.CreateSrvc
+    order_items_read: order_items_srvcs.ReadSrvc
+    order_items_update: order_items_srvcs.UpdateSrvc
+    order_items_delete: order_items_srvcs.DelSrvc
     # orders services
     orders_create: orders_srvcs.CreateSrvc
     orders_read: orders_srvcs.ReadSrvc
     orders_update: orders_srvcs.UpdateSrvc
     orders_delete: orders_srvcs.DelSrvc
+    # product list items services
+    product_list_items_create: product_list_items_srvcs.CreateSrvc
+    product_list_items_read: product_list_items_srvcs.ReadSrvc
+    product_list_items_update: product_list_items_srvcs.UpdateSrvc
+    product_list_items_delete: product_list_items_srvcs.DelSrvc
     # product lists services
     product_lists_create: product_lists_srvcs.CreateSrvc
     product_lists_read: product_lists_srvcs.ReadSrvc
@@ -272,6 +286,24 @@ container: ServicesContainer = {
         statements=statements_container["numbers_stms"],
         db_operations=database_container["operations"],
     ),
+    # order items services
+    "order_items_create": lambda: order_items_srvcs.CreateSrvc(
+        statements=statements_container["order_items_stms"],
+        db_operations=database_container["operations"],
+        model=OrderItems,
+    ),
+    "order_items_read": lambda: order_items_srvcs.ReadSrvc(
+        statements=statements_container["order_items_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "order_items_update": lambda: order_items_srvcs.UpdateSrvc(
+        statements=statements_container["order_items_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "order_items_delete": lambda: order_items_srvcs.DelSrvc(
+        statements=statements_container["order_items_stms"],
+        db_operations=database_container["operations"],
+    ),
     # orders services
     "orders_create": lambda: orders_srvcs.CreateSrvc(
         db_operations=database_container["operations"], model=Orders
@@ -286,6 +318,24 @@ container: ServicesContainer = {
     ),
     "orders_delete": lambda: orders_srvcs.DelSrvc(
         statements=statements_container["orders_stms"],
+        db_operations=database_container["operations"],
+    ),
+    # product list items services
+    "product_list_items_create": lambda: product_list_items_srvcs.CreateSrvc(
+        statements=statements_container["product_list_items_stms"],
+        db_operations=database_container["operations"],
+        model=ProductListItems,
+    ),
+    "product_list_items_read": lambda: product_list_items_srvcs.ReadSrvc(
+        statements=statements_container["product_list_items_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "product_list_items_update": lambda: product_list_items_srvcs.UpdateSrvc(
+        statements=statements_container["product_list_items_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "product_list_items_delete": lambda: product_list_items_srvcs.DelSrvc(
+        statements=statements_container["product_list_items_stms"],
         db_operations=database_container["operations"],
     ),
     # product lists services

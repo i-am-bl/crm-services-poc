@@ -1,251 +1,238 @@
 from typing import List
 
-from fastapi import Depends
 from pydantic import UUID4
-from sqlalchemy import Select, and_, func, update
+from sqlalchemy import Select, Update, and_, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import constants as cnst
-from ..database.database import Operations, get_db
+from ..database.operations import Operations
 from ..exceptions import ProductListItemExists, ProductListItemNotExist
-from ..models import product_list_items as m_product_list_items
-from ..schemas import product_list_items as s_product_list_items
+from ..models import ProductListItems
+from ..schemas.product_list_items import (
+    ProductListItemsCreate,
+    ProductListItemsDel,
+    ProductListItemsDelRes,
+    ProductListItemsPgRes,
+    ProductListItemsRes,
+    ProductListItemsUpdate,
+)
+from ..statements.product_list_items import ProductListItemsStms
+from ..utilities import pagination
 from ..utilities.utilities import DataUtils as di
 
 
-class ProductListItemsModels:
-    product_list_items = m_product_list_items.ProductListItems
+class ReadSrvc:
+    def __init__(
+        self, statements: ProductListItemsStms, db_operations: Operations
+    ) -> None:
+        self._statements: ProductListItemsStms = statements
+        self._db_ops: Operations = db_operations
 
+    @property
+    def statements(self) -> ProductListItemsStms:
+        return self._statements
 
-class ProductListItemsStatements:
-    pass
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-    class SelStatements:
-        pass
+    async def get_product_list_item(
+        self,
+        product_list_uuid: UUID4,
+        product_list_item_uuid: UUID4,
+        db: AsyncSession,
+    ) -> ProductListItemsRes:
+        statement = self._statements.get_product_list_item(
+            product_list_uuid=product_list_uuid,
+            product_list_item_uuid=product_list_item_uuid,
+        )
+        product_list_item: ProductListItemsRes = await self._db_ops.return_one_row(
+            service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
+        )
+        return di.record_not_exist(
+            instance=product_list_item, exception=ProductListItemNotExist
+        )
 
-        @staticmethod
-        def get_pli_by_product_list_pli_uuid(
-            product_list_uuid: UUID4, product_list_item_uuid: UUID4
-        ):
-            product_list_items = ProductListItemsModels.product_list_items
-            statement = Select(product_list_items).where(
-                and_(
-                    product_list_items.product_list_uuid == product_list_uuid,
-                    product_list_items.uuid == product_list_item_uuid,
-                    product_list_items.sys_deleted_at == None,
-                )
-            )
-            return statement
-
-        @staticmethod
-        def get_pli_by_product_list(product_list_uuid: UUID4, limit: int, offset: int):
-            product_list_items = ProductListItemsModels.product_list_items
-            statement = (
-                Select(product_list_items)
-                .where(
-                    and_(
-                        product_list_items.product_list_uuid == product_list_uuid,
-                        product_list_items.sys_deleted_at == None,
-                    )
-                )
-                .offset(offset=offset)
-                .limit(limit=limit)
-            )
-
-            return statement
-
-        @staticmethod
-        def get_pli_by_product_list_ct(product_list_uuid: UUID4):
-            product_list_items = ProductListItemsModels.product_list_items
-            statement = (
-                Select(func.count())
-                .select_from(product_list_items)
-                .where(
-                    and_(
-                        product_list_items.product_list_uuid == product_list_uuid,
-                        product_list_items.sys_deleted_at == None,
-                    )
-                )
-            )
-
-            return statement
-
-        @staticmethod
-        def get_pli_by_product_list_product(
-            product_list_uuid: UUID4, product_uuid_list: List[UUID4]
-        ):
-            product_list_items = ProductListItemsModels.product_list_items
-            statement = Select(product_list_items).where(
-                and_(
-                    product_list_items.product_list_uuid == product_list_uuid,
-                    product_list_items.product_uuid.in_(product_uuid_list),
-                    product_list_items.sys_deleted_at == None,
-                ),
-            )
-
-            return statement
-
-    class UpdateStatements:
-        pass
-
-        @staticmethod
-        def update_pli(
-            product_list_uuid: UUID4,
-            product_list_item_uuid: UUID4,
-            product_list_item_data: object,
-        ):
-            product_list_items = ProductListItemsModels.product_list_items
-            statement = (
-                update(product_list_items)
-                .where(
-                    and_(
-                        product_list_items.product_list_uuid == product_list_uuid,
-                        product_list_items.uuid == product_list_item_uuid,
-                        product_list_items.sys_deleted_at == None,
-                    )
-                )
-                .values(di.set_empty_strs_null(product_list_item_data))
-                .returning(product_list_items)
-            )
-            return statement
-
-
-class ProductListItemsSerivces:
-    pass
-
-    class ReadService:
-        def __init__(self) -> None:
-            pass
-
-        async def get_product_list_item(
-            self,
-            product_list_uuid: UUID4,
-            product_list_item_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = ProductListItemsStatements.SelStatements.get_pli_by_product_list_pli_uuid(
-                product_list_uuid=product_list_uuid,
-                product_list_item_uuid=product_list_item_uuid,
-            )
-            product_list_item = await Operations.return_one_row(
+    async def get_product_list_items(
+        self,
+        product_list_uuid: UUID4,
+        limit: int,
+        offset: int,
+        db: AsyncSession,
+    ) -> List[ProductListItemsRes]:
+        statement = self._statements.get_product_list_items(
+            product_list_uuid=product_list_uuid, limit=limit, offset=offset
+        )
+        product_list_items: List[ProductListItemsRes] = (
+            await self._db_ops.return_all_rows(
                 service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
             )
-            return di.record_not_exist(
-                instance=product_list_item, exception=ProductListItemNotExist
-            )
+        )
+        return di.record_not_exist(
+            instance=product_list_items, exception=ProductListItemNotExist
+        )
 
-        async def get_product_list_items(
-            self,
-            product_list_uuid: UUID4,
-            limit: int,
-            offset: int,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = (
-                ProductListItemsStatements.SelStatements.get_pli_by_product_list(
-                    product_list_uuid=product_list_uuid, limit=limit, offset=offset
-                )
-            )
-            product_list_items = await Operations.return_all_rows(
-                service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=product_list_items, exception=ProductListItemNotExist
-            )
+    async def get_product_list_items_ct(
+        self,
+        product_list_uuid: UUID4,
+        db: AsyncSession,
+    ) -> int:
+        statement = self._statements.get_product_list_items_ct(
+            product_list_uuid=product_list_uuid
+        )
+        return await self._db_ops.return_count(
+            service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
+        )
 
-        async def get_product_list_items_ct(
-            self,
-            product_list_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = (
-                ProductListItemsStatements.SelStatements.get_pli_by_product_list_ct(
-                    product_list_uuid=product_list_uuid
-                )
-            )
-            return await Operations.return_count(
-                service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
-            )
+    async def paginated_product_list_items(
+        self, product_list_uuid: UUID4, page: int, limit: int, db: AsyncSession
+    ) -> ProductListItemsPgRes:
+        total_count = await self.get_product_list_items_ct(
+            product_list_uuid=product_list_uuid, db=db
+        )
+        offset = pagination.page_offset(page=page, limit=limit)
+        has_more = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        product_list_items = await self.get_product_list_items(
+            product_list_uuid=product_list_uuid, offset=offset, limit=limit, db=db
+        )
 
-    class CreateService:
-        def __init__(self) -> None:
-            pass
+        return ProductListItemsPgRes(
+            total=total_count,
+            page=page,
+            limit=limit,
+            has_more=has_more,
+            product_list_items=product_list_items,
+        )
 
-        async def create_product_list_items(
-            self,
-            product_list_uuid: UUID4,
-            product_list_item_data: List[s_product_list_items.ProductListItemsCreate],
-            db: AsyncSession = Depends(get_db),
-        ):
-            product_list_items = ProductListItemsModels.product_list_items
 
-            list_data = [*product_list_item_data]
-            product_uuid_list = [dict.product_uuid for dict in list_data]
+class CreateSrvc:
+    def __init__(
+        self,
+        statements: ProductListItemsStms,
+        db_operations: Operations,
+        model: ProductListItems,
+    ) -> None:
+        self._statements: ProductListItemsStms = statements
+        self._db_ops: Operations = db_operations
+        self._model: ProductListItems = model
 
-            statement = ProductListItemsStatements.SelStatements.get_pli_by_product_list_product(
-                product_list_uuid=product_list_uuid,
-                product_uuid_list=product_uuid_list,
-            )
-            product_list_item_exists = await Operations.return_one_row(
+    @property
+    def statements(self) -> ProductListItemsStms:
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
+
+    @property
+    def model(self) -> ProductListItems:
+        return self._model
+
+    async def create_product_list_items(
+        self,
+        product_list_uuid: UUID4,
+        product_list_item_data: List[ProductListItemsCreate],
+        db: AsyncSession,
+    ) -> List[ProductListItemsRes]:
+        product_list_items = self._model
+
+        list_data = [*product_list_item_data]
+        product_uuid_list = [dict.product_uuid for dict in list_data]
+
+        statement = self._statements.get_product_list_items(
+            product_list_uuid=product_list_uuid,
+            product_uuid_list=product_uuid_list,
+        )
+        product_list_item_exists: ProductListItemsRes = (
+            await self._db_ops.return_one_row(
                 service=cnst.PRODUCT_LIST_ITEMS_CREATE_SERV,
                 statement=statement,
                 db=db,
             )
-            di.record_exists(
-                instance=product_list_item_exists, exception=ProductListItemExists
-            )
-            product_list_item = await Operations.add_instances(
+        )
+        di.record_exists(
+            instance=product_list_item_exists, exception=ProductListItemExists
+        )
+        product_list_items: List[ProductListItemsRes] = (
+            await self._db_ops.add_instances(
                 service=cnst.PRODUCT_LIST_ITEMS_CREATE_SERV,
                 model=product_list_items,
                 data=product_list_item_data,
                 db=db,
             )
-            return di.record_not_exist(
-                instance=product_list_item, exception=ProductListItemNotExist
-            )
+        )
+        return di.record_not_exist(
+            instance=product_list_items, exception=ProductListItemNotExist
+        )
 
-    class UpdateService:
-        def __init__(self) -> None:
-            pass
 
-        async def update_product_list_item(
-            self,
-            product_list_uuid: UUID4,
-            product_list_item_uuid: UUID4,
-            product_list_item_data: s_product_list_items.ProductListItemsUpdate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = ProductListItemsStatements.UpdateStatements.update_pli(
-                product_list_uuid=product_list_uuid,
-                product_list_item_uuid=product_list_item_uuid,
-                product_list_item_data=product_list_item_data,
-            )
-            product_list_item = await Operations.return_one_row(
-                service=cnst.PRODUCT_LIST_ITEMS_UPDATE_SERV, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=product_list_item, exception=ProductListItemNotExist
-            )
+class UpdateSrvc:
+    def __init__(
+        self, statements: ProductListItemsStms, db_operations: Operations
+    ) -> None:
+        self._statements: ProductListItemsStms = statements
+        self._db_ops: Operations = db_operations
 
-    class DelService:
-        def __init__(self) -> None:
-            pass
+    @property
+    def statements(self) -> ProductListItemsStms:
+        return self._statements
 
-        async def soft_del_product_list_item(
-            self,
-            product_list_uuid: UUID4,
-            product_list_item_uuid: UUID4,
-            product_list_item_data: s_product_list_items.ProductListItemsDel,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = ProductListItemsStatements.UpdateStatements.update_pli(
-                product_list_uuid=product_list_uuid,
-                product_list_item_uuid=product_list_item_uuid,
-                product_list_item_data=product_list_item_data,
-            )
-            product_list_item = await Operations.return_one_row(
-                service=cnst.PRODUCT_LIST_ITEMS_UPDATE_SERV, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=product_list_item, exception=ProductListItemNotExist
-            )
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
+
+    async def update_product_list_item(
+        self,
+        product_list_uuid: UUID4,
+        product_list_item_uuid: UUID4,
+        product_list_item_data: ProductListItemsUpdate,
+        db: AsyncSession,
+    ) -> ProductListItemsRes:
+        statement = self._statements.update_product_list_item(
+            product_list_uuid=product_list_uuid,
+            product_list_item_uuid=product_list_item_uuid,
+            product_list_item_data=product_list_item_data,
+        )
+        product_list_item: ProductListItemsRes = await self._db_ops.return_one_row(
+            service=cnst.PRODUCT_LIST_ITEMS_UPDATE_SERV, statement=statement, db=db
+        )
+        return di.record_not_exist(
+            instance=product_list_item, exception=ProductListItemNotExist
+        )
+
+
+class DelSrvc:
+    def __init__(
+        self, statements: ProductListItemsStms, db_operations: Operations
+    ) -> None:
+        self._statements: ProductListItemsStms = statements
+        self._db_ops: Operations = db_operations
+
+    @property
+    def statements(self) -> ProductListItemsStms:
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
+
+    async def soft_del_product_list_item(
+        self,
+        product_list_uuid: UUID4,
+        product_list_item_uuid: UUID4,
+        product_list_item_data: ProductListItemsDel,
+        db: AsyncSession,
+    ) -> ProductListItemsDelRes:
+        statement = self._statements.update_product_list_item(
+            product_list_uuid=product_list_uuid,
+            product_list_item_uuid=product_list_item_uuid,
+            product_list_item_data=product_list_item_data,
+        )
+        product_list_item: ProductListItemsDelRes = await self._db_ops.return_one_row(
+            service=cnst.PRODUCT_LIST_ITEMS_UPDATE_SERV, statement=statement, db=db
+        )
+        return di.record_not_exist(
+            instance=product_list_item, exception=ProductListItemNotExist
+        )

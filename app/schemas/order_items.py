@@ -55,7 +55,7 @@ class OrderItemsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class OrderItemsResponse(BaseModel):
+class OrderItemsRes(BaseModel):
     id: int
     uuid: UUID4
     order_uuid: UUID4
@@ -70,14 +70,14 @@ class OrderItemsResponse(BaseModel):
     sys_updated_by: Optional[UUID4] = None
 
 
-class OrderItemsPagResponse(BaseModel):
+class OrderItemsPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    order_items: Optional[List[OrderItemsResponse]] = None
+    order_items: Optional[List[OrderItemsRes]] = None
 
 
-class OrderItemsDelResponse(OrderItemsResponse):
+class OrderItemsDelRes(OrderItemsRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None

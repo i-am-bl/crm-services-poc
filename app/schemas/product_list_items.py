@@ -54,7 +54,7 @@ class ProductListItemsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class ProductListItemsRespone(BaseModel):
+class ProductListItemsRes(BaseModel):
     id: int
     uuid: UUID4
     product_list_uuid: UUID4
@@ -70,14 +70,14 @@ class ProductListItemsRespone(BaseModel):
     sys_updated_by: Optional[UUID4] = None
 
 
-class ProductListItemsPagRespone(BaseModel):
+class ProductListItemsPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    product_list_items: Optional[List[ProductListItemsRespone]] = None
+    product_list_items: Optional[List[ProductListItemsRes]] = None
 
 
-class ProductListItemsDelRespone(ProductListItemsRespone):
+class ProductListItemsDelRes(ProductListItemsRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None

@@ -1,202 +1,191 @@
-from operator import and_
 from typing import List
 
-from fastapi import Depends, status
 from pydantic import UUID4
-from sqlalchemy import Select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import constants as cnst
-from ..database.database import Operations, get_db
-from ..exceptions import OrderItemExists, OrderItemNotExist
-from ..models import order_items as m_order_items
-from ..schemas import order_items as s_order_items
+from ..database.operations import Operations
+from ..exceptions import OrderItemNotExist
+from ..models.order_items import OrderItems
+from ..schemas.order_items import (
+    OrderItemsCreate,
+    OrderItemsDel,
+    OrderItemsDelRes,
+    OrderItemsPgRes,
+    OrderItemsRes,
+    OrderItemsUpdate,
+)
+from ..statements.order_items import OrderItemsStms
+from ..utilities import pagination
 from ..utilities.utilities import DataUtils as di
 
 
-class OrderItemsModels:
-    order_items = m_order_items.OrderItems
+class ReadSrvc:
+    def __init__(self, statements: OrderItemsStms, db_operations: Operations) -> None:
+        self._statements: OrderItemsStms = statements
+        self._db_ops: Operations = db_operations
+
+    @property
+    def statements(self) -> OrderItemsStms:
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
+
+    async def get_order_item(
+        self,
+        order_uuid: UUID4,
+        order_item_uuid: UUID4,
+        db: AsyncSession,
+    ) -> OrderItemsRes:
+        statement = self._statements.get_order_item(
+            order_uuid=order_uuid, order_item_uuid=order_item_uuid
+        )
+        order_item: OrderItemsRes = await self._db_ops.return_one_row(
+            cnst.ORDERS_ITEMS_READ_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
+
+    async def get_order_items(
+        self,
+        order_uuid: UUID4,
+        limit: int,
+        offset: int,
+        db: AsyncSession,
+    ) -> List[OrderItemsRes]:
+        statement = self._statements.get_order_items(
+            order_uuid=order_uuid, limit=limit, offset=offset
+        )
+        order_items: List[OrderItemsRes] = await self._db_ops.return_all_rows(
+            service=cnst.ORDERS_ITEMS_READ_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=order_items, exception=OrderItemNotExist)
+
+    async def get_order_items_ct(
+        self,
+        order_uuid: UUID4,
+        db: AsyncSession,
+    ) -> int:
+        statement = self._statements.get_order_item_ct(order_uuid=order_uuid)
+        return await self._db_ops.return_count(
+            service=cnst.ORDERS_ITEMS_READ_SERVICE, statement=statement, db=db
+        )
+
+    async def paginated_order_items(
+        self, order_uuid: UUID4, page: int, limit: int, db: AsyncSession
+    ) -> OrderItemsPgRes:
+        total_count = await self.get_order_items_ct(order_uuid=order_uuid, db=db)
+        offset = pagination.page_offset(page=page, limit=limit)
+        has_more = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        order_items = await self.get_order_items(
+            order_uuid=order_uuid, offset=offset, limit=limit, db=db
+        )
+        return OrderItemsPgRes(
+            total=total_count,
+            page=page,
+            limit=limit,
+            has_more=has_more,
+            order_items=order_items,
+        )
 
 
-class OrderItemsStatements:
-    pass
+class CreateSrvc:
+    def __init__(
+        self, statements: OrderItemsStms, db_operations: Operations, model: OrderItems
+    ) -> None:
+        self._statements: OrderItemsStms = statements
+        self._db_ops: Operations = db_operations
+        self._model: OrderItems = model
 
-    class SelStatements:
-        pass
+    @property
+    def statements(self) -> OrderItemsStms:
+        return self._statements
 
-        @staticmethod
-        def sel_order_item_by_uuid(order_uuid: UUID4, order_item_uuid: UUID4):
-            order_items = OrderItemsModels.order_items
-            statement = Select(order_items).where(
-                and_(
-                    order_items.order_uuid == order_uuid,
-                    order_items.uuid == order_item_uuid,
-                    order_items.sys_deleted_at == None,
-                )
-            )
-            return statement
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        @staticmethod
-        def sel_order_items_by_order(order_uuid: UUID4, limit: int, offset: int):
-            order_items = OrderItemsModels.order_items
-            statement = (
-                Select(order_items)
-                .where(
-                    and_(
-                        order_items.order_uuid == order_uuid,
-                        order_items.sys_deleted_at == None,
-                    )
-                )
-                .offset(offset=offset)
-                .limit(limit=limit)
-            )
-            return statement
+    @property
+    def model(self) -> OrderItems:
+        return self._model
 
-        @staticmethod
-        def sel_order_items_by_order_ct(order_uuid: UUID4):
-            order_items = OrderItemsModels.order_items
-            statement = (
-                Select(func.count())
-                .select_from(order_items)
-                .where(
-                    and_(
-                        order_items.order_uuid == order_uuid,
-                        order_items.sys_deleted_at == None,
-                    )
-                )
-            )
-            return statement
-
-    class UpdateStatements:
-        pass
-
-        @staticmethod
-        def update_order_item_by_uuid(
-            order_uuid: UUID4, order_item_uuid: UUID4, order_item_data: object
-        ):
-            order_items = OrderItemsModels.order_items
-            statement = (
-                update(order_items)
-                .where(
-                    and_(
-                        order_items.order_uuid == order_uuid,
-                        order_items.uuid == order_item_uuid,
-                        order_items.sys_deleted_at == None,
-                    )
-                )
-                .values(di.set_empty_strs_null(values=order_item_data))
-                .returning(order_items)
-            )
-            return statement
+    async def create_order_item(
+        self,
+        order_uuid: UUID4,
+        order_item_data: OrderItemsCreate,
+        db: AsyncSession,
+    ) -> OrderItemsRes:
+        # TODO: unsused param
+        order_items = self._model
+        order_item: OrderItemsRes = await self._db_ops.add_instances(
+            service=cnst.ORDERS_ITEMS_CREATE_SERVICE,
+            model=order_items,
+            data=order_item_data,
+            db=db,
+        )
+        return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
 
 
-class OrderItemsServices:
-    pass
+class UpdateSrvc:
+    def __init__(self, statements: OrderItemsStms, db_operations: Operations) -> None:
+        self._statements: OrderItemsStms = statements
+        self._db_ops: Operations = db_operations
 
-    class ReadService:
-        def __init__(self) -> None:
-            pass
+    @property
+    def statements(self) -> OrderItemsStms:
+        return self._statements
 
-        async def get_order_item(
-            self,
-            order_uuid: UUID4,
-            order_item_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = OrderItemsStatements.SelStatements.sel_order_item_by_uuid(
-                order_uuid=order_uuid, order_item_uuid=order_item_uuid
-            )
-            order_item = await Operations.return_one_row(
-                cnst.ORDERS_ITEMS_READ_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        async def get_order_items(
-            self,
-            order_uuid: UUID4,
-            limit: int,
-            offset: int,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = OrderItemsStatements.SelStatements.sel_order_items_by_order(
-                order_uuid=order_uuid, limit=limit, offset=offset
-            )
-            order_items = await Operations.return_all_rows(
-                service=cnst.ORDERS_ITEMS_READ_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=order_items, exception=OrderItemNotExist
-            )
+    async def update_order_item(
+        self,
+        order_uuid: UUID4,
+        order_item_uuid: UUID4,
+        order_item_data: OrderItemsUpdate,
+        db: AsyncSession,
+    ) -> OrderItemsRes:
+        statement = self._statements.update_order_item(
+            order_uuid=order_uuid,
+            order_item_uuid=order_item_uuid,
+            order_item_data=order_item_data,
+        )
+        order_item: OrderItemsRes = await self._db_ops.return_one_row(
+            service=cnst.ORDERS_ITEMS_UPDATE_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
 
-        async def get_order_items_ct(
-            self,
-            order_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = OrderItemsStatements.SelStatements.sel_order_items_by_order_ct(
-                order_uuid=order_uuid
-            )
-            return await Operations.return_count(
-                service=cnst.ORDERS_ITEMS_READ_SERVICE, statement=statement, db=db
-            )
 
-    class CreateService:
-        def __init__(self) -> None:
-            pass
+class DelSrvc:
+    def __init__(self, statements: OrderItemsStms, db_operations: Operations) -> None:
+        self._statements: OrderItemsStms = statements
+        self._db_ops: Operations = db_operations
 
-        async def create_order_item(
-            self,
-            order_uuid: UUID4,
-            order_item_data: s_order_items.OrderItemsCreate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            order_items = OrderItemsModels.order_items
-            order_item = await Operations.add_instances(
-                service=cnst.ORDERS_ITEMS_CREATE_SERVICE,
-                model=order_items,
-                data=order_item_data,
-                db=db,
-            )
-            return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
+    @property
+    def statements(self) -> OrderItemsStms:
+        return self._statements
 
-    class UpdateService:
-        def __init__(self) -> None:
-            pass
+    @property
+    def db_operations(self) -> Operations:
+        return self._db_ops
 
-        async def update_order_item(
-            self,
-            order_uuid: UUID4,
-            order_item_uuid: UUID4,
-            order_item_data: s_order_items.OrderItemsUpdate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = OrderItemsStatements.UpdateStatements.update_order_item_by_uuid(
-                order_uuid=order_uuid,
-                order_item_uuid=order_item_uuid,
-                order_item_data=order_item_data,
-            )
-            order_item = await Operations.return_one_row(
-                service=cnst.ORDERS_ITEMS_UPDATE_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
-
-    class DelService:
-        def __init__(self) -> None:
-            pass
-
-        async def soft_del_order_item(
-            self,
-            order_uuid: UUID4,
-            order_item_uuid: UUID4,
-            order_item_data: s_order_items.OrderItemsDel,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = OrderItemsStatements.UpdateStatements.update_order_item_by_uuid(
-                order_uuid=order_uuid,
-                order_item_uuid=order_item_uuid,
-                order_item_data=order_item_data,
-            )
-            order_item = await Operations.return_one_row(
-                service=cnst.ORDERS_ITEMS_DEL_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
+    async def soft_del_order_item(
+        self,
+        order_uuid: UUID4,
+        order_item_uuid: UUID4,
+        order_item_data: OrderItemsDel,
+        db: AsyncSession,
+    ) -> OrderItemsDelRes:
+        statement = self._statements.update_order_item(
+            order_uuid=order_uuid,
+            order_item_uuid=order_item_uuid,
+            order_item_data=order_item_data,
+        )
+        order_item: OrderItemsDelRes = await self._db_ops.return_one_row(
+            service=cnst.ORDERS_ITEMS_DEL_SERVICE, statement=statement, db=db
+        )
+        return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
