@@ -42,7 +42,7 @@ class InvoiceItemsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = None
 
 
-class InvoiceItemsResponse(BaseModel):
+class InvoiceItemsRes(BaseModel):
     id: int
     uuid: UUID4
     invoice_uuid: UUID4
@@ -62,15 +62,15 @@ class InvoiceItemsResponse(BaseModel):
         from_attributes = True
 
 
-class InvoiceItemsPagResponse(BaseModel):
+class InvoiceItemsPgRes(BaseModel):
     total: int
     page: int
     limit: int
     has_more: bool
-    invoice_items: Optional[List[InvoiceItemsResponse]] = None
+    invoice_items: Optional[List[InvoiceItemsRes]] = None
 
 
-class InvoiceItemsDelResponse(InvoiceItemsResponse):
+class InvoiceItemsDelRes(InvoiceItemsRes):
     sys_deleted_at: datetime
     sys_deleted_by: Optional[UUID4] = None
 

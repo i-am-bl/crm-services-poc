@@ -4,19 +4,22 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...containers.services import container as service_container
 from ...database.database import get_db, transaction_manager
 from ...exceptions import InvoiceItemExists, InvoiceItemNotExist
 from ...handlers.handler import handle_exceptions
-from ...schemas import invoice_items as s_invoice_items
+from ...models.sys_users import SysUsers
+from ...schemas.invoice_items import (
+    InvoiceItemsCreate,
+    InvoiceItemsDel,
+    InvoiceItemsPgRes,
+    InvoiceItemsUpdate,
+    InvoiceItemsRes,
+)
 from ...services.authetication import SessionService, TokenService
-from ...services.invoice_items import InvoiceItemsServices
-from ...utilities.set_values import SetSys
-from ...utilities.utilities import Pagination as pg
+from ...services.invoice_items import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
+from ...utilities import sys_values
 
-serv_ivoice_items_r = InvoiceItemsServices.ReadService()
-serv_ivoice_items_c = InvoiceItemsServices.CreateService()
-serv_ivoice_items_u = InvoiceItemsServices.UpdateService()
-serv_ivoice_items_d = InvoiceItemsServices.DelService()
 serv_session = SessionService()
 serv_token = TokenService()
 router = APIRouter()
@@ -25,7 +28,7 @@ router = APIRouter()
 # TODO: get product meta data for FE load
 @router.get(
     "/{invoice_uuid}/invoice-items/{invoice_item_uuid}/",
-    response_model=s_invoice_items.InvoiceItemsResponse,
+    response_model=InvoiceItemsRes,
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
@@ -36,21 +39,24 @@ async def get_invoice_item(
     invoice_uuid: UUID4,
     invoice_item_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_invoice_items.InvoiceItemsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    invoice_items_read_srvc: ReadSrvc = Depends(
+        service_container["invoice_items_read"]
+    ),
+) -> InvoiceItemsRes:
     """
     Get one invoice item.
     """
 
     async with transaction_manager(db=db):
-        return await serv_ivoice_items_r.get_invoice_item(
+        return await invoice_items_read_srvc.get_invoice_item(
             invoice_uuid=invoice_uuid, invoice_item_uuid=invoice_item_uuid, db=db
         )
 
 
 @router.get(
     "/{invoice_uuid}/invoice-items/",
-    response_model=s_invoice_items.InvoiceItemsPagResponse,
+    response_model=InvoiceItemsPgRes,
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
@@ -62,33 +68,24 @@ async def get_invoice_items(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=10),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_invoice_items.InvoiceItemsPagResponse:
+    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    invoice_items_read_srvc: ReadSrvc = Depends(
+        service_container["invoice_items_read"]
+    ),
+) -> InvoiceItemsPgRes:
     """
     Get invoice items by invoice.
     """
 
     async with transaction_manager(db=db):
-        offset = pg.pagination_offset(page=page, limit=limit)
-        total_count = await serv_ivoice_items_r.get_invoices_items_ct(
-            invoice_uuid=invoice_uuid, db=db
-        )
-        invoice_items = await serv_ivoice_items_r.get_invoices_items(
-            invoice_uuid=invoice_uuid, limit=limit, offset=offset, db=db
-        )
-        has_more = pg.has_more(total_count=total_count, page=page, limit=limit)
-        return s_invoice_items.InvoiceItemsPagResponse(
-            total=total_count,
-            page=page,
-            limit=limit,
-            has_more=has_more,
-            invoice_items=invoice_items,
+        return await invoice_items_read_srvc.paginated_invoice_items(
+            invoice_uuid=invoice_uuid, page=page, limit=limit, db=db
         )
 
 
 @router.post(
     "/{invoice_uuid}/invoice-items/",
-    response_model=List[s_invoice_items.InvoiceItemsResponse],
+    response_model=List[InvoiceItemsRes],
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
@@ -96,25 +93,28 @@ async def get_invoice_items(
 async def create_invoice_item(
     response: Response,
     invoice_uuid: UUID4,
-    invoice_item_data: List[s_invoice_items.InvoiceItemsCreate],
+    invoice_item_data: List[InvoiceItemsCreate],
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> List[s_invoice_items.InvoiceItemsResponse]:
+    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    invoice_items_create_srvc: CreateSrvc = Depends(
+        service_container["invoice_items_create"]
+    ),
+) -> List[InvoiceItemsRes]:
     """
     Create one invoice item.
     """
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        SetSys.sys_created_by_ls(data=invoice_item_data, sys_user=sys_user)
-        return await serv_ivoice_items_c.create_invoice_item(
+        sys_values.sys_created_by(data=invoice_item_data, sys_user=sys_user.uuid)
+        return await invoice_items_create_srvc.create_invoice_item(
             invoice_uuid=invoice_uuid, invoice_item_data=invoice_item_data, db=db
         )
 
 
 @router.put(
     "/{invoice_uuid}/invoice-items/{invoice_item_uuid}/",
-    response_model=s_invoice_items.InvoiceItemsResponse,
+    response_model=InvoiceItemsRes,
     status_code=status.HTTP_200_OK,
 )
 @serv_token.set_auth_cookie
@@ -123,18 +123,21 @@ async def update_invoice_item(
     response: Response,
     invoice_uuid: UUID4,
     invoice_item_uuid: UUID4,
-    invoice_item_data: s_invoice_items.InvoiceItemsUpdate,
+    invoice_item_data: InvoiceItemsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_invoice_items.InvoiceItemsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    invoice_items_update_srvc: UpdateSrvc = Depends(
+        service_container["invoice_items_update"]
+    ),
+) -> InvoiceItemsRes:
     """
     Update one invoice item.
     """
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        SetSys.sys_updated_by(data=invoice_item_data, sys_user=sys_user)
-        return await serv_ivoice_items_u.update_invoice_item(
+        sys_values.sys_updated_by(data=invoice_item_data, sys_user=sys_user.uuid)
+        return await invoice_items_update_srvc.update_invoice_item(
             invoice_uuid=invoice_uuid,
             invoice_item_uuid=invoice_item_uuid,
             invoice_item_data=invoice_item_data,
@@ -144,8 +147,7 @@ async def update_invoice_item(
 
 @router.delete(
     "/{invoice_uuid}/invoice-items/{invoice_item_uuid}/",
-    response_model=s_invoice_items.InvoiceItemsDelResponse,
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 @serv_token.set_auth_cookie
 @handle_exceptions([InvoiceItemNotExist])
@@ -154,17 +156,20 @@ async def soft_del_invoice_item(
     invoice_uuid: UUID4,
     invoice_item_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_invoice_items.InvoiceItemsDelResponse:
+    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    invoice_items_delete_srvc: DelSrvc = Depends(
+        service_container["invoice_items_delete"]
+    ),
+) -> None:
     """
     Soft del one invoice items.
     """
 
     async with transaction_manager(db=db):
-        invoice_item_data = s_invoice_items.InvoiceItemsDel()
+        invoice_item_data = InvoiceItemsDel()
         sys_user, _ = user_token
-        SetSys.sys_deleted_by(data=invoice_item_data, sys_user=sys_user)
-        return await serv_ivoice_items_d.soft_del_invoice_item(
+        sys_values.sys_deleted_by(data=invoice_item_data, sys_user=sys_user.uuid)
+        return await invoice_items_delete_srvc.soft_del_invoice_item(
             invoice_uuid=invoice_uuid,
             invoice_item_uuid=invoice_item_uuid,
             invoice_item_data=invoice_item_data,

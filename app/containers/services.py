@@ -9,6 +9,7 @@ from ..models.emails import Emails
 from ..models.entities import Entities
 from ..models.individuals import Individuals
 from ..models.non_individuals import NonIndividuals
+from ..models.invoice_items import InvoiceItems
 from ..models.invoices import Invoices
 from ..models.numbers import Numbers
 from ..models.order_items import OrderItems
@@ -24,6 +25,7 @@ from ..services import accounts as accounts_srvcs
 from ..services import emails as emails_srvcs
 from ..services import entities as entities_srvcs
 from ..services import individuals as individuals_srvcs
+from ..services import invoice_items as invoice_items_srvcs
 from ..services import invoices as invoices_srvcs
 from ..services import non_individuals as non_individual_srvcs
 from ..services import numbers as numbers_srvcs
@@ -67,6 +69,11 @@ class ServicesContainer(TypedDict):
     individuals_read: individuals_srvcs.ReadSrvc
     individuals_update: individuals_srvcs.UpdateSrvc
     individuals_delete: individuals_srvcs.DelSrvc
+    # invoice items services
+    invoice_items_create: invoice_items_srvcs.CreateSrvc
+    invoice_items_read: invoice_items_srvcs.ReadSrvc
+    invoice_items_update: invoice_items_srvcs.UpdateSrvc
+    invoice_items_delete: invoice_items_srvcs.DelSrvc
     # invoices services
     invoices_create: invoices_srvcs.CreateSrvc
     invoices_read: invoices_srvcs.ReadSrvc
@@ -230,6 +237,24 @@ container: ServicesContainer = {
     ),
     "individuals_delete": lambda: individuals_srvcs.DelSrvc(
         statements=statements_container["invoice_stms"],
+        db_operations=database_container["operations"],
+    ),
+    # invoice items services
+    "invoice_items_create": lambda: invoice_items_srvcs.CreateSrvc(
+        statements=statements_container["invoice_items_stms"],
+        db_operations=database_container["operations"],
+        model=InvoiceItems,
+    ),
+    "invoice_items_read": lambda: invoice_items_srvcs.ReadSrvc(
+        statements=statements_container["invoice_items_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "invoice_items_update": lambda: invoice_items_srvcs.UpdateSrvc(
+        statements=statements_container["invoice_items_stms"],
+        db_operations=database_container["operations"],
+    ),
+    "invoice_items_delete": lambda: invoice_items_srvcs.DelSrvc(
+        statements=statements_container["invoice_items_stms"],
         db_operations=database_container["operations"],
     ),
     # invoices services

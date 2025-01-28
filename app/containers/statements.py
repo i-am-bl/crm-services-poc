@@ -12,6 +12,7 @@ from ..models.entities import Entities
 from ..models.individuals import Individuals
 from ..models.non_individuals import NonIndividuals
 from ..models.individuals import Individuals
+from ..models.invoice_items import InvoiceItems
 from ..models.invoices import Invoices
 from ..models.non_individuals import NonIndividuals
 from ..models.numbers import Numbers
@@ -28,6 +29,7 @@ from ..statements.accounts import AccountsStms
 from ..statements.emails import EmailsStms
 from ..statements.entities import EntitiesStms
 from ..statements.individuals import IndividualsStms
+from ..statements.invoice_items import InvoiceItemsStms
 from ..statements.invoices import InvoicesStms
 from ..statements.non_individuals import NonInvdividualsStms
 from ..statements.numbers import NumberStms
@@ -47,6 +49,7 @@ class StatementsContainer(TypedDict):
     emails_stms: EmailsStms
     entites_stms: EntitiesStms
     individuals_stms: IndividualsStms
+    invoice_items_stms: InvoiceItemsStms
     invoice_stms: InvoicesStms
     non_individuals: NonInvdividualsStms
     numbers_stms: NumberStms
@@ -68,6 +71,7 @@ container: StatementsContainer = {
         entities=Entities, individuals=Individuals, non_individuals=NonIndividuals
     ),
     "individuals_stms": lambda: IndividualsStms(model=Individuals),
+    "invoice_items_stms": lambda: InvoiceItemsStms(model=InvoiceItems),
     "invoice_stms": lambda: InvoicesStms(model=Invoices),
     "non_individuals": lambda: NonInvdividualsStms(model=NonIndividuals),
     "numbers_stms": lambda: NumberStms(model=Numbers),
