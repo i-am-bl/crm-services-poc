@@ -77,7 +77,6 @@ async def get_account_products(
     """
     Get all active products linked to the account.
     """
-    # TODO: need an orchestrator for this
     async with transaction_manager(db=db):
         return await account_products_read_orchs.paginated_products(
             account_uuid=account_uuid, page=page, limit=limit, db=db

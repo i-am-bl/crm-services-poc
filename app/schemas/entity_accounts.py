@@ -71,7 +71,7 @@ class AccountEntitiesPgRes(BaseModel):
     page: int
     limit: int
     has_more: bool
-    entities: List[IndividualNonIndividualRes] = None
+    data: List[IndividualNonIndividualRes] = None
 
 
 class EntityAccountsDelRes(EntityAccountsRes):

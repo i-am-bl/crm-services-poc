@@ -4,11 +4,13 @@ from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...containers.orchestrators import container as orchs_container
 from ...containers.services import container as services_container
 from ...database.database import get_db, transaction_manager
 from ...exceptions import AccsNotExist, EntityAccNotExist, EntityNotExist
 from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
+from ...orchestrators.entity_accounts import EntityAccountsReadOrch
 from ...schemas.entity_accounts import (
     AccountEntityCreate,
     EntityAccountsCreate,
@@ -69,43 +71,16 @@ async def get_account_entities(
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
-    entity_account_read_srvc: entity_accounts_srvcs.ReadSrvc = Depends(
-        services_container["entity_accounts_read"]
-    ),
-    entities_read_srvc: entities_srvcs.ReadSrvc = Depends(
-        services_container["entities_read"]
+    entity_accounts_read_orch: EntityAccountsReadOrch = Depends(
+        orchs_container["entity_accounts_read_orch"]
     ),
 ) -> EntityAccountsPgRes:
     """
     Get many entities that are active on the account.
     """
-    # TODO: Need an orchestrator for this
     async with transaction_manager(db=db):
-        offset = pagination.page_offset(page=page, limit=limit)
-        total_count = await entity_account_read_srvc.get_account_entities_ct(
-            account_uuid=account_uuid, db=db
-        )
-        entity_accounts = await entity_account_read_srvc.get_account_entities(
-            account_uuid=account_uuid, limit=limit, offset=offset, db=db
-        )
-        entity_uuids = []
-        for value in entity_accounts:
-            entity_uuids.append(value.entity_uuid)
-        entities = await entities_read_srvc.get_entities_by_uuids(
-            entity_uuids=entity_uuids, db=db
-        )
-        if not isinstance(entities, list):
-            entities = [entities]
-
-        has_more = pagination.has_more_items(
-            total_count=total_count, page=page, limit=limit
-        )
-        return EntityAccountsPgRes(
-            total=total_count,
-            page=page,
-            limit=limit,
-            has_more=has_more,
-            entities=entities,
+        return await entity_accounts_read_orch.paginated_account_entities(
+            account_uuid=account_uuid, page=page, limit=limit, db=db
         )
 
 
