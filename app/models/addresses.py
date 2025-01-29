@@ -22,6 +22,7 @@ class Addresses(SysBase):
     )
 
     parent_uuid: Mapped[uuid4] = mapped_column(UUID(as_uuid=True), nullable=False)
+    # TODO: Make this an enum for parent table
     parent_table: Mapped[str] = mapped_column(String(50), nullable=False)
     sys_value_type_uuid: Mapped[uuid4] = mapped_column(
         UUID(as_uuid=True), nullable=False

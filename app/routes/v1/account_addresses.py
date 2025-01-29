@@ -10,7 +10,7 @@ from ...exceptions import AddressExists, AddressNotExist
 from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
 from ...schemas.addresses import (
-    AddressesCreate,
+    AccountAddressesCreate,
     AddressesDel,
     AddressesDel,
     AddressesPgRes,
@@ -19,7 +19,6 @@ from ...schemas.addresses import (
 )
 from ...services.addresses import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.authetication import SessionService, TokenService
-from ...utilities.set_values import SetField
 from ...utilities import sys_values
 
 serv_session = SessionService()
@@ -95,7 +94,7 @@ async def get_addresses(
 async def create_address(
     response: Response,
     account_uuid: UUID4,
-    address_data: AddressesCreate,
+    address_data: AccountAddressesCreate,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
     addresses_create_srvc: CreateSrvc = Depends(services_container["addresses_create"]),
@@ -107,9 +106,6 @@ async def create_address(
     async with transaction_manager(db=db):
         sys_user, _ = user_token
         sys_values.sys_created_by(sys_user=sys_user.uuid, data=address_data)
-        SetField.set_field_value(
-            field="parent_table", value="accounts", data=address_data
-        )
         return await addresses_create_srvc.create_address(
             parent_uuid=account_uuid, address_data=address_data, db=db
         )

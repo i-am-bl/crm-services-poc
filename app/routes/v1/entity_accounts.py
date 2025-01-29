@@ -16,20 +16,22 @@ from ...exceptions import (
 )
 from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
-from ...orchestrators.entity_accounts import EntityAccountsReadOrch
+from ...orchestrators.entity_accounts import (
+    EntityAccountsReadOrch,
+    EntityAccountsCreateOrch,
+)
 from ...schemas.accounts import AccountsCreate
 from ...schemas.entity_accounts import (
     AccountEntityCreate,
+    EntityAccountParentRes,
     EntityAccountsCreate,
     EntityAccountsDel,
     EntityAccountsPgRes,
     EntityAccountsUpdate,
     EntityAccountsRes,
 )
-from ...services import accounts as accounts_srvcs
 from ...services.authetication import SessionService, TokenService
 from ...services import entity_accounts as entity_accounts_srvcs
-from ...utilities.set_values import SetField
 from ...utilities import sys_values
 
 serv_session = SessionService()
@@ -138,13 +140,10 @@ async def create_entity_account_account(
     entity_account_data: AccountEntityCreate,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
-    entity_accounts_create_srvc: entity_accounts_srvcs.CreateSrvc = Depends(
-        services_container["entity_accounts_create"]
+    entity_accounts_read_orch: EntityAccountsCreateOrch = Depends(
+        orchs_container["entity_accounts_create_orch"]
     ),
-    accounts_create_srvc: accounts_srvcs.CreateSrvc = Depends(
-        services_container["accounts_create"]
-    ),
-) -> EntityAccountsRes:
+) -> EntityAccountParentRes:
     """
     Create new account relationship with no existing account.
 
@@ -152,23 +151,16 @@ async def create_entity_account_account(
     """
 
     async with transaction_manager(db=db):
-        # TODO: need an orchestrator for this
-        sys_user, token = user_token
+        sys_user, _ = user_token
+        # TODO: Review these setter methods
         sys_values.sys_created_by(data=account_data, sys_user=sys_user.uuid)
-        account = await accounts_create_srvc.create_account(
-            account_data=account_data, db=db
-        )
-        await db.flush()
-
         sys_values.sys_created_by(data=entity_account_data, sys_user=sys_user.uuid)
-        SetField.set_field_value(
-            field="account_uuid", value=account.uuid, data=entity_account_data
+        return await entity_accounts_read_orch.create_account(
+            entity_uuid=entity_uuid,
+            account_data=account_data,
+            entity_account_data=entity_account_data,
+            db=db,
         )
-        entity_account = await entity_accounts_create_srvc.create_entity_account(
-            entity_uuid=entity_uuid, entity_account_data=entity_account_data, db=db
-        )
-        await db.flush()
-        return EntityAccountsRes(account=account, entity_account=entity_account)
 
 
 @router.put(

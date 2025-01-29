@@ -25,7 +25,6 @@ serv_token = TokenService()
 router = APIRouter()
 
 
-# TODO: get product meta data for FE load
 @router.get(
     "/{invoice_uuid}/invoice-items/{invoice_item_uuid}/",
     response_model=InvoiceItemsRes,

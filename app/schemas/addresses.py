@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import List, Literal, Optional
 
-from pydantic import UUID4, BaseModel
+from pydantic import UUID4, BaseModel, Field
 
 from ._variables import TimeStamp
+from ..enums.addresses import AddressesParentTable
 
 
 class Addresses(BaseModel):
@@ -17,10 +18,19 @@ class Addresses(BaseModel):
     zip_plus4: Optional[str] = None
 
 
-class AddressesCreate(Addresses):
+class AccountAddressesCreate(Addresses):
 
     parent_uuid: UUID4
-    parent_table: Optional[str] = None
+    parent_table: AddressesParentTable = Field(default=AddressesParentTable.ACCOUNTS)
+    sys_value_type_uuid: Optional[UUID4] = None
+    sys_created_at: datetime = TimeStamp
+    sys_created_by: Optional[UUID4] = None
+
+
+class EntityAddressesCreate(Addresses):
+
+    parent_uuid: UUID4
+    parent_table: AddressesParentTable = Field(default=AddressesParentTable.ENTITIES)
     sys_value_type_uuid: Optional[UUID4] = None
     sys_created_at: datetime = TimeStamp
     sys_created_by: Optional[UUID4] = None
@@ -43,7 +53,7 @@ class AddressesRes(BaseModel):
     id: int
     uuid: UUID4
     parent_uuid: UUID4
-    parent_table: str
+    parent_table: AddressesParentTable
     address_line1: Optional[str] = None
     address_line2: Optional[str] = None
     city: Optional[str] = None

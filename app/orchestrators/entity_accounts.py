@@ -1,9 +1,16 @@
 from pydantic import UUID4
-from ..schemas.entity_accounts import AccountEntitiesPgRes, EntityAccountsPgRes
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..schemas.accounts import AccountsCreate
+from ..schemas.entity_accounts import (
+    AccountEntitiesPgRes,
+    EntityAccountParentRes,
+    EntityAccountsPgRes,
+    EntityAccountsCreate,
+)
 from ..services import accounts as accounts_srvcs
 from ..services import entity_accounts as entity_accounts_srvcs
 from ..services import entities as entities_srvcs
-from sqlalchemy.ext.asyncio import AsyncSession
 from ..utilities import pagination
 
 
@@ -75,3 +82,41 @@ class EntityAccountsReadOrch:
         return EntityAccountsPgRes(
             total=total_count, page=page, limit=limit, has_more=has_more, data=accounts
         )
+
+
+class EntityAccountsCreateOrch:
+    def __init__(
+        self,
+        accounts_create_srvc: accounts_srvcs.CreateSrvc,
+        entity_accounts_create_srvc: entity_accounts_srvcs.CreateSrvc,
+    ):
+        self._accounts_create_srvc: accounts_srvcs.CreateSrvc = accounts_create_srvc
+        self._entity_accounts_create_srvc: entity_accounts_srvcs.CreateSrvc = (
+            entity_accounts_create_srvc
+        )
+
+    @property
+    def accounts_create_srvc(self) -> accounts_srvcs.CreateSrvc:
+        return self._accounts_create_srvc
+
+    @property
+    def entity_accounts_create_srvc(self) -> entity_accounts_srvcs.CreateSrvc:
+        return self._entity_accounts_create_srvc
+
+    async def create_account(
+        self,
+        entity_uuid: UUID4,
+        account_data: AccountsCreate,
+        entity_account_data: EntityAccountsCreate,
+        db: AsyncSession,
+    ):
+        account = await self._accounts_create_srvc.create_account(
+            account_data=account_data, db=db
+        )
+        await db.flush()
+        setattr(entity_account_data, "account_uuid", account.uuid)
+        entity_account = await self._entity_accounts_create_srvc.create_entity_account(
+            entity_uuid=entity_uuid, entity_account_data=entity_account_data, db=db
+        )
+        # TODO: Revisit this to see if this is what we need
+        return EntityAccountParentRes(account=account, entity_account=entity_account)

@@ -21,33 +21,14 @@ from ...models.sys_users import SysUsers
 from ...schemas.entities import (
     EntitiesCreate,
     EntitiesDel,
-    EntitiesRes,
     EntitiesPgRes,
     EntitiesCombinedRes,
-    EntitiesIndividualRes,
 )
-from ...schemas import individuals as s_indiv
-from ...schemas import non_individuals as s_non_indiv
 from ...services.authetication import SessionService, TokenService
 from ...services.entities import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
-from ...services.individuals import IndividualsServices
-from ...services.non_individuals import NonIndividualsServices
-from ...utilities.set_values import SetField, SetSys
 from ...utilities import sys_values
 from ...utilities.utilities import Pagination as pg
 
-# serv_entities_c = EntitiesServices.CreateService()
-# serv_entities_r = EntitiesServices.ReadService()
-# serv_entities_u = EntitiesServices.UpdateService()
-# serv_entities_d = EntitiesServices.DelService()
-serv_indiv_c = IndividualsServices.CreateService()
-serv_indiv_r = IndividualsServices.ReadService()
-serv_indiv_u = IndividualsServices.UpdateService()
-serv_indiv_d = IndividualsServices.DelService()
-serv_non_indiv_c = NonIndividualsServices.CreateService()
-serv_non_indiv_r = NonIndividualsServices.ReadService()
-serv_non_indiv_u = NonIndividualsServices.UpdateService()
-serv_non_indiv_d = NonIndividualsServices.DelService()
 serv_session = SessionService()
 serv_token = TokenService()
 router = APIRouter()
@@ -179,9 +160,7 @@ async def create_entity(
                 raise EntityIndivDataInvalid()
             else:
                 sys_values.sys_created_by(sys_user=sys_user.uuid, data=individual_data)
-                SetField.set_field_value(
-                    field="entity_uuid", value=entity.uuid, data=individual_data
-                )
+                setattr(individual_data, "entity_uuid", entity.uuid)
                 individual = await serv_indiv_c.create_individual(
                     entity_uuid=entity.uuid, individual_data=individual_data, db=db
                 )
@@ -194,9 +173,7 @@ async def create_entity(
                 sys_values.sys_created_by(
                     sys_user=sys_user.uuid, data=non_individual_data
                 )
-                SetField.set_field_value(
-                    field="entity_uuid", value=entity.uuid, data=non_individual_data
-                )
+                setattr(non_individual_data, "entity_uuid", entity.uuid)
                 non_individual = (
                     await serv_non_indiv_c.create_non_individual(
                         entity_uuid=entity.uuid,
