@@ -8,9 +8,7 @@ from ...containers.services import container as services_container
 from ...database.database import get_db, transaction_manager
 from ...exceptions import AccContractExists, AccContractNotExist
 from ...handlers.handler import handle_exceptions
-from ...models import (
-    sys_users as sys_user_mdl,
-)
+from ...models.sys_users import SysUsers
 from ...schemas.account_contracts import (
     AccountContractsCreate,
     AccountContractsDel,
@@ -39,7 +37,7 @@ async def get_account_contract(
     account_uuid: UUID4,
     account_contract_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(get_validated_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_contract_read_srvc: ReadSrvc = Depends(
         services_container["account_contracts_read"]
     ),
@@ -69,7 +67,7 @@ async def get_account_contracts(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(get_validated_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_contract_read_srvc: ReadSrvc = Depends(
         services_container["account_contracts_read"]
     ),
@@ -96,7 +94,7 @@ async def create_account_contract(
     account_uuid: UUID4,
     account_contract_data: AccountContractsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(get_validated_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_contract_create_srvc: CreateSrvc = Depends(
         services_container["account_contracts_create"]
     ),
@@ -129,7 +127,7 @@ async def update_account_contract(
     account_contract_uuid: UUID4,
     account_contract_data: AccountContractsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(get_validated_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_contract_update_srvc: UpdateSrvc = Depends(
         services_container["account_contracts_update"]
     ),
@@ -162,7 +160,7 @@ async def soft_delete_account_contract(
     account_uuid: UUID4,
     account_contract_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(get_validated_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_contracts_delete_srvc: DelSrvc = Depends(
         services_container["account_contracts_delete"]
     ),

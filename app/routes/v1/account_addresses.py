@@ -154,7 +154,7 @@ async def soft_del_address(
     account_uuid: UUID4,
     address_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(lambda: auth_co),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     addresses_delete_srvc: DelSrvc = Depends(services_container["addresses_delete"]),
 ) -> None:
     """
