@@ -13,10 +13,10 @@ class AccountContracts(BaseModel):
 
     account_uuid: UUID4 = Field(..., description="Unique identifier of the account.")
     start_on: Optional[date] = Field(
-        None, description="Start date of the contract.", default=None
+        description="Start date of the contract.", default=None
     )
     end_on: Optional[date] = Field(
-        None, description="End date of the contract.", default=None
+        description="End date of the contract.", default=None
     )
 
 
@@ -29,7 +29,7 @@ class AccountContractsCreate(AccountContracts):
         TimeStamp, description="Timestamp of when the contract was created."
     )
     sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the contract.", default=None
+        description="UUID of the user who created the contract.", default=None
     )
 
 
@@ -42,7 +42,6 @@ class AccountContractsUpdate(BaseModel):
         TimeStamp, description="Timestamp of when the contract was last updated."
     )
     sys_updated_by: Optional[UUID4] = Field(
-        None,
         description="UUID of the user who last updated the contract.",
         default=None,
     )
@@ -57,7 +56,7 @@ class AccountContractsDel(BaseModel):
         TimeStamp, description="Timestamp of when the contract was deleted."
     )
     sys_deleted_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who deleted the contract.", default=None
+        description="UUID of the user who deleted the contract.", default=None
     )
 
 
@@ -70,24 +69,22 @@ class AccountContractsRes(BaseModel):
     uuid: UUID4 = Field(..., description="UUID of the account contract.")
     account_uuid: UUID4 = Field(..., description="UUID of the associated account.")
     start_on: Optional[date] = Field(
-        None, description="Start date of the contract.", default=None
+        description="Start date of the contract.", default=None
     )
     end_on: Optional[date] = Field(
-        None, description="End date of the contract.", default=None
+        description="End date of the contract.", default=None
     )
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp of when the contract was created."
     )
     sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the contract.", default=None
+        description="UUID of the user who created the contract.", default=None
     )
     sys_updated_at: Optional[datetime] = Field(
-        None,
         description="Timestamp of when the contract was last updated.",
         default=None,
     )
     sys_updated_by: Optional[UUID4] = Field(
-        None,
         description="UUID of the user who last updated the contract.",
         default=None,
     )
@@ -122,7 +119,7 @@ class AccountContractsDelRes(AccountContractsRes):
         TimeStamp, description="Timestamp of when the contract was deleted."
     )
     sys_deleted_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who deleted the contract.", default=None
+        None, description="UUID of the user who deleted the contract."
     )
 
     class Config:

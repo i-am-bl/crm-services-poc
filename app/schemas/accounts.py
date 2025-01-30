@@ -11,14 +11,12 @@ class Accounts(BaseModel):
     Model representing an account with optional name and contract dates.
     """
 
-    name: Optional[ConstrainedStr] = Field(
-        None, description="Name of the account.", default=None
-    )
+    name: Optional[ConstrainedStr] = Field(None, description="Name of the account.")
     start_on: Optional[date] = Field(
-        None, description="Start date of the account's validity period.", default=None
+        None, description="Start date of the account's validity period."
     )
     end_on: Optional[date] = Field(
-        None, description="End date of the account's validity period.", default=None
+        None, description="End date of the account's validity period."
     )
 
 
@@ -31,7 +29,7 @@ class AccountsCreate(Accounts):
         TimeStamp, description="Timestamp of when the account was created."
     )
     sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the account.", default=None
+        None, description="UUID of the user who created the account."
     )
 
 
@@ -44,7 +42,7 @@ class AccountsUpdate(BaseModel):
         TimeStamp, description="Timestamp of when the account was last updated."
     )
     sys_updated_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who last updated the account.", default=None
+        None, description="UUID of the user who last updated the account."
     )
 
 
@@ -57,7 +55,7 @@ class AccountsDel(BaseModel):
         TimeStamp, description="Timestamp of when the account was deleted."
     )
     sys_deleted_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who deleted the account.", default=None
+        None, description="UUID of the user who deleted the account."
     )
 
 
@@ -68,28 +66,25 @@ class AccountsRes(BaseModel):
 
     id: int = Field(..., description="Unique identifier of the account entry.")
     uuid: UUID4 = Field(..., description="UUID of the account.")
-    name: Optional[ConstrainedStr] = Field(
-        None, description="Name of the account.", default=None
-    )
+    name: Optional[ConstrainedStr] = Field(None, description="Name of the account.")
     start_on: Optional[date] = Field(
-        None, description="Start date of the account's validity period.", default=None
+        None, description="Start date of the account's validity period."
     )
     end_on: Optional[date] = Field(
-        None, description="End date of the account's validity period.", default=None
+        None, description="End date of the account's validity period."
     )
     sys_created_at: datetime = Field(
         ..., description="Timestamp of when the account was created."
     )
     sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the account.", default=None
+        None, description="UUID of the user who created the account."
     )
     sys_updated_at: Optional[datetime] = Field(
         None,
         description="Timestamp of when the account was last updated.",
-        default=None,
     )
     sys_updated_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who last updated the account.", default=None
+        None, description="UUID of the user who last updated the account."
     )
 
     class Config:
@@ -125,7 +120,7 @@ class AccountsDelRes(AccountsRes):
         ..., description="Timestamp of when the account was deleted."
     )
     sys_deleted_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who deleted the account.", default=None
+        None, description="UUID of the user who deleted the account."
     )
 
     class Config:

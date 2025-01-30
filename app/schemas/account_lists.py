@@ -17,10 +17,10 @@ class AccountLists(BaseModel):
         ..., description="UUID of the associated product list."
     )
     start_on: Optional[date] = Field(
-        None, description="Start date of the account list contract.", default=None
+        None, description="Start date of the account list contract."
     )
     end_on: Optional[date] = Field(
-        None, description="End date of the account list contract.", default=None
+        None, description="End date of the account list contract."
     )
 
 
@@ -33,7 +33,7 @@ class AccountListsCreate(AccountLists):
         TimeStamp, description="Timestamp of when the account list was created."
     )
     sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the account list.", default=None
+        None, description="UUID of the user who created the account list."
     )
 
 
@@ -48,7 +48,6 @@ class AccountListsUpdate(BaseModel):
     sys_updated_by: Optional[UUID4] = Field(
         None,
         description="UUID of the user who last updated the account list.",
-        default=None,
     )
 
 
@@ -61,7 +60,7 @@ class AccountListsDel(BaseModel):
         TimeStamp, description="Timestamp of when the account list was deleted."
     )
     sys_deleted_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who deleted the account list.", default=None
+        None, description="UUID of the user who deleted the account list."
     )
 
 
@@ -77,26 +76,24 @@ class AccountListsRes(BaseModel):
         ..., description="UUID of the associated product list."
     )
     start_on: Optional[date] = Field(
-        None, description="Start date of the account list contract.", default=None
+        None, description="Start date of the account list contract."
     )
     end_on: Optional[date] = Field(
-        None, description="End date of the account list contract.", default=None
+        None, description="End date of the account list contract."
     )
     sys_created_at: datetime = Field(
         ..., description="Timestamp of when the account list was created."
     )
     sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the account list.", default=None
+        None, description="UUID of the user who created the account list."
     )
     sys_updated_at: Optional[datetime] = Field(
         None,
         description="Timestamp of when the account list was last updated.",
-        default=None,
     )
     sys_updated_by: Optional[UUID4] = Field(
         None,
         description="UUID of the user who last updated the account list.",
-        default=None,
     )
 
     class Config:
@@ -130,7 +127,7 @@ class AccountListsDelRes(AccountListsRes):
         TimeStamp, description="Timestamp of when the account list was deleted."
     )
     sys_deleted_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who deleted the account list.", default=None
+        None, description="UUID of the user who deleted the account list."
     )
 
     class Config:

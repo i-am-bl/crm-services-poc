@@ -15,10 +15,10 @@ class AccountProducts(BaseModel):
     account_uuid: UUID4 = Field(..., description="UUID of the associated account.")
     product_uuid: UUID4 = Field(..., description="UUID of the associated product.")
     start_on: Optional[date] = Field(
-        None, description="Start date of the account product contract.", default=None
+        None, description="Start date of the account product contract."
     )
     end_on: Optional[date] = Field(
-        None, description="End date of the account product contract.", default=None
+        None, description="End date of the account product contract."
     )
 
 
@@ -33,7 +33,6 @@ class AccountProductsCreate(AccountProducts):
     sys_created_by: Optional[UUID4] = Field(
         None,
         description="UUID of the user who created the account product.",
-        default=None,
     )
 
 
@@ -43,10 +42,10 @@ class AccountProductsUpdate(BaseModel):
     """
 
     start_on: Optional[date] = Field(
-        None, description="Start date of the account product contract.", default=None
+        None, description="Start date of the account product contract."
     )
     end_on: Optional[date] = Field(
-        None, description="End date of the account product contract.", default=None
+        None, description="End date of the account product contract."
     )
     sys_updated_at: datetime = Field(
         TimeStamp, description="Timestamp of when the account product was last updated."
@@ -54,7 +53,6 @@ class AccountProductsUpdate(BaseModel):
     sys_updated_by: Optional[UUID4] = Field(
         None,
         description="UUID of the user who last updated the account product.",
-        default=None,
     )
 
 
@@ -69,7 +67,6 @@ class AccountProductsDel(BaseModel):
     sys_deleted_by: Optional[UUID4] = Field(
         None,
         description="UUID of the user who deleted the account product.",
-        default=None,
     )
 
 
@@ -83,10 +80,10 @@ class AccountProductsRes(BaseModel):
     account_uuid: UUID4 = Field(..., description="UUID of the associated account.")
     product_uuid: UUID4 = Field(..., description="UUID of the associated product.")
     start_on: Optional[date] = Field(
-        None, description="Start date of the account product contract.", default=None
+        None, description="Start date of the account product contract."
     )
     end_on: Optional[date] = Field(
-        None, description="End date of the account product contract.", default=None
+        None, description="End date of the account product contract."
     )
     sys_created_at: datetime = Field(
         ..., description="Timestamp of when the account product was created."
@@ -94,17 +91,14 @@ class AccountProductsRes(BaseModel):
     sys_created_by: Optional[UUID4] = Field(
         None,
         description="UUID of the user who created the account product.",
-        default=None,
     )
     sys_updated_at: Optional[datetime] = Field(
         None,
         description="Timestamp of when the account product was last updated.",
-        default=None,
     )
     sys_updated_by: Optional[UUID4] = Field(
         None,
         description="UUID of the user who last updated the account product.",
-        default=None,
     )
 
     class Config:
@@ -157,7 +151,6 @@ class AccountProductsDelRes(AccountProductsRes):
     sys_deleted_by: Optional[UUID4] = Field(
         None,
         description="UUID of the user who deleted the account product.",
-        default=None,
     )
 
     class Config:
