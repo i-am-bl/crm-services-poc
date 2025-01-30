@@ -3,6 +3,12 @@ from pydantic import UUID4
 
 SysFieldSetter = Callable[[object | List[object], UUID4], object | List[object]]
 
+"""
+sys_values utilities provide reusable setter methods for system fields. These utilities manage
+the injection of user-related information (such as creation, update, or deletion) on objects or 
+lists of objects during I/O operations.
+"""
+
 
 def set_sys_field(
     data: object | List[object],
