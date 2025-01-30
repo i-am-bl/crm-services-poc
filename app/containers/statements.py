@@ -45,6 +45,12 @@ from ..statements.websites import WebsitesStms
 
 
 class StatementsContainer(TypedDict):
+    """
+    A container that holds dependencies related to statements.
+
+    This container is used to manage and inject dependencies for statement classes.
+    """
+
     account_contracts_stms: AccountContractStms
     account_lists_stms: AccountListsStms
     account_products_stms: AccountProductsStms
@@ -67,6 +73,7 @@ class StatementsContainer(TypedDict):
     product_list_items_stms: ProductListItems
 
 
+# Container for initializing statements classes and injecting their dependencies.
 container: StatementsContainer = {
     "account_contracts_stms": lambda: AccountContractStms(model=AccountContracts),
     "account_lists_stms": lambda: AccountListsStms(model=AccountLists),

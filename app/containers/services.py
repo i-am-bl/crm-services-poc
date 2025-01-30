@@ -45,6 +45,12 @@ from ..services import websites as websites_srvcs
 
 
 class ServicesContainer(TypedDict):
+    """
+    A container that holds dependencies related to services.
+
+    This container is used to manage and inject dependencies for services.
+    """
+
     # account contract services
     account_contracts_create: account_contracts_srvcs.CreateSrvc
     account_contracts_read: account_contracts_srvcs.ReadSrvc
@@ -147,6 +153,7 @@ class ServicesContainer(TypedDict):
     websites_delete: websites_srvcs.DelSrvc
 
 
+# Container for initializing service objects and injecting their dependencies.
 container: ServicesContainer = {
     # account contract services
     "account_contracts_create": lambda: account_contracts_srvcs.CreateSrvc(

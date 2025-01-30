@@ -11,6 +11,13 @@ from .services import container as services_container
 
 
 class OrchestratorsContainer(TypedDict):
+    """
+    A container for orchestrator dependencies.
+
+    This container holds orchestrator services that are responsible for orchestrating
+    complex business logic, typically involving multiple service calls and interactions.
+    """
+
     accounts_lists_read_orch: AccountListsReadOrch
     account_products_read_orch: AccountProductsReadOrch
     entities_create_orch: EntitiesCreateOrch
@@ -18,6 +25,7 @@ class OrchestratorsContainer(TypedDict):
     entity_accounts_create_orch: EntityAccountsCreateOrch
 
 
+# Container initialization for orchestration services.
 container: OrchestratorsContainer = {
     "accounts_lists_read_orch": lambda: AccountListsReadOrch(
         account_lists_read_srvc=services_container["account_lists_read"],
