@@ -1,5 +1,5 @@
 from pydantic import UUID4
-from sqlalchemy import Select, and_, func, update, values
+from sqlalchemy import Select, Update, and_, func, update, values
 
 from ..models.invoices import Invoices
 from ..utilities.data import set_empty_strs_null
