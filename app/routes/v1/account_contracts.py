@@ -19,11 +19,10 @@ from ...schemas.account_contracts import (
     AccountContractsUpdate,
 )
 from ...services.account_contracts import ReadSrvc, CreateSrvc, UpdateSrvc, DeleteSrvc
-from ...services.authetication import SessionService, TokenService
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -33,16 +32,14 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccContractNotExist])
 async def get_account_contract(
     response: Response,
     account_uuid: UUID4,
     account_contract_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
-        serv_session.validate_session
-    ),
+    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(get_validated_session),
     account_contract_read_srvc: ReadSrvc = Depends(
         services_container["account_contracts_read"]
     ),
@@ -64,7 +61,7 @@ async def get_account_contract(
     response_model=AccountContractsPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccContractNotExist])
 async def get_account_contracts(
     response: Response,
@@ -72,9 +69,7 @@ async def get_account_contracts(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
-        serv_session.validate_session
-    ),
+    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(get_validated_session),
     account_contract_read_srvc: ReadSrvc = Depends(
         services_container["account_contracts_read"]
     ),
@@ -94,16 +89,14 @@ async def get_account_contracts(
     response_model=AccountContractsRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccContractNotExist, AccContractExists])
 async def create_account_contract(
     response: Response,
     account_uuid: UUID4,
     account_contract_data: AccountContractsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
-        serv_session.validate_session
-    ),
+    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(get_validated_session),
     account_contract_create_srvc: CreateSrvc = Depends(
         services_container["account_contracts_create"]
     ),
@@ -128,7 +121,7 @@ async def create_account_contract(
     response_model=AccountContractsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccContractNotExist])
 async def update_account_contract(
     response: Response,
@@ -136,9 +129,7 @@ async def update_account_contract(
     account_contract_uuid: UUID4,
     account_contract_data: AccountContractsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
-        serv_session.validate_session
-    ),
+    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(get_validated_session),
     account_contract_update_srvc: UpdateSrvc = Depends(
         services_container["account_contracts_update"]
     ),
@@ -164,16 +155,14 @@ async def update_account_contract(
     response_model=None,
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccContractNotExist])
 async def soft_delete_account_contract(
     response: Response,
     account_uuid: UUID4,
     account_contract_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(
-        serv_session.validate_session
-    ),
+    user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(get_validated_session),
     account_contracts_delete_srvc: DeleteSrvc = Depends(
         services_container["account_contracts_delete"]
     ),

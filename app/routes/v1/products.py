@@ -16,12 +16,11 @@ from ...schemas.products import (
     ProductsUpdate,
     ProductsRes,
 )
-from ...services.authetication import SessionService, TokenService
 from ...services.products import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -31,13 +30,13 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductsNotExist])
 async def get_product(
     response: Response,
     product_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     products_read_srvc: ReadSrvc = Depends(services_container["products_read"]),
 ) -> ProductsRes:
 
@@ -50,14 +49,14 @@ async def get_product(
     response_model=ProductsPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductsNotExist])
 async def get_products(
     response: Response,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     products_read_srvc: ReadSrvc = Depends(services_container["products_read"]),
 ) -> ProductsPgRes:
     """
@@ -75,13 +74,13 @@ async def get_products(
     response_model=ProductsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductsNotExist, ProductsExists])
 async def create_product(
     response: Response,
     product_data: ProductsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     products_create_srvc: CreateSrvc = Depends(services_container["products_create"]),
 ) -> ProductsRes:
     """
@@ -101,14 +100,14 @@ async def create_product(
     response_model=ProductsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductsNotExist])
 async def update_product(
     response: Response,
     product_uuid: UUID4,
     product_data: ProductsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     products_update_srvc: UpdateSrvc = Depends(services_container["products_update"]),
 ) -> ProductsRes:
     """
@@ -127,13 +126,13 @@ async def update_product(
     "/{product_uuid}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductsNotExist])
 async def soft_del_product(
     response: Response,
     product_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     products_delete_srvc: DelSrvc = Depends(services_container["products_delete"]),
 ) -> None:
     """

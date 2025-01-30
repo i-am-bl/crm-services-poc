@@ -16,13 +16,11 @@ from ...schemas.product_list_items import (
     ProductListItemsRes,
     ProductListItemsUpdate,
 )
-from ...services.authetication import SessionService, TokenService
 from ...services.product_list_items import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -32,14 +30,14 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductListItemNotExist])
 async def get_product_list_item(
     response: Response,
     product_list_uuid: UUID4,
     product_list_item_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     product_list_items_read_srvc: ReadSrvc = Depends(
         service_container["product_list_items_read"]
     ),
@@ -59,7 +57,7 @@ async def get_product_list_item(
     response_model=ProductListItemsPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductListItemNotExist])
 async def get_product_list_item(
     response: Response,
@@ -67,7 +65,7 @@ async def get_product_list_item(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     product_list_items_read_srvc: ReadSrvc = Depends(
         service_container["product_list_items_read"]
     ),
@@ -88,14 +86,14 @@ async def get_product_list_item(
     response_model=List[ProductListItemsRes],
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductListItemNotExist, ProductListItemExists])
 async def create_product_list_items(
     response: Response,
     product_list_uuid: UUID4,
     product_list_item_data: List[ProductListItemsCreate],
     db: AsyncSession = Depends(get_db),
-    user_token: str = Depends(serv_session.validate_session),
+    user_token: str = Depends(get_validated_session),
     product_list_items_create_srvc: CreateSrvc = Depends(
         service_container["product_list_items_create"]
     ),
@@ -121,7 +119,7 @@ async def create_product_list_items(
     response_model=ProductListItemsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductListItemNotExist])
 async def update_product_list_item(
     response: Response,
@@ -129,7 +127,7 @@ async def update_product_list_item(
     product_list_item_uuid: UUID4,
     product_list_item_data: ProductListItemsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     product_list_items_update_srvc: UpdateSrvc = Depends(
         service_container["product_list_items_update"]
     ),
@@ -153,14 +151,14 @@ async def update_product_list_item(
     "/{product_list_uuid}/product-list-items/{product_list_item_uuid}/",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductListItemNotExist])
 async def soft_del_product_list_item(
     response: Response,
     product_list_uuid: UUID4,
     product_list_item_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     product_list_items_delete_srvc: DelSrvc = Depends(
         service_container["product_list_items_delete"]
     ),

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 from ...containers.services import container as services_container
 from ...database.database import get_db, transaction_manager
 from ...exceptions import AddressExists, AddressNotExist
@@ -18,11 +19,10 @@ from ...schemas.addresses import (
     AddressesUpdate,
 )
 from ...services.addresses import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
-from ...services.authetication import SessionService, TokenService
+from ...services.token import set_auth_cookie
+from ...utilities.auth import get_validated_session
 from ...utilities import sys_values
 
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -32,14 +32,14 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AddressNotExist])
 async def get_address(
     response: Response,
     account_uuid: UUID4,
     address_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     addresses_read_srvc: ReadSrvc = Depends(services_container["addresses_read"]),
 ) -> AddressesRes:
     """get one address"""
@@ -58,7 +58,7 @@ async def get_address(
     response_model=AddressesPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AddressNotExist])
 async def get_addresses(
     response: Response,
@@ -66,7 +66,7 @@ async def get_addresses(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     addresses_read_srvc: ReadSrvc = Depends(services_container["addresses_read"]),
 ) -> AddressesPgRes:
     """
@@ -88,14 +88,14 @@ async def get_addresses(
     response_model=AddressesRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AddressExists, AddressNotExist])
 async def create_address(
     response: Response,
     account_uuid: UUID4,
     address_data: AccountAddressesCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     addresses_create_srvc: CreateSrvc = Depends(services_container["addresses_create"]),
 ) -> AddressesRes:
     """
@@ -115,7 +115,7 @@ async def create_address(
     response_model=AddressesRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AddressNotExist])
 async def update_address(
     response: Response,
@@ -123,7 +123,7 @@ async def update_address(
     address_uuid: UUID4,
     address_data: AddressesUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     addresses_update_srvc: UpdateSrvc = Depends(services_container["addresses_update"]),
 ) -> AddressesRes:
     """
@@ -147,14 +147,14 @@ async def update_address(
     response_model=None,
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AddressNotExist])
 async def soft_del_address(
     response: Response,
     account_uuid: UUID4,
     address_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(lambda: auth_co),
     addresses_delete_srvc: DelSrvc = Depends(services_container["addresses_delete"]),
 ) -> None:
     """

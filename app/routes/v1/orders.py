@@ -16,12 +16,11 @@ from ...schemas.orders import (
     OrdersUpdate,
     OrdersRes,
 )
-from ...services.authetication import SessionService, TokenService
 from ...services.orders import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -31,13 +30,13 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([OrderNotExist])
 async def get_order(
     response: Response,
     order_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     orders_read_srvc: ReadSrvc = Depends(services_container["orders_read"]),
 ) -> OrdersRes:
     """
@@ -53,14 +52,14 @@ async def get_order(
     response_model=OrdersPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([OrderNotExist])
 async def get_orders(
     response: Response,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     orders_read_srvc: ReadSrvc = Depends(services_container["orders_read"]),
 ) -> OrdersPgRes:
     """
@@ -76,13 +75,13 @@ async def get_orders(
     response_model=OrdersRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([OrderNotExist, OrderExists])
 async def create_order(
     response: Response,
     order_data: OrdersCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     orders_create_srvc: CreateSrvc = Depends(services_container["orders_create"]),
 ) -> OrdersRes:
     """
@@ -100,14 +99,14 @@ async def create_order(
     response_model=OrdersRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([OrderNotExist])
 async def update_order(
     response: Response,
     order_uuid: UUID4,
     order_data: OrdersUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     orders_update_srvc: UpdateSrvc = Depends(services_container["orders_update"]),
 ) -> OrdersRes:
     """
@@ -126,13 +125,13 @@ async def update_order(
     "/{order_uuid}/",
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([OrderNotExist])
 async def soft_del_order(
     response: Response,
     order_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     orders_delete_srvc: DelSrvc = Depends(services_container["orders_delete"]),
 ) -> None:
     """

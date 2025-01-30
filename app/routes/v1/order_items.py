@@ -16,12 +16,10 @@ from ...schemas.order_items import (
     OrderItemsRes,
     OrderItemsUpdate,
 )
-from ...services.authetication import SessionService, TokenService
 from ...services.order_items import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
-from ...utilities.set_values import SetSys
-
-serv_session = SessionService()
-serv_token = TokenService()
+from ...services.token import set_auth_cookie
+from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
 router = APIRouter()
 
@@ -32,14 +30,14 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([OrderItemNotExist])
 async def get_order_item(
     response: Response,
     order_uuid: UUID4,
     order_item_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     order_items_read_srvc: ReadSrvc = Depends(services_container["order_items_read"]),
 ) -> OrderItemsRes:
     """
@@ -57,7 +55,7 @@ async def get_order_item(
     response_model=OrderItemsPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([OrderItemNotExist])
 async def get_order_items(
     response: Response,
@@ -65,7 +63,7 @@ async def get_order_items(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     order_items_read_srvc: ReadSrvc = Depends(services_container["order_items_read"]),
 ) -> OrderItemsPgRes:
     """
@@ -83,14 +81,14 @@ async def get_order_items(
     response_model=List[OrderItemsRes],
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 # @handle_exceptions([OrderItemNotExist, OrderItemExists])
 async def create_order_item(
     response: Response,
     order_uuid: UUID4,
     order_item_data: List[OrderItemsCreate],
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     order_items_create_srvc: CreateSrvc = Depends(
         services_container["order_items_create"]
     ),
@@ -101,7 +99,7 @@ async def create_order_item(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        SetSys.sys_created_by(data=order_item_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(data=order_item_data, sys_user=sys_user.uuid)
         return await order_items_create_srvc.create_order_item(
             order_uuid=order_uuid, order_item_data=order_item_data, db=db
         )
@@ -112,7 +110,7 @@ async def create_order_item(
     response_model=OrderItemsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([OrderItemNotExist])
 async def update_order_item(
     response: Response,
@@ -120,7 +118,7 @@ async def update_order_item(
     order_item_uuid: UUID4,
     order_item_data: OrderItemsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     order_items_update_srvc: UpdateSrvc = Depends(
         services_container["order_items_update"]
     ),
@@ -131,7 +129,7 @@ async def update_order_item(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        SetSys.sys_updated_by(data=order_item_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=order_item_data, sys_user=sys_user.uuid)
         return await order_items_update_srvc.update_order_item(
             order_uuid=order_uuid,
             order_item_uuid=order_item_uuid,
@@ -144,14 +142,14 @@ async def update_order_item(
     "/{order_uuid}/order-items/{order_item_uuid}/",
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([OrderItemNotExist])
 async def soft_del_order_item(
     response: Response,
     order_uuid: UUID4,
     order_item_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     order_items_delete_srvc: DelSrvc = Depends(
         services_container["order_items_delete"]
     ),
@@ -163,7 +161,7 @@ async def soft_del_order_item(
     async with transaction_manager(db=db):
         order_item_data = OrderItemsDel()
         sys_user, _ = user_token
-        SetSys.sys_deleted_by(data=order_item_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=order_item_data, sys_user=sys_user.uuid)
         return await order_items_delete_srvc.soft_del_order_item(
             order_uuid=order_uuid,
             order_item_uuid=order_item_uuid,

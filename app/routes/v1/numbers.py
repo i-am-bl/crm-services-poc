@@ -16,14 +16,12 @@ from ...schemas.numbers import (
     NumbersRes,
     NumbersUpdate,
 )
-from ...services.authetication import SessionService, TokenService
 from ...services.numbers import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
-
+from ...utilities.auth import get_validated_session
 
 router = APIRouter()
-serv_session = SessionService()
-serv_token = TokenService()
 
 
 @router.get(
@@ -32,14 +30,14 @@ serv_token = TokenService()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NumbersNotExist])
 async def get_number(
     response: Response,
     entity_uuid: UUID4,
     number_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
+    user_token: Tuple = Depends(get_validated_session),
     numbers_read_srvc: ReadSrvc = Depends(services_container["numbers_read"]),
 ) -> NumbersRes:
     """get one number by entity"""
@@ -57,7 +55,7 @@ async def get_number(
     response_model=NumbersPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NumbersNotExist])
 async def get_numbers(
     response: Response,
@@ -65,7 +63,7 @@ async def get_numbers(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     numbers_read_srvc: ReadSrvc = Depends(services_container["numbers_read"]),
 ) -> NumbersPgRes:
     """
@@ -83,14 +81,14 @@ async def get_numbers(
     response_model=NumbersRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NumbersNotExist, NumberExists])
 async def create_number(
     response: Response,
     entity_uuid: UUID4,
     number_data: NumbersCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     numbers_create_srvc: CreateSrvc = Depends(services_container["numbers_create"]),
 ) -> NumbersRes:
     """
@@ -110,7 +108,7 @@ async def create_number(
     response_model=NumbersRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NumbersNotExist])
 async def update_number(
     response: Response,
@@ -118,7 +116,7 @@ async def update_number(
     number_uuid: UUID4,
     number_data: NumbersUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     numbers_update_srvc: UpdateSrvc = Depends(services_container["numbers_update"]),
 ) -> NumbersRes:
     """
@@ -140,14 +138,14 @@ async def update_number(
     "/{entity_uuid}/numbers/{number_uuid}/",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NumbersNotExist])
 async def soft_del_number(
     response: Response,
     entity_uuid: UUID4,
     number_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     numbers_delete_srvc: DelSrvc = Depends(services_container["numbers_delete"]),
 ) -> None:
     """

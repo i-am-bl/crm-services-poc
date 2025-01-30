@@ -7,10 +7,8 @@ from ...database.database import get_db, transaction_manager
 from ...exceptions import SysUserExists, SysUserNotExist
 from ...handlers.handler import handle_exceptions
 from ...schemas.sys_users import SysUsersCreate, SysUsersRes
-from ...services.authetication import TokenService
 from ...services.sys_users import CreateSrvc
 
-serv_token = TokenService()
 router = APIRouter()
 
 

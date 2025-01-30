@@ -19,11 +19,10 @@ from ...schemas.account_products import (
     AccountProductsUpdate,
 )
 from ...services import account_products as account_products_srvcs
-from ...services.authetication import SessionService, TokenService
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-serv_session = SessionService()
-serv_token = TokenService()
 
 router = APIRouter()
 
@@ -34,14 +33,14 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccProductstNotExist])
 async def get_account_products(
     response: Response,
     account_uuid: UUID4,
     account_product_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_products_read_srvc: account_products_srvcs.ReadSrvc = Depends(
         services_container["account_products_read"]
     ),
@@ -61,7 +60,7 @@ async def get_account_products(
     response_model=AccountProductsOrchPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccProductstNotExist, ProductsNotExist])
 async def get_account_products(
     response: Response,
@@ -69,7 +68,7 @@ async def get_account_products(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_products_read_orchs: AccountProductsReadOrch = Depends(
         orchs_container["account_products_read_orch"]
     ),
@@ -88,14 +87,14 @@ async def get_account_products(
     response_model=AccountProductsRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccProductstNotExist, AccProductsExists])
 async def create_account_product(
     response: Response,
     account_uuid: UUID4,
     account_product_data: AccountProductsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_products_create_srvc: account_products_srvcs.CreateSrvc = Depends(
         services_container["account_products_create"]
     ),
@@ -121,7 +120,7 @@ async def create_account_product(
     response_model=AccountProductsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccProductstNotExist])
 async def update_account_product(
     response: Response,
@@ -129,7 +128,7 @@ async def update_account_product(
     account_product_uuid: UUID4,
     account_product_data: AccountProductsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_products_update_srvc: account_products_srvcs.UpdateSrvc = Depends(
         services_container["account_products_update"]
     ),
@@ -154,14 +153,14 @@ async def update_account_product(
     response_model=None,
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccProductstNotExist])
 async def soft_del_account_product(
     response: Response,
     account_uuid: UUID4,
     account_product_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_products_delete_srvc: account_products_srvcs.DelSrvc = Depends(
         services_container["account_products_delete"]
     ),

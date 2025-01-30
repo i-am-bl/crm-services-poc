@@ -16,12 +16,11 @@ from ...schemas.invoice_items import (
     InvoiceItemsUpdate,
     InvoiceItemsRes,
 )
-from ...services.authetication import SessionService, TokenService
 from ...services.invoice_items import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -31,14 +30,14 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([InvoiceItemNotExist])
 async def get_invoice_item(
     response: Response,
     invoice_uuid: UUID4,
     invoice_item_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     invoice_items_read_srvc: ReadSrvc = Depends(
         service_container["invoice_items_read"]
     ),
@@ -59,7 +58,7 @@ async def get_invoice_item(
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([InvoiceItemNotExist])
 async def get_invoice_items(
     response: Response,
@@ -67,7 +66,7 @@ async def get_invoice_items(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=10),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     invoice_items_read_srvc: ReadSrvc = Depends(
         service_container["invoice_items_read"]
     ),
@@ -87,14 +86,14 @@ async def get_invoice_items(
     response_model=List[InvoiceItemsRes],
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([InvoiceItemNotExist, InvoiceItemExists])
 async def create_invoice_item(
     response: Response,
     invoice_uuid: UUID4,
     invoice_item_data: List[InvoiceItemsCreate],
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     invoice_items_create_srvc: CreateSrvc = Depends(
         service_container["invoice_items_create"]
     ),
@@ -116,7 +115,7 @@ async def create_invoice_item(
     response_model=InvoiceItemsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([InvoiceItemNotExist])
 async def update_invoice_item(
     response: Response,
@@ -124,7 +123,7 @@ async def update_invoice_item(
     invoice_item_uuid: UUID4,
     invoice_item_data: InvoiceItemsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     invoice_items_update_srvc: UpdateSrvc = Depends(
         service_container["invoice_items_update"]
     ),
@@ -148,14 +147,14 @@ async def update_invoice_item(
     "/{invoice_uuid}/invoice-items/{invoice_item_uuid}/",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([InvoiceItemNotExist])
 async def soft_del_invoice_item(
     response: Response,
     invoice_uuid: UUID4,
     invoice_item_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     invoice_items_delete_srvc: DelSrvc = Depends(
         service_container["invoice_items_delete"]
     ),

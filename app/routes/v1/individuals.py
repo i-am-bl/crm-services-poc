@@ -15,13 +15,11 @@ from ...schemas.individuals import (
     IndividualsRes,
     IndividualsDel,
 )
-from ...services.authetication import SessionService, TokenService
 from ...services.individuals import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -30,14 +28,14 @@ router = APIRouter()
     response_model=IndividualsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([IndividualNotExist])
 async def get_individual(
     response: Response,
     entity_uuid: UUID4,
     individual_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     individuals_read_srvc: ReadSrvc = Depends(services_container["individuals_read"]),
 ) -> IndividualsRes:
     """get one individual"""
@@ -53,14 +51,14 @@ async def get_individual(
     response_model=IndividualsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([IndividualNotExist, IndividualExists])
 async def create_individual(
     response: Response,
     entity_uuid: UUID4,
     individual_data: IndividualsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     individuals_create_srvc: CreateSrvc = Depends(
         services_container["individuals_create"]
     ),
@@ -80,7 +78,7 @@ async def create_individual(
     response_model=IndividualsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([IndividualNotExist])
 async def update_individual(
     response: Response,
@@ -88,7 +86,7 @@ async def update_individual(
     individual_uuid: UUID4,
     individual_data: IndividualsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
+    user_token: Tuple = Depends(get_validated_session),
     individuals_update_srvc: UpdateSrvc = Depends(
         services_container["individuals_update"]
     ),
@@ -110,14 +108,14 @@ async def update_individual(
     "/{entity_uuid}/individuals/{individual_uuid}/",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([IndividualNotExist])
 async def soft_del_individual(
     response: Response,
     entity_uuid: UUID4,
     individual_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     individuals_delete_srvc: DelSrvc = Depends(
         services_container["individuals_delete"]
     ),

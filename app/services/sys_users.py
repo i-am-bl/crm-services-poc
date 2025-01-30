@@ -3,7 +3,6 @@ from typing import List
 
 from config import settings
 from pydantic import UUID4
-from sqlalchemy import Select, Update, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import constants as cnst
@@ -43,7 +42,7 @@ class ReadSrvc:
         self,
         sys_user_uuid: UUID4,
         db: AsyncSession,
-    ):
+    ) -> SysUsersRes:
         statement = self._statements.get_sys_user(sys_user_uuid=sys_user_uuid)
         sys_user = await self._db_ops.return_one_row(
             service=cnst.SYS_USER_READ_SERV, statement=statement, db=db
@@ -54,7 +53,7 @@ class ReadSrvc:
         self,
         username: str,
         db: AsyncSession,
-    ):
+    ) -> SysUsersRes:
         statement = self._statements.get_sys_user_by_username(username=username)
         sys_user = await self._db_ops.return_one_row(
             service=cnst.SYS_USER_READ_SERV, statement=statement, db=db

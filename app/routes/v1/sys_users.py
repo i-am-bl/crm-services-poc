@@ -17,12 +17,11 @@ from ...schemas.sys_users import (
     SysUsersRes,
     SysUsersUpdate,
 )
-from ...services.authetication import SessionService, TokenService
 from ...services.sys_users import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -31,13 +30,13 @@ router = APIRouter()
     response_model=SysUsersRes,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([SysUserNotExist])
 async def get_sys_user(
     response: Response,
     sys_user_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     sys_users_read_srvc: ReadSrvc = Depends(services_container["sys_users_read"]),
 ) -> SysUsersRes:
     """get one user"""
@@ -52,14 +51,14 @@ async def get_sys_user(
     "/",
     response_model=SysUsersPgRes,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([SysUserNotExist])
 async def get_sys_users(
     response: Response,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     sys_users_read_srvc: ReadSrvc = Depends(services_container["sys_users_read"]),
 ) -> SysUsersPgRes:
     """
@@ -75,12 +74,12 @@ async def get_sys_users(
     response_model=SysUsersRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([SysUserNotExist, SysUserExists])
 async def create_sys_user(
     sys_user_data: SysUsersCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     sys_users_create_srvc: CreateSrvc = Depends(services_container["sys_users_create"]),
 ) -> SysUsersRes:
     """
@@ -99,14 +98,14 @@ async def create_sys_user(
     response_model=SysUsersRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([SysUserNotExist])
 async def update_sys_user(
     response: Response,
     sys_user_uuid: str,
     sys_user_data: SysUsersUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     sys_users_update_srvc: UpdateSrvc = Depends(services_container["sys_users_update"]),
 ) -> SysUsersRes:
     """
@@ -126,13 +125,13 @@ async def update_sys_user(
     response_model=SysUsersRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([SysUserNotExist])
 async def disable_sys_user(
     response: Response,
     sys_user_uuid: str,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     sys_users_update_srvc: UpdateSrvc = Depends(services_container["sys_users_update"]),
 ) -> SysUsersRes:
     """disable one user"""
@@ -150,13 +149,13 @@ async def disable_sys_user(
     response_model=SysUsersRes,
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([SysUserNotExist])
 async def del_sys_user(
     response: Response,
     sys_user_uuid: str,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     sys_users_delete_srvc: DelSrvc = Depends(services_container["sys_users_delete"]),
 ) -> None:
     """

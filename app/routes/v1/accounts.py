@@ -17,11 +17,10 @@ from ...schemas.accounts import (
     AccountsUpdate,
 )
 from ...services.accounts import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
-from ...services.authetication import SessionService, TokenService
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -30,13 +29,13 @@ router = APIRouter()
     response_model=AccountsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccsNotExist])
 async def get_account(
     response: Response,
     account_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     accounts_read_srvc: ReadSrvc = Depends(services_container["accounts_read"]),
 ) -> AccountsRes:
     """
@@ -52,14 +51,14 @@ async def get_account(
     response_model=AccountsPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccsNotExist])
 async def get_accounts(
     response: Response,
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     accounts_read_srvc: ReadSrvc = Depends(services_container["accounts_read"]),
 ) -> AccountsPgRes:
     """
@@ -77,13 +76,13 @@ async def get_accounts(
     response_model=AccountsRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccsNotExist])
 async def create_account(
     response: Response,
     account_data: AccountsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     accounts_create_srvc: CreateSrvc = Depends(services_container["accounts_create"]),
 ) -> AccountsRes:
     """
@@ -106,14 +105,14 @@ async def create_account(
     response_model=AccountsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccsNotExist])
 async def update_account(
     response: Response,
     account_uuid: UUID4,
     account_data: AccountsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     update_accounts_srvc: UpdateSrvc = Depends(services_container["accounts_update"]),
 ) -> AccountsRes:
     """
@@ -132,13 +131,13 @@ async def update_account(
     "/{account_uuid}/",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccsNotExist])
 async def soft_del_account(
     response: Response,
     account_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     accounts_delete_srvc: DelSrvc = Depends(services_container["accounts_delete"]),
 ) -> None:
     """

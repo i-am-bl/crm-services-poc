@@ -16,14 +16,12 @@ from ...schemas.emails import (
     EmailsPgRes,
     EmailsDel,
 )
-from ...services.authetication import SessionService, TokenService
-from ...services.emails import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
+from ...services.emails import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
-
+from ...utilities.auth import get_validated_session
 
 router = APIRouter()
-serv_session = SessionService()
-serv_token = TokenService()
 
 
 @router.get(
@@ -32,14 +30,14 @@ serv_token = TokenService()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EmailNotExist])
 async def get_email(
     response: Response,
     entity_uuid: UUID4,
     email_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     emails_read_srvc: ReadSrvc = Depends(services_container["emails_read"]),
 ) -> EmailsRes:
     """get one entity email"""
@@ -55,7 +53,7 @@ async def get_email(
     response_model=EmailsPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EmailNotExist])
 async def get_emails(
     response: Response,
@@ -63,7 +61,7 @@ async def get_emails(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     emails_read_srvc: ReadSrvc = Depends(services_container["emails_read"]),
 ) -> EmailsPgRes:
     """
@@ -81,14 +79,14 @@ async def get_emails(
     response_model=EmailsRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EmailNotExist, EmailExists])
 async def create_email(
     response: Response,
     entity_uuid,
     email_data: EmailsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     emails_create_srvc: CreateSrvc = Depends(services_container["emails_create"]),
 ) -> EmailsCreate:
     """
@@ -108,7 +106,7 @@ async def create_email(
     response_model=EmailsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EmailNotExist])
 async def update_email(
     response: Response,
@@ -116,7 +114,7 @@ async def update_email(
     email_uuid: UUID4,
     email_data: EmailsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     user_update_srvc: UpdateSrvc = Depends(services_container["emails_update"]),
 ) -> EmailsUpdate:
     """
@@ -138,14 +136,14 @@ async def update_email(
     "/{entity_uuid}/emails/{email_uuid}",
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EmailNotExist])
 async def soft_del_email(
     response: Response,
     entity_uuid: UUID4,
     email_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     user_delete_srvc: DelSrvc = Depends(services_container["emails_delete"]),
 ) -> None:
     """

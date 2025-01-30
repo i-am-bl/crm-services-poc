@@ -20,12 +20,10 @@ from ...schemas.account_lists import (
     AccountListsDel,
 )
 from ...services.account_lists import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
-from ...services.authetication import SessionService, TokenService
-
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-serv_session = SessionService()
-serv_token = TokenService()
 
 router = APIRouter()
 
@@ -36,13 +34,13 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccListNotExist])
 async def get_account_list(
     account_uuid: UUID4,
     account_list_uuid: UUID4,
     response: Response,
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     db: AsyncSession = Depends(get_db),
     account_lists_read_srvc: ReadSrvc = Depends(
         service_container["account_lists_read"]
@@ -63,7 +61,7 @@ async def get_account_list(
     response_model=AccountListsOrchPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccListNotExist, ProductsNotExist])
 async def get_account_lists(
     response: Response,
@@ -71,7 +69,7 @@ async def get_account_lists(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_lists_read_orch: AccountListsReadOrch = Depends(
         orchs_container["accounts_lists_read_orch"]
     ),
@@ -93,14 +91,14 @@ async def get_account_lists(
     response_model=AccountListsRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccListNotExist, AccListExists])
 async def create_account_list(
     response: Response,
     account_uuid: UUID4,
     account_list_data: AccountListsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     account_lists_create_srvc: CreateSrvc = Depends(
         service_container["account_lists_create"]
     ),
@@ -122,14 +120,14 @@ async def create_account_list(
     response_model=AccountListsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccListNotExist])
 async def update_account_list(
     response: Response,
     account_uuid: UUID4,
     account_list_uuid: UUID4,
     account_list_data: AccountListsUpdate,
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     db: AsyncSession = Depends(get_db),
     account_lists_udpate_srvc: UpdateSrvc = Depends(
         service_container["account_lists_update"]
@@ -155,14 +153,14 @@ async def update_account_list(
     response_model=AccountListsDelRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccListNotExist])
 async def soft_del_account_list(
     request: Request,
     response: Response,
     account_uuid: UUID4,
     account_list_uuid: UUID4,
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     db: AsyncSession = Depends(get_db),
     account_lists_delete_srvc: DelSrvc = Depends(
         service_container["account_lists_delete"]

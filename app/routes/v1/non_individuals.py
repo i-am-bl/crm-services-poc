@@ -15,12 +15,11 @@ from ...schemas.non_individuals import (
     NonIndividualsRes,
     NonIndividualsUpdate,
 )
-from ...services.authetication import SessionService, TokenService
 from ...services.non_individuals import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -29,14 +28,14 @@ router = APIRouter()
     response_model=NonIndividualsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NonIndividualNotExist])
 async def get_non_individual(
     response: Response,
     entity_uuid: UUID4,
     non_individual_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     non_invdivuals_read_srvc: ReadSrvc = Depends(
         service_container["non_individuals_read"]
     ),
@@ -54,14 +53,14 @@ async def get_non_individual(
     response_model=NonIndividualsRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NonIndividualNotExist, NonIndividualExists])
 async def create_non_individual(
     response: Response,
     entity_uuid: UUID4,
     non_individual_data: NonIndividualsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     non_individual_create_srvc: CreateSrvc = Depends(
         service_container["non_individuals_create"]
     ),
@@ -80,7 +79,7 @@ async def create_non_individual(
     response_model=NonIndividualsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NonIndividualNotExist])
 async def update_non_individual(
     response: Response,
@@ -88,7 +87,7 @@ async def update_non_individual(
     non_individual_uuid: UUID4,
     non_individual_data: NonIndividualsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     non_individuals_update_srvc: UpdateSrvc = Depends(
         service_container["non_individuals_update"]
     ),
@@ -109,14 +108,14 @@ async def update_non_individual(
     "/{entity_uuid}/non-individuals/{non_individual_uuid}/",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NonIndividualNotExist])
 async def soft_del_non_individual(
     response: Response,
     entity_uuid: UUID4,
     non_individual_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     non_individuals_delete_srvc: DelSrvc = Depends(
         service_container["non_individuals_delete"]
     ),

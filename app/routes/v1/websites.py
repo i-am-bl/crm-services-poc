@@ -17,12 +17,11 @@ from ...schemas.websites import (
     WebsitesUpdate,
     WebsitesRes,
 )
-from ...services.authetication import SessionService, TokenService
 from ...services.websites import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -32,14 +31,14 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([WebsitesNotExist])
 async def get_website(
     response: Response,
     entity_uuid: UUID4,
     website_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     websites_read_srvc: ReadSrvc = Depends(service_container["websites_read"]),
 ) -> WebsitesRes:
     """Retrieve single website by entity_uuid and website_uuid"""
@@ -57,7 +56,7 @@ async def get_website(
     response_model=WebsitesPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([WebsitesNotExist])
 async def get_website(
     response: Response,
@@ -65,7 +64,7 @@ async def get_website(
     page: int,
     limit: int,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     websites_read_srvc: ReadSrvc = Depends(service_container["websites_read"]),
 ) -> WebsitesPgRes:
     """
@@ -83,13 +82,13 @@ async def get_website(
     response_model=WebsitesRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([WebsitesNotExist, WebsitesExists])
 async def create_website(
     response: Response,
     website_data: WebsitesCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     websites_create_srvc: CreateSrvc = Depends(service_container["websites_create"]),
 ) -> WebsitesRes:
     """
@@ -109,7 +108,7 @@ async def create_website(
     response_model=WebsitesRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([WebsitesNotExist])
 async def update_website(
     response: Response,
@@ -117,7 +116,7 @@ async def update_website(
     website_uuid: UUID4,
     website_data: WebsitesUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     websites_update_srvc: UpdateSrvc = Depends(service_container["websites_update"]),
 ) -> WebsitesRes:
     """
@@ -139,14 +138,14 @@ async def update_website(
     "/{entity_uuid}/websites/{website_uuid}/",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([WebsitesNotExist])
 async def soft_del_website(
     response: Response,
     entity_uuid: UUID4,
     website_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     websites_delete_srvc: DelSrvc = Depends(service_container["websites_delete"]),
 ) -> None:
     """

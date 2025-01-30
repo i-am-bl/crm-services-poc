@@ -30,12 +30,11 @@ from ...schemas.entity_accounts import (
     EntityAccountsUpdate,
     EntityAccountsRes,
 )
-from ...services.authetication import SessionService, TokenService
 from ...services import entity_accounts as entity_accounts_srvcs
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
 
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
@@ -45,14 +44,14 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EntityAccNotExist])
 async def get_entity_account(
     response: Response,
     entity_uuid: UUID4,
     entity_account_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     entity_accounts_read_srvc: entity_accounts_srvcs.ReadSrvc = Depends(
         services_container["entity_accounts_read"]
     ),
@@ -70,7 +69,7 @@ async def get_entity_account(
     response_model=EntityAccountsPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EntityAccNotExist, EntityNotExist, AccsNotExist])
 async def get_entity_accounts(
     response: Response,
@@ -78,7 +77,7 @@ async def get_entity_accounts(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     entity_accounts_read_orch: EntityAccountsReadOrch = Depends(
         orchs_container["entity_accounts_read_orch"]
     ),
@@ -100,14 +99,14 @@ async def get_entity_accounts(
     response_model=EntityAccountsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EntityAccNotExist])
 async def create_entity_account(
     response: Response,
     entity_uuid: UUID4,
     entity_account_data: EntityAccountsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     entity_accounts_create_srvc: entity_accounts_srvcs.CreateSrvc = Depends(
         services_container["entity_accounts_create"]
     ),
@@ -131,7 +130,7 @@ async def create_entity_account(
     response_model=EntityAccountsRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccsExists, EntityAccNotExist, EntityAccExists])
 async def create_entity_account_account(
     response: Response,
@@ -139,7 +138,7 @@ async def create_entity_account_account(
     account_data: AccountsCreate,
     entity_account_data: AccountEntityCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     entity_accounts_read_orch: EntityAccountsCreateOrch = Depends(
         orchs_container["entity_accounts_create_orch"]
     ),
@@ -167,7 +166,7 @@ async def create_entity_account_account(
     response_model=EntityAccountsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EntityAccNotExist])
 async def update_entity_account(
     response: Response,
@@ -175,7 +174,7 @@ async def update_entity_account(
     entity_account_uuid: UUID4,
     entity_account_data: EntityAccountsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     entity_accounts_update_srvc: entity_accounts_srvcs.UpdateSrvc = Depends(
         services_container["entity_accounts_update"]
     ),
@@ -200,14 +199,14 @@ async def update_entity_account(
     response_model=None,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EntityAccNotExist])
 async def soft_del_entity_account(
     response: Response,
     entity_uuid: UUID4,
     entity_account_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(serv_session.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     entity_accounts_update_srvc: entity_accounts_srvcs.DelSrvc = Depends(
         services_container["entity_accounts_update"]
     ),
