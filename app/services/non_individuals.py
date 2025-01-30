@@ -13,7 +13,7 @@ from ..schemas.non_individuals import (
     NonIndividualsDelRes,
     NonIndividualsUpdate,
 )
-from ..statements.non_individuals import NonInvdividualsStms
+from ..statements.non_individuals import NonIndivididualsStms
 from ..utilities.data import record_not_exist, record_exists
 
 
@@ -25,32 +25,32 @@ class ReadSrvc:
     that are not individuals) from the database, including individual records and lists with pagination support.
 
     :param statements: The SQL statements used for querying non-individual entities.
-    :type statements: NonInvdividualsStms
+    :type statements: NonIndivididualsStms
     :param db_operations: The database operations object used for executing queries.
     :type db_operations: Operations
     """
 
     def __init__(
-        self, statements: NonInvdividualsStms, db_operations: Operations
+        self, statements: NonIndivididualsStms, db_operations: Operations
     ) -> None:
         """
         Initializes the ReadSrvc class with the provided statements and database operations.
 
         :param statements: The SQL statements used for querying non-individual entities.
-        :type statements: NonInvdividualsStms
+        :type statements: NonIndivididualsStms
         :param db_operations: The database operations object used for executing queries.
         :type db_operations: Operations
         """
-        self._statements: NonInvdividualsStms = statements
+        self._statements: NonIndivididualsStms = statements
         self._db_ops: Operations = db_operations
 
     @property
-    def statements(self) -> NonInvdividualsStms:
+    def statements(self) -> NonIndivididualsStms:
         """
-        Returns the instance of NonInvdividualsStms.
+        Returns the instance of NonIndivididualsStms.
 
         :returns: The SQL statements for querying non-individual entities.
-        :rtype: NonInvdividualsStms
+        :rtype: NonIndivididualsStms
         """
         return self._statements
 
@@ -142,7 +142,7 @@ class CreateSrvc:
     that are not individuals) by inserting new records into the database.
 
     :param statements: The SQL statements used for querying and inserting non-individual entities.
-    :type statements: NonInvdividualsStms
+    :type statements: NonIndivididualsStms
     :param db_operations: The database operations object used for executing queries.
     :type db_operations: Operations
     :param model: The model representing the non-individual entities.
@@ -151,7 +151,7 @@ class CreateSrvc:
 
     def __init__(
         self,
-        statements: NonInvdividualsStms,
+        statements: NonIndivididualsStms,
         db_operations: Operations,
         model: NonIndividuals,
     ) -> None:
@@ -159,23 +159,23 @@ class CreateSrvc:
         Initializes the CreateSrvc class with the provided statements, database operations, and model.
 
         :param statements: The SQL statements used for querying and inserting non-individual entities.
-        :type statements: NonInvdividualsStms
+        :type statements: NonIndivididualsStms
         :param db_operations: The database operations object used for executing queries.
         :type db_operations: Operations
         :param model: The model representing the non-individual entities.
         :type model: NonIndividuals
         """
-        self._statements: NonInvdividualsStms = statements
+        self._statements: NonIndivididualsStms = statements
         self._db_ops: Operations = db_operations
         self._model: NonIndividuals = model
 
     @property
-    def statements(self) -> NonInvdividualsStms:
+    def statements(self) -> NonIndivididualsStms:
         """
-        Returns the instance of NonInvdividualsStms.
+        Returns the instance of NonIndivididualsStms.
 
         :returns: The SQL statements for querying non-individual entities.
-        :rtype: NonInvdividualsStms
+        :rtype: NonIndivididualsStms
         """
         return self._statements
 
@@ -247,32 +247,32 @@ class UpdateSrvc:
     in the database.
 
     :param statements: The SQL statements used for querying and updating non-individual entities.
-    :type statements: NonInvdividualsStms
+    :type statements: NonIndivididualsStms
     :param db_operations: The database operations object used for executing queries.
     :type db_operations: Operations
     """
 
     def __init__(
-        self, statements: NonInvdividualsStms, db_operations: Operations
+        self, statements: NonIndivididualsStms, db_operations: Operations
     ) -> None:
         """
         Initializes the UpdateSrvc class with the provided statements and database operations.
 
         :param statements: The SQL statements used for querying and updating non-individual entities.
-        :type statements: NonInvdividualsStms
+        :type statements: NonIndivididualsStms
         :param db_operations: The database operations object used for executing queries.
         :type db_operations: Operations
         """
-        self._statements: NonInvdividualsStms = statements
+        self._statements: NonIndivididualsStms = statements
         self._db_ops: Operations = db_operations
 
     @property
-    def statements(self) -> NonInvdividualsStms:
+    def statements(self) -> NonIndivididualsStms:
         """
-        Returns the instance of NonInvdividualsStms.
+        Returns the instance of NonIndivididualsStms.
 
         :returns: The SQL statements for querying non-individual entities.
-        :rtype: NonInvdividualsStms
+        :rtype: NonIndivididualsStms
         """
         return self._statements
 
@@ -325,32 +325,32 @@ class DelSrvc:
     the entity is marked as deleted rather than completely removed from the database.
 
     :param statements: The SQL statements used for querying and updating non-individual entities.
-    :type statements: NonInvdividualsStms
+    :type statements: NonIndivididualsStms
     :param db_operations: The database operations object used for executing queries.
     :type db_operations: Operations
     """
 
     def __init__(
-        self, statements: NonInvdividualsStms, db_operations: Operations
+        self, statements: NonIndivididualsStms, db_operations: Operations
     ) -> None:
         """
         Initializes the DelSrvc class with the provided statements and database operations.
 
         :param statements: The SQL statements used for querying and updating non-individual entities.
-        :type statements: NonInvdividualsStms
+        :type statements: NonIndivididualsStms
         :param db_operations: The database operations object used for executing queries.
         :type db_operations: Operations
         """
-        self._statements: NonInvdividualsStms = statements
+        self._statements: NonIndivididualsStms = statements
         self._db_ops: Operations = db_operations
 
     @property
-    def statements(self) -> NonInvdividualsStms:
+    def statements(self) -> NonIndivididualsStms:
         """
-        Returns the instance of NonInvdividualsStms.
+        Returns the instance of NonIndivididualsStms.
 
         :returns: The SQL statements for querying non-individual entities.
-        :rtype: NonInvdividualsStms
+        :rtype: NonIndivididualsStms
         """
         return self._statements
 

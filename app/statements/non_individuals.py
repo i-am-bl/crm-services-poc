@@ -1,5 +1,5 @@
 from pydantic import UUID4
-from sqlalchemy import Select, and_, func, update, values
+from sqlalchemy import Select, and_, func, update, values, Update
 
 from ..models.non_individuals import NonIndividuals
 from ..utilities.data import set_empty_strs_null
@@ -94,7 +94,7 @@ class NonIndivididualsStms:
 
     def update_non_individual(
         self, entity_uuid: UUID4, non_individual_data: object
-    ) -> update:
+    ) -> Update:
         """
         Updates a non-individual entity by its entity UUID.
 

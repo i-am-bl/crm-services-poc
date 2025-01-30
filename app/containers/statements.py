@@ -33,7 +33,7 @@ from ..statements.entities import EntitiesStms
 from ..statements.individuals import IndividualsStms
 from ..statements.invoice_items import InvoiceItemsStms
 from ..statements.invoices import InvoicesStms
-from ..statements.non_individuals import NonInvdividualsStms
+from ..statements.non_individuals import NonIndivididualsStms
 from ..statements.numbers import NumbersStms
 from ..statements.order_items import OrderItemsStms
 from ..statements.orders import OrdersStms
@@ -56,7 +56,7 @@ class StatementsContainer(TypedDict):
     individuals_stms: IndividualsStms
     invoice_items_stms: InvoiceItemsStms
     invoice_stms: InvoicesStms
-    non_individuals: NonInvdividualsStms
+    non_individuals: NonIndivididualsStms
     numbers_stms: NumbersStms
     order_items_stms: OrderItemsStms
     orders_stms: OrdersStms
@@ -81,7 +81,7 @@ container: StatementsContainer = {
     "individuals_stms": lambda: IndividualsStms(model=Individuals),
     "invoice_items_stms": lambda: InvoiceItemsStms(model=InvoiceItems),
     "invoice_stms": lambda: InvoicesStms(model=Invoices),
-    "non_individuals": lambda: NonInvdividualsStms(model=NonIndividuals),
+    "non_individuals": lambda: NonIndivididualsStms(model=NonIndividuals),
     "numbers_stms": lambda: NumbersStms(model=Numbers),
     "order_items_stms": lambda: OrderItemsStms(model=OrderItems),
     "orders_stms": lambda: OrdersStms(model=Orders),
