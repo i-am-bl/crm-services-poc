@@ -1,5 +1,14 @@
 from .logger import logger
 
+"""
+Data utility functions for handling Pydantic model serialization, validation, and object manipulation.
+
+These utilities assist with:
+- Serializing Pydantic models to dictionaries.
+- Converting unset values to `None`.
+- Validating the existence of records and raising appropriate exceptions.
+"""
+
 
 def m_dumps(data: object):
     """
