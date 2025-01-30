@@ -1,3 +1,9 @@
+"""
+Pagination utilities for handling pagination logic, including calculating offsets 
+and determining if there are more items to display based on total count, page number, and limit.
+"""
+
+
 def page_offset(page: int, limit: int) -> int:
     """
     Utility function to calculate the offset for pagination.
