@@ -42,8 +42,22 @@ async def get_address(
     user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     addresses_read_srvc: ReadSrvc = Depends(services_container["addresses_read"]),
 ) -> AddressesRes:
-    """get one address"""
+    """
+    Retrieve a **single address** by account UUID and address UUID.
 
+    This endpoint retrieves a specific address associated with a given account.
+    It raises an exception if the address does not exist.
+
+    ### Parameters:
+    - **account_uuid** (UUID4): The UUID of the account to which the address belongs.
+    - **address_uuid** (UUID4): The UUID of the address to retrieve.
+    - **db** (AsyncSession): The database session used for interaction.
+    - **user_token** (Tuple[SysUsers, str]): The authenticated user and token, validated using a dependency.
+    - **addresses_read_srvc** (ReadSrvc): Service for reading address data.
+
+    ### Returns:
+    - **AddressesRes**: The address data that corresponds to the provided UUIDs.
+    """
     async with transaction_manager(db=db):
         return await addresses_read_srvc.get_address(
             parent_uuid=account_uuid,
@@ -70,9 +84,22 @@ async def get_addresses(
     addresses_read_srvc: ReadSrvc = Depends(services_container["addresses_read"]),
 ) -> AddressesPgRes:
     """
-    Get many addresses by account_uuid.
-    """
+    Retrieve a **list of addresses** for a specific account UUID.
 
+    This endpoint retrieves a paginated list of addresses associated with a specified account UUID.
+    It supports pagination through the `page` and `limit` query parameters.
+
+    ### Parameters:
+    - **account_uuid** (UUID4): The UUID of the account.
+    - **page** (int, optional): The page number for pagination (default is 1).
+    - **limit** (int, optional): The number of items per page (default is 10, max 100).
+    - **db** (AsyncSession): The database session used for interaction.
+    - **user_token** (Tuple[SysUsers, str]): The authenticated user and token, validated using a dependency.
+    - **addresses_read_srvc** (ReadSrvc): Service for reading address data.
+
+    ### Returns:
+    - **AddressesPgRes**: A paginated list of addresses for the provided account UUID.
+    """
     async with transaction_manager(db=db):
         return await addresses_read_srvc.paginated_addresses(
             parent_uuid=account_uuid,
@@ -99,9 +126,22 @@ async def create_address(
     addresses_create_srvc: CreateSrvc = Depends(services_container["addresses_create"]),
 ) -> AddressesRes:
     """
-    Create one address.
-    """
+    **Create a new address** for the specified account UUID.
 
+    This endpoint creates a new address for the given account UUID. The provided address data
+    is validated, and any existing address conflicts are handled. The created address is returned
+    with a 201 status code.
+
+    ### Parameters:
+    - **account_uuid** (UUID4): The UUID of the account to create the address for.
+    - **address_data** (AccountAddressesCreate): The address data to be created.
+    - **db** (AsyncSession): The database session used for interaction.
+    - **user_token** (Tuple[SysUsers, str]): The authenticated user and token, validated using a dependency.
+    - **addresses_create_srvc** (CreateSrvc): Service for creating the address.
+
+    ### Returns:
+    - **AddressesRes**: The created address data.
+    """
     async with transaction_manager(db=db):
         sys_user, _ = user_token
         sys_values.sys_created_by(sys_user=sys_user.uuid, data=address_data)
@@ -127,9 +167,23 @@ async def update_address(
     addresses_update_srvc: UpdateSrvc = Depends(services_container["addresses_update"]),
 ) -> AddressesRes:
     """
-    Update one address.
-    """
+    **Update an existing address** for the specified account and address UUIDs.
 
+    This endpoint updates an existing address, specified by both the account UUID and address UUID.
+    The address data is validated, and any necessary updates are applied. It raises an exception
+    if the address does not exist.
+
+    ### Parameters:
+    - **account_uuid** (UUID4): The UUID of the account the address belongs to.
+    - **address_uuid** (UUID4): The UUID of the address to be updated.
+    - **address_data** (AddressesUpdate): The updated address data.
+    - **db** (AsyncSession): The database session used for interaction.
+    - **user_token** (Tuple[SysUsers, str]): The authenticated user and token, validated using a dependency.
+    - **addresses_update_srvc** (UpdateSrvc): Service for updating the address.
+
+    ### Returns:
+    - **AddressesRes**: The updated address data.
+    """
     async with transaction_manager(db=db):
         sys_user, _ = user_token
         sys_values.sys_updated_by(sys_user=sys_user.uuid, data=address_data)
@@ -158,9 +212,22 @@ async def soft_del_address(
     addresses_delete_srvc: DelSrvc = Depends(services_container["addresses_delete"]),
 ) -> None:
     """
-    Soft del one address.
-    """
+    **Soft delete** an address for the specified account UUID and address UUID.
 
+    This endpoint performs a soft deletion of an address, specified by both the account UUID
+    and address UUID. The address will be marked as deleted, but not permanently removed
+    from the database.
+
+    ### Parameters:
+    - **account_uuid** (UUID4): The UUID of the account the address belongs to.
+    - **address_uuid** (UUID4): The UUID of the address to be deleted.
+    - **db** (AsyncSession): The database session used for interaction.
+    - **user_token** (Tuple[SysUsers, str]): The authenticated user and token, validated using a dependency.
+    - **addresses_delete_srvc** (DelSrvc): Service for deleting the address.
+
+    ### Returns:
+    - **None**: No content is returned on success (204 No Content).
+    """
     async with transaction_manager(db=db):
         address_data = AddressesDel()
         sys_user, _ = user_token
