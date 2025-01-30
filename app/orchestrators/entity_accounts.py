@@ -118,5 +118,5 @@ class EntityAccountsCreateOrch:
         entity_account = await self._entity_accounts_create_srvc.create_entity_account(
             entity_uuid=entity_uuid, entity_account_data=entity_account_data, db=db
         )
-        # TODO: Revisit this to see if this is what we need
+
         return EntityAccountParentRes(account=account, entity_account=entity_account)

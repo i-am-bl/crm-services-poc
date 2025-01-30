@@ -12,7 +12,7 @@ class Individuals(BaseModel):
 
 
 class IndividualsCreate(Individuals):
-    entity_uuid: Optional[UUID4] = None
+    entity_uuid: UUID4
     sys_created_at: datetime = TimeStamp
     sys_created_by: Optional[UUID4] = None
 

@@ -111,7 +111,7 @@ class UpdateSrvc:
         order_data: OrdersUpdate,
         db: AsyncSession,
     ) -> OrdersRes:
-        # TODO: intllisense not working
+
         statement = self._statements.update_order(
             order_uuid=order_uuid, order_data=order_data
         )
@@ -140,7 +140,7 @@ class DelSrvc:
         order_data: OrdersDel,
         db: AsyncSession,
     ) -> OrdersDelRes:
-        # TODO: intllisense not working
+
         statement = self._statements.update_order(
             order_uuid=order_uuid, order_data=order_data
         )

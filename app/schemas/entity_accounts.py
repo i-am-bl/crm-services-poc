@@ -21,7 +21,6 @@ class EntityAccountsCreate(EntityAccounts):
 
 
 class AccountEntityCreate(BaseModel):
-    # TODO: Need to give this more thought, there could be a cleaner way for this
     entity_uuid: UUID4
     account_uuid: Optional[UUID4] = None
     start_on: Optional[date] = None

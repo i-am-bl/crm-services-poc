@@ -152,7 +152,6 @@ async def create_entity_account_account(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        # TODO: Review these setter methods
         sys_values.sys_created_by(data=account_data, sys_user=sys_user.uuid)
         sys_values.sys_created_by(data=entity_account_data, sys_user=sys_user.uuid)
         return await entity_accounts_read_orch.create_account(

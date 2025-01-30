@@ -19,8 +19,7 @@ class EntitiesCreate(Entities):
     sys_created_by: Optional[UUID4] = None
 
 
-class EntitiesUpdate(BaseModel):
-    type: Annotated[EntityTypes, EntityTypes]
+class EntitiesUpdate(Entities):
     sys_updated_at: datetime = TimeStamp
     sys_updated_by: Optional[UUID4] = None
 
@@ -76,8 +75,7 @@ class EntitiesPgRes(BaseModel):
     page: int
     limit: int
     has_more: bool
-    individuals: Optional[List[IndividualsRes]] = None
-    non_individuals: Optional[List[NonIndividualsRes]] = None
+    data: List[EntitiesRes]
 
 
 class EntitiesDelRes(EntitiesRes):

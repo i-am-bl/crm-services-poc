@@ -17,6 +17,7 @@ from ..schemas.entities import (
     EntitiesUpdate,
 )
 from ..statements.entities import EntitiesStms
+from ..utilities import pagination
 from ..utilities.utilities import DataUtils as di
 
 
@@ -69,13 +70,17 @@ class ReadSrvc:
         )
 
     async def paginated_entities(
-        enitity_uuids: List[UUID4], page: int, limit: int, db: AsyncSession
+        self, page: int, limit: int, db: AsyncSession
     ) -> EntitiesPgRes:
-        total_count: int = None
-        offset: int = None
-        has_more: bool = None
-        entities: List[EntitiesRes]
-        return EntitiesPgRes()
+        total_count: int = self.get_entity_ct(db=db)
+        offset = pagination.page_offset(page=page, limit=limit)
+        has_more = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        entities = await self.get_entities(offset=offset, limit=limit, db=db)
+        return EntitiesPgRes(
+            total=total_count, page=page, limit=limit, has_more=has_more, data=entities
+        )
 
 
 class CreateSrvc:

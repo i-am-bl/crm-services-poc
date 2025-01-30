@@ -66,7 +66,6 @@ class ReadSrvc:
         offset: int,
         db: AsyncSession,
     ) -> List[EntityAccountsRes]:
-        # TODO: validate this
         statement = self._statements.get_account_entities(
             account_uuid=account_uuid, limit=limit, offset=offset
         )

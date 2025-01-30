@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .sys_base import SysBase
 
 
+# TODO: compare a checkConstraint compared to an enum
 class Entities(SysBase):
     __tablename__ = "em_entities"
     __table_args__ = (

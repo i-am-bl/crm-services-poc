@@ -26,7 +26,6 @@ serv_token = TokenService()
 router = APIRouter()
 
 
-# TODO: think about more targetd schema validation for each flavor of address service
 @router.get(
     "/{account_uuid}/addresses/{address_uuid}/",
     response_model=AddressesRes,

@@ -10,7 +10,7 @@ from models.sys_base import SysBase
 class InvoiceItems(SysBase):
     """Essentially this is a snap shot table and statements pick up from here."""
 
-    # TODO: setting to abstract for v1
+    # TODO: Marking this as abstract for v1 to exclude from build
     __abstract__ = True
     __tablename__ = "om_invoice_items"
     __table_args__ = (
