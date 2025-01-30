@@ -1,18 +1,32 @@
 from .logger import logger
 
 
-def m_dumps(cls, data: object):
+def m_dumps(data: object):
+    """
+    Serializes the given object data into a dictionary representation.
+
+    :param data: The object to serialize.
+    :return: dict: A dictionary representation of the object data.
+    """
     return data.model_dump()
 
 
-def m_dumps_unset(cls, data: object):
+def m_dumps_unset(data: object):
+    """
+    Serializes the given object data into a dictionary, excluding unset values.
+
+    :param data: The object to serialize.
+    :return: dict: A dictionary representation of the object data with unset values excluded.
+    """
     return data.model_dump(exclude_unset=True)
 
 
-def set_empty_strs_null(cls, values: object):
+def set_empty_strs_null(values: object):
     """
-    Ignore optional fields == None
-    Set field signaled to be reset to None with ""
+    Sets empty string fields to None, and ignores optional fields that are None.
+
+    :param values: The object containing the data to process.
+    :return: dict: The processed dictionary with empty strings set to None.
     """
     items = values.model_dump(exclude_none=True)
     for key in items:
@@ -21,7 +35,14 @@ def set_empty_strs_null(cls, values: object):
     return items
 
 
-def record_exists(cls, instance: object, exception: Exception) -> bool:
+def record_exists(instance: object, exception: Exception) -> bool:
+    """
+    Checks if a record exists and raises the provided exception if it does.
+
+    :param instance: The record instance to check for existence.
+    :param exception: The exception to raise if the record exists.
+    :return: bool: Returns the instance if it does not exist, raises an exception otherwise.
+    """
     if instance:
         class_name = exception.__name__
         logger.warning(
@@ -31,7 +52,14 @@ def record_exists(cls, instance: object, exception: Exception) -> bool:
     return instance
 
 
-def record_not_exist(cls, instance: object, exception: Exception) -> bool:
+def record_not_exist(instance: object, exception: Exception) -> bool:
+    """
+    Checks if a record does not exist and raises the provided exception if it doesn't.
+
+    :param instance: The record instance to check for non-existence.
+    :param exception: The exception to raise if the record does not exist.
+    :return: bool: Returns the instance if it exists, raises an exception otherwise.
+    """
     if not instance:
         class_name = exception.__name__
         logger.warning(f"Warning: record not found for {class_name}")
