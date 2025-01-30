@@ -34,7 +34,7 @@ from ..statements.individuals import IndividualsStms
 from ..statements.invoice_items import InvoiceItemsStms
 from ..statements.invoices import InvoicesStms
 from ..statements.non_individuals import NonInvdividualsStms
-from ..statements.numbers import NumberStms
+from ..statements.numbers import NumbersStms
 from ..statements.order_items import OrderItemsStms
 from ..statements.orders import OrdersStms
 from ..statements.product_list_items import ProductListItemsStms
@@ -57,7 +57,7 @@ class StatementsContainer(TypedDict):
     invoice_items_stms: InvoiceItemsStms
     invoice_stms: InvoicesStms
     non_individuals: NonInvdividualsStms
-    numbers_stms: NumberStms
+    numbers_stms: NumbersStms
     order_items_stms: OrderItemsStms
     orders_stms: OrdersStms
     product_lists: ProductListsStms
@@ -82,7 +82,7 @@ container: StatementsContainer = {
     "invoice_items_stms": lambda: InvoiceItemsStms(model=InvoiceItems),
     "invoice_stms": lambda: InvoicesStms(model=Invoices),
     "non_individuals": lambda: NonInvdividualsStms(model=NonIndividuals),
-    "numbers_stms": lambda: NumberStms(model=Numbers),
+    "numbers_stms": lambda: NumbersStms(model=Numbers),
     "order_items_stms": lambda: OrderItemsStms(model=OrderItems),
     "orders_stms": lambda: OrdersStms(model=Orders),
     "product_lists": lambda: ProductListsStms(model=ProductLists),

@@ -14,7 +14,7 @@ from ..schemas.numbers import (
     NumbersRes,
     NumbersUpdate,
 )
-from ..statements.numbers import NumberStms
+from ..statements.numbers import NumbersStms
 from ..utilities import pagination
 from ..utilities.data import record_exists, record_not_exist
 
@@ -27,30 +27,30 @@ class ReadSrvc:
     for a given entity, including paginated results.
 
     :param statements: The SQL statements used for querying number data from the database.
-    :type statements: NumberStms
+    :type statements: NumbersStms
     :param db_operations: The database operations object used for executing queries.
     :type db_operations: Operations
     """
 
-    def __init__(self, statements: NumberStms, db_operations: Operations) -> None:
+    def __init__(self, statements: NumbersStms, db_operations: Operations) -> None:
         """
         Initializes the ReadSrvc class with the provided statements and database operations.
 
         :param statements: The SQL statements used for querying number data from the database.
-        :type statements: NumberStms
+        :type statements: NumbersStms
         :param db_operations: The database operations object used for executing queries.
         :type db_operations: Operations
         """
-        self._statements: NumberStms = statements
+        self._statements: NumbersStms = statements
         self._db_ops: Operations = db_operations
 
     @property
-    def statements(self) -> NumberStms:
+    def statements(self) -> NumbersStms:
         """
-        Returns the instance of NumberStms.
+        Returns the instance of NumbersStms.
 
         :returns: The SQL statements for querying number data.
-        :rtype: NumberStms
+        :rtype: NumbersStms
         """
         return self._statements
 
@@ -189,7 +189,7 @@ class CreateSrvc:
     and ensures the uniqueness of the number before adding it to the database.
 
     :param statements: The SQL statements used for querying and manipulating number data in the database.
-    :type statements: NumberStms
+    :type statements: NumbersStms
     :param db_operations: The database operations object used for executing queries.
     :type db_operations: Operations
     :param model: The model representing the number data structure.
@@ -197,29 +197,29 @@ class CreateSrvc:
     """
 
     def __init__(
-        self, statements: NumberStms, db_operations: Operations, model: Numbers
+        self, statements: NumbersStms, db_operations: Operations, model: Numbers
     ) -> None:
         """
         Initializes the CreateSrvc class with the provided statements, database operations, and model.
 
         :param statements: The SQL statements used for querying and manipulating number data in the database.
-        :type statements: NumberStms
+        :type statements: NumbersStms
         :param db_operations: The database operations object used for executing queries.
         :type db_operations: Operations
         :param model: The model representing the number data structure.
         :type model: Numbers
         """
-        self._statements: NumberStms = statements
+        self._statements: NumbersStms = statements
         self._db_ops: Operations = db_operations
         self._model: Numbers = model
 
     @property
-    def statements(self) -> NumberStms:
+    def statements(self) -> NumbersStms:
         """
-        Returns the instance of NumberStms.
+        Returns the instance of NumbersStms.
 
         :returns: The SQL statements for querying and manipulating number data.
-        :rtype: NumberStms
+        :rtype: NumbersStms
         """
         return self._statements
 
@@ -298,30 +298,30 @@ class UpdateSrvc:
     This class provides the method to update the number details for a specific entity.
 
     :param statements: The SQL statements used for querying and manipulating number data in the database.
-    :type statements: NumberStms
+    :type statements: NumbersStms
     :param db_operations: The database operations object used for executing queries.
     :type db_operations: Operations
     """
 
-    def __init__(self, statements: NumberStms, db_operations: Operations) -> None:
+    def __init__(self, statements: NumbersStms, db_operations: Operations) -> None:
         """
         Initializes the UpdateSrvc class with the provided statements and database operations.
 
         :param statements: The SQL statements used for querying and manipulating number data in the database.
-        :type statements: NumberStms
+        :type statements: NumbersStms
         :param db_operations: The database operations object used for executing queries.
         :type db_operations: Operations
         """
-        self._statements: NumberStms = statements
+        self._statements: NumbersStms = statements
         self._db_ops: Operations = db_operations
 
     @property
-    def statements(self) -> NumberStms:
+    def statements(self) -> NumbersStms:
         """
-        Returns the instance of NumberStms.
+        Returns the instance of NumbersStms.
 
         :returns: The SQL statements for querying and manipulating number data.
-        :rtype: NumberStms
+        :rtype: NumbersStms
         """
         return self._statements
 
@@ -379,30 +379,30 @@ class DelSrvc:
     This class provides the method to soft delete a number entry from the database.
 
     :param statements: The SQL statements used for querying and manipulating number data in the database.
-    :type statements: NumberStms
+    :type statements: NumbersStms
     :param db_operations: The database operations object used for executing queries.
     :type db_operations: Operations
     """
 
-    def __init__(self, statements: NumberStms, db_operations: Operations) -> None:
+    def __init__(self, statements: NumbersStms, db_operations: Operations) -> None:
         """
         Initializes the DelSrvc class with the provided statements and database operations.
 
         :param statements: The SQL statements used for querying and manipulating number data in the database.
-        :type statements: NumberStms
+        :type statements: NumbersStms
         :param db_operations: The database operations object used for executing queries.
         :type db_operations: Operations
         """
-        self._statements: NumberStms = statements
+        self._statements: NumbersStms = statements
         self._db_ops: Operations = db_operations
 
     @property
-    def statements(self) -> NumberStms:
+    def statements(self) -> NumbersStms:
         """
-        Returns the instance of NumberStms.
+        Returns the instance of NumbersStms.
 
         :returns: The SQL statements for querying and manipulating number data.
-        :rtype: NumberStms
+        :rtype: NumbersStms
         """
         return self._statements
 
