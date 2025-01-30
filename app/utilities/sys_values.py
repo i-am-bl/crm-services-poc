@@ -1,5 +1,16 @@
+"""
+sys_values utilities provide reusable setter methods for system fields, which are used to 
+inject user-related information (such as creation, update, or deletion details) into objects 
+or lists of objects during I/O operations.
+
+These utilities facilitate the consistent tracking of the users who perform system actions, 
+including creating, updating, or deleting records. The functions allow for updating a single 
+object or a list of objects, ensuring that user-related metadata is appropriately set for each.
+"""
+
 from typing import List, Literal, Callable
 from pydantic import UUID4
+
 
 SysFieldSetter = Callable[[object | List[object], UUID4], object | List[object]]
 

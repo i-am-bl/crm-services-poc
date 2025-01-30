@@ -1,11 +1,11 @@
+"""
+Password utilities for handling password hashing and validation.
+"""
+
 from passlib.hash import pbkdf2_sha256
 from pydantic import UUID4
 
 from ..exceptions import InvalidCredentials
-
-"""
-Password utilities for handling password hashing and validation.
-"""
 
 
 def create_hash(password: str) -> str:

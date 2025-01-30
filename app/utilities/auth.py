@@ -1,11 +1,11 @@
+"""
+Auth utilities for session validation and creation, assisting with dependency injection.
+"""
+
 from typing import Callable, Tuple
 
 from ..containers.auth import container as auth_container
 from ..models.sys_users import SysUsers
-
-"""
-Auth utilities for session validation and creation, assisting with dependency injection.
-"""
 
 
 def get_validated_session() -> Callable[[], Tuple[SysUsers, str]]:
