@@ -127,7 +127,7 @@ class AddressesStms:
         """
         addresses = self._model
         return (
-            select(func.count())
+            Select(func.count())
             .select_from(addresses)
             .where(
                 and_(
