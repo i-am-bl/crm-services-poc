@@ -146,7 +146,7 @@ async def disable_sys_user(
 
 @router.delete(
     "/{sys_user_uuid}/",
-    response_model=SysUsersRes,
+    response_model=None,
     status_code=status.HTTP_204_NO_CONTENT,
 )
 @set_auth_cookie

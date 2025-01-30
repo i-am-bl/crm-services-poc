@@ -8,7 +8,8 @@ from ..database.operations import Operations
 from ..exceptions import AddressExists, AddressNotExist
 from ..models.addresses import Addresses
 from ..schemas.addresses import (
-    AddressesCreate,
+    AccountAddressesCreate,
+    EntityAddressesCreate,
     AddressesDel,
     AddressesDelRes,
     AddressesPgRes,
@@ -136,7 +137,7 @@ class CreateSrvc:
     async def create_address(
         self,
         parent_uuid: UUID4,
-        address_data: AddressesCreate,
+        address_data: AccountAddressesCreate | EntityAddressesCreate,
         db: AsyncSession,
     ) -> AddressesRes:
         addresses = self._model

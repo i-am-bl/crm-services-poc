@@ -90,7 +90,7 @@ class TokenSrvc:
             return sys_user, valid_token
 
 
-def set_auth_cookie(self, func: Callable) -> Callable:
+def set_auth_cookie(func: Callable) -> Callable:
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
         async def set_cookie(self, response: Response, token: str):

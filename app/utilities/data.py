@@ -1,4 +1,4 @@
-from logger import logger
+from .logger import logger
 
 
 def m_dumps(cls, data: object):

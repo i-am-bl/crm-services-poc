@@ -12,7 +12,7 @@ from ..schemas.account_lists import (
     AccountListsDelRes,
     AccountListsUpdate,
     AccountListsRes,
-    AccountListsPgRes,
+    AccountListsOrchPgRes,
 )
 from ..statements.account_lists import AccountListsStms
 from ..database.operations import Operations
@@ -70,7 +70,7 @@ class ReadSrvc:
 
     async def paginated_account_lists(
         self, account_uuid: UUID4, page: int, limit: int, db: AsyncSession
-    ) -> AccountListsPgRes:
+    ) -> AccountListsOrchPgRes:
 
         offset: int = pagination.page_offset(page=page, limit=limit)
         total_count: int = await self.get_account_list_ct(
@@ -81,12 +81,12 @@ class ReadSrvc:
             total_count=total_count, page=page, limit=limit
         )
         # TODO: research the product lists in this context.
-        return AccountListsPgRes(
+        return AccountListsOrchPgRes(
             total=total_count,
             page=page,
             limit=limit,
             has_moare=has_more,
-            product_lists=None,
+            data=None,
         )
 
 

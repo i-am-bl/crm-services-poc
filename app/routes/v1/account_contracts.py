@@ -18,7 +18,7 @@ from ...schemas.account_contracts import (
     AccountContractsRes,
     AccountContractsUpdate,
 )
-from ...services.account_contracts import ReadSrvc, CreateSrvc, UpdateSrvc, DeleteSrvc
+from ...services.account_contracts import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
@@ -163,7 +163,7 @@ async def soft_delete_account_contract(
     account_contract_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[sys_user_mdl.SysUsers, str] = Depends(get_validated_session),
-    account_contracts_delete_srvc: DeleteSrvc = Depends(
+    account_contracts_delete_srvc: DelSrvc = Depends(
         services_container["account_contracts_delete"]
     ),
     set_sys_deleted_by: sys_values.SysFieldSetter = Depends(sys_values.sys_deleted_by),

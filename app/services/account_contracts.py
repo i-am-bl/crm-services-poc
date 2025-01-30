@@ -292,7 +292,7 @@ class UpdateSrvc:
         )
 
 
-class DeleteSrvc:
+class DelSrvc:
     """
     Delete service class for account contracts.
 

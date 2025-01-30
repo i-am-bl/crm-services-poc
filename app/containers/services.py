@@ -49,12 +49,12 @@ class ServicesContainer(TypedDict):
     account_contracts_create: account_contracts_srvcs.CreateSrvc
     account_contracts_read: account_contracts_srvcs.ReadSrvc
     account_contracts_update: account_contracts_srvcs.UpdateSrvc
-    account_contracts_delete: account_contracts_srvcs.DeleteSrvc
+    account_contracts_delete: account_contracts_srvcs.DelSrvc
     # account list services
     account_lists_create: account_lists_srvcs.CreateSrvc
     account_lists_read: account_lists_srvcs.ReadSrvc
     account_lists_update: account_lists_srvcs.UpdateSrvc
-    account_lists_delete: account_lists_srvcs.DeleteSrvc
+    account_lists_delete: account_lists_srvcs.DelSrvc
     # account products services
     account_products_create: account_products_srvcs.CreateSrvc
     account_products_read: account_products_srvcs.ReadSrvc
@@ -160,7 +160,7 @@ container: ServicesContainer = {
         operations=database_container["operations"],
         statements=statements_container["account_contracts_stms"],
     ),
-    "account_contracts_delete": lambda: account_contracts_srvcs.DeleteSrvc(
+    "account_contracts_delete": lambda: account_contracts_srvcs.DelSrvc(
         operations=database_container["operations"],
         statements=statements_container["account_contracts_stms"],
     ),

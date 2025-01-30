@@ -1,9 +1,5 @@
 from typing import TypedDict
 
-from bk_workspace.py_services.fastapi_6.app.constants.constants import (
-    PRODUCT_LIST_ITEMS_UPDATE_SERV,
-)
-
 from ..models.account_contracts import AccountContracts
 from ..models.account_lists import AccountLists
 from ..models.account_products import AccountProducts
@@ -42,7 +38,7 @@ from ..statements.numbers import NumberStms
 from ..statements.order_items import OrderItemsStms
 from ..statements.orders import OrdersStms
 from ..statements.product_list_items import ProductListItemsStms
-from ..statements.product_lists import ProductListStms
+from ..statements.product_lists import ProductListsStms
 from ..statements.products import ProductsStms
 from ..statements.sys_users import SysUsersStms
 from ..statements.websites import WebsitesStms
@@ -64,7 +60,7 @@ class StatementsContainer(TypedDict):
     numbers_stms: NumberStms
     order_items_stms: OrderItemsStms
     orders_stms: OrdersStms
-    product_lists: ProductListStms
+    product_lists: ProductListsStms
     products_stms: ProductsStms
     sys_users_stms: SysUsersStms
     websites_stms: Websites
@@ -89,7 +85,7 @@ container: StatementsContainer = {
     "numbers_stms": lambda: NumberStms(model=Numbers),
     "order_items_stms": lambda: OrderItemsStms(model=OrderItems),
     "orders_stms": lambda: OrdersStms(model=Orders),
-    "product_lists": lambda: ProductListStms(model=ProductLists),
+    "product_lists": lambda: ProductListsStms(model=ProductLists),
     "products_stms": lambda: ProductsStms(model=Products),
     "websites_stms": lambda: WebsitesStms(model=Websites),
     "sys_users_stms": lambda: SysUsersStms(model=SysUsers),

@@ -4,7 +4,7 @@ from typing import List, Optional
 from pydantic import UUID4, BaseModel
 
 from ._variables import TimeStamp
-from .products import ProductsResponse
+from .products import ProductsRes
 
 
 class AccountProducts(BaseModel):
@@ -52,7 +52,7 @@ class AccountProductsOrchPgRes(BaseModel):
     page: int
     limit: int
     has_more: bool
-    data: Optional[List[ProductsResponse]] = None
+    data: Optional[List[ProductsRes]] = None
 
 
 class AccountProductsPgRes(BaseModel):

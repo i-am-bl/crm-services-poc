@@ -7,7 +7,7 @@ from ..models.product_lists import ProductLists
 from ..utilities.data import set_empty_strs_null
 
 
-class ProductListStms:
+class ProductListsStms:
     def __init__(self, model: ProductLists):
         self._model: ProductLists = model
 
