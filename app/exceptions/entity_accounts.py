@@ -1,9 +1,21 @@
-from ..constants.messages import (ENTITY_ACCOUNT_EXISTS,
-                                  ENTITY_ACCOUNT_NOT_EXIST)
+from ..constants.messages import ENTITY_ACCOUNT_EXISTS, ENTITY_ACCOUNT_NOT_EXIST
 from .crm_exceptions import CRMExceptions
 
 
 class EntityAccNotExist(CRMExceptions):
+    """
+    Custom exception raised when an entity account does not exist in the system.
+
+    Inherits from the base CRMExceptions class. The default message for this exception
+    is specified by the constant `ENTITY_ACCOUNT_NOT_EXIST`. This exception is typically raised
+    when an attempt is made to access or perform an operation on an entity account that does not exist.
+
+    :param message: The error message to display when the exception is raised.
+                    Defaults to the value of ENTITY_ACCOUNT_NOT_EXIST.
+    :param args: Additional positional arguments to pass to the parent exception class.
+    :param kwargs: Additional keyword arguments to pass to the parent exception class.
+    """
+
     def __init__(
         self, message: str = ENTITY_ACCOUNT_NOT_EXIST, *args: object, **kwargs
     ) -> None:
@@ -11,6 +23,19 @@ class EntityAccNotExist(CRMExceptions):
 
 
 class EntityAccExists(CRMExceptions):
+    """
+    Custom exception raised when an entity account already exists in the system.
+
+    Inherits from the base CRMExceptions class. The default message for this exception
+    is specified by the constant `ENTITY_ACCOUNT_EXISTS`. This exception is typically raised
+    when an attempt is made to create or register an entity account that already exists.
+
+    :param message: The error message to display when the exception is raised.
+                    Defaults to the value of ENTITY_ACCOUNT_EXISTS.
+    :param args: Additional positional arguments to pass to the parent exception class.
+    :param kwargs: Additional keyword arguments to pass to the parent exception class.
+    """
+
     def __init__(
         self, message: str = ENTITY_ACCOUNT_EXISTS, *args: object, **kwargs
     ) -> None:
