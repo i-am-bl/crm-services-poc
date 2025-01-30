@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import UUID4
 from sqlalchemy import Select, Update, and_, func, update, values
 from ..models.addresses import Addresses
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class AddressesStms:
@@ -106,6 +106,6 @@ class AddressesStms:
                     addresses.sys_deleted_at == None,
                 )
             )
-            .values(di.set_empty_strs_null(values=address_data))
+            .values(set_empty_strs_null(values=address_data))
             .returning(addresses)
         )

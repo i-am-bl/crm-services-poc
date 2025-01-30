@@ -17,7 +17,7 @@ from ..schemas.addresses import (
 )
 from ..statements.addresses import AddressesStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist, record_exists
 
 
 class ReadSrvc:
@@ -48,7 +48,7 @@ class ReadSrvc:
         address: AddressesRes = await self._db_ops.return_one_row(
             service=cnst.ADDRESSES_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=address, exception=AddressNotExist)
+        return record_not_exist(instance=address, exception=AddressNotExist)
 
     async def get_addresses(
         self,
@@ -67,7 +67,7 @@ class ReadSrvc:
         addresses: List[AddressesRes] = await self._db_ops.return_all_rows(
             service=cnst.ADDRESSES_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=addresses, exception=AddressNotExist)
+        return record_not_exist(instance=addresses, exception=AddressNotExist)
 
     async def get_addresses_ct(
         self,
@@ -149,14 +149,14 @@ class CreateSrvc:
         address_exists: AddressesRes = await self._db_ops.return_one_row(
             service=cnst.ADDRESSES_CREATE_SERVICE, statement=statement, db=db
         )
-        if not di.record_exists(instance=address_exists, exception=AddressExists):
+        if not record_exists(instance=address_exists, exception=AddressExists):
             address: AddressesRes = await self._db_ops.add_instance(
                 service=cnst.ADDRESSES_CREATE_SERVICE,
                 model=addresses,
                 data=address_data,
                 db=db,
             )
-            return di.record_not_exist(instance=address, exception=AddressNotExist)
+            return record_not_exist(instance=address, exception=AddressNotExist)
 
 
 class UpdateSrvc:
@@ -189,7 +189,7 @@ class UpdateSrvc:
         address: AddressesRes = await self._db_ops.return_one_row(
             service=cnst.ADDRESSES_UPDATE_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=address, exception=AddressNotExist)
+        return record_not_exist(instance=address, exception=AddressNotExist)
 
 
 class DelSrvc:
@@ -222,4 +222,4 @@ class DelSrvc:
         address: AddressesDelRes = await self._db_ops.return_one_row(
             service=cnst.ADDRESSES_DEL_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=address, exception=AddressNotExist)
+        return record_not_exist(instance=address, exception=AddressNotExist)

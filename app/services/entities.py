@@ -18,7 +18,7 @@ from ..schemas.entities import (
 )
 from ..statements.entities import EntitiesStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist
 
 
 class ReadSrvc:
@@ -39,7 +39,7 @@ class ReadSrvc:
         entity: EntitiesRes = await self._db_ops.return_one_row(
             service=cnst.ENTITIES_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=entity, exception=EntityNotExist)
+        return record_not_exist(instance=entity, exception=EntityNotExist)
 
     async def get_entities_by_uuids(self, entity_uuids: List[UUID4], db: AsyncSession):
         statement: Select = self._statements.get_entities_by_uuids(
@@ -48,7 +48,7 @@ class ReadSrvc:
         entities: List[EntitiesRes] = await self._db_ops.return_all_rows_and_values(
             service=cnst.ENTITIES_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=entities, exception=EntityNotExist)
+        return record_not_exist(instance=entities, exception=EntityNotExist)
 
     async def get_entities(
         self,
@@ -60,7 +60,7 @@ class ReadSrvc:
         entities: List[EntitiesRes] = await self._db_ops.return_all_rows(
             service=cnst.ENTITIES_READ_SERV, statement=statement, db=db
         )
-        di.record_not_exist(instance=entities, exception=EntityNotExist)
+        record_not_exist(instance=entities, exception=EntityNotExist)
         return entities
 
     async def get_entity_ct(self, db: AsyncSession) -> int:
@@ -111,7 +111,7 @@ class CreateSrvc:
             data=entity_data,
             db=db,
         )
-        return di.record_not_exist(instance=entity, exception=EntityNotExist)
+        return record_not_exist(instance=entity, exception=EntityNotExist)
 
 
 class UpdateSrvc:
@@ -139,7 +139,7 @@ class UpdateSrvc:
         entity: EntitiesRes = await Operations.return_one_row(
             service=cnst.ENTITIES_UPDATE_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=entity, exception=EntityNotExist)
+        return record_not_exist(instance=entity, exception=EntityNotExist)
 
 
 class DelSrvc:
@@ -167,4 +167,4 @@ class DelSrvc:
         entity: EntitiesDelRes = await self._db_ops.return_one_row(
             service=cnst.ENTITIES_DEL_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=entity, exception=EntityNotExist)
+        return record_not_exist(instance=entity, exception=EntityNotExist)

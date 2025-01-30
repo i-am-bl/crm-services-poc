@@ -17,7 +17,7 @@ from ..schemas.account_lists import (
 from ..statements.account_lists import AccountListsStms
 from ..database.operations import Operations
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist, record_exists
 
 
 class ReadSrvc:
@@ -45,7 +45,7 @@ class ReadSrvc:
         account_list = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=account_list, exception=AccListNotExist)
+        return record_not_exist(instance=account_list, exception=AccListNotExist)
 
     async def get_account_lists(
         self,
@@ -60,7 +60,7 @@ class ReadSrvc:
         account_lists: List[AccountLists] = await self._db_ops.return_all_rows(
             service=cnst.ACCOUNTS_LISTS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=account_lists, exception=AccListNotExist)
+        return record_not_exist(instance=account_lists, exception=AccListNotExist)
 
     async def get_account_list_ct(self, account_uuid: UUID4, db: AsyncSession) -> int:
         statement = self._statements.get_account_list_count(account_uuid=account_uuid)
@@ -127,7 +127,7 @@ class CreateSrvc:
         account_list_exists = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_LISTS_CREATE_SERVICE, statement=statement, db=db
         )
-        di.record_exists(instance=account_list_exists, exception=AccListExists)
+        record_exists(instance=account_list_exists, exception=AccListExists)
 
         account_list = await self._db_ops.add_instance(
             service=cnst.ACCOUNTS_LISTS_CREATE_SERVICE,
@@ -135,7 +135,7 @@ class CreateSrvc:
             data=account_list_data,
             db=db,
         )
-        return di.record_not_exist(instance=account_list, exception=AccListNotExist)
+        return record_not_exist(instance=account_list, exception=AccListNotExist)
 
 
 class UpdateSrvc:
@@ -166,7 +166,7 @@ class UpdateSrvc:
         account_list = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_LISTS_UPDATE_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=account_list, exception=AccListNotExist)
+        return record_not_exist(instance=account_list, exception=AccListNotExist)
 
 
 class DelSrvc:
@@ -197,4 +197,4 @@ class DelSrvc:
         account_list = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_LISTS_UPDATE_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=account_list, exception=AccListNotExist)
+        return record_not_exist(instance=account_list, exception=AccListNotExist)

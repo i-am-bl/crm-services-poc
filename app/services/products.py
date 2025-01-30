@@ -18,7 +18,7 @@ from ..schemas.products import (
 )
 from ..statements.products import ProductsStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist, record_exists
 
 
 class ReadSrvc:
@@ -39,14 +39,14 @@ class ReadSrvc:
         product = await self._db_ops.return_one_row(
             service=cnst.PRODUCTS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=product, exception=ProductsNotExist)
+        return record_not_exist(instance=product, exception=ProductsNotExist)
 
     async def get_products(self, limit: int, offset: int, db: AsyncSession):
         statemenet = self._statements.get_products(limit=limit, offset=offset)
         products = await self._db_ops.return_all_rows(
             service=cnst.PRODUCTS_READ_SERV, statement=statemenet, db=db
         )
-        return di.record_not_exist(instance=products, exception=ProductsNotExist)
+        return record_not_exist(instance=products, exception=ProductsNotExist)
 
     async def get_product_by_uuids(
         self, product_uuids: List[UUID4], db: AsyncSession
@@ -55,7 +55,7 @@ class ReadSrvc:
         products: List[ProductsRes] = await self._db_ops.return_all_rows(
             service=cnst.PRODUCTS_READ_SERV, statement=statemenet, db=db
         )
-        return di.record_not_exist(instance=products, exception=ProductsNotExist)
+        return record_not_exist(instance=products, exception=ProductsNotExist)
 
     async def get_products_ct(self, db: AsyncSession):
         statemenet = self._statements.get_product_count()
@@ -116,7 +116,7 @@ class CreateSrvc:
             product_exists = await self._db_ops.return_one_row(
                 service=cnst.PRODUCTS_CREATE_SERV, statement=statement, db=db
             )
-            di.record_exists(instance=product_exists, exception=ProductsExists)
+            record_exists(instance=product_exists, exception=ProductsExists)
             product = await self._db_ops.add_instance(
                 service=cnst.PRODUCTS_CREATE_SERV,
                 model=products,
@@ -131,7 +131,7 @@ class CreateSrvc:
             data=product_data,
             db=db,
         )
-        return di.record_not_exist(instance=product, exception=ProductsNotExist)
+        return record_not_exist(instance=product, exception=ProductsNotExist)
 
 
 class UpdateSrvc:
@@ -159,7 +159,7 @@ class UpdateSrvc:
         product: ProductsRes = await self._db_ops.return_one_row(
             service=cnst.PRODUCTS_UPDATE_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=product, exception=ProductsNotExist)
+        return record_not_exist(instance=product, exception=ProductsNotExist)
 
 
 class DelSrvc:
@@ -187,4 +187,4 @@ class DelSrvc:
         product: ProductsDelRes = await self._db_ops.return_one_row(
             service=cnst.PRODUCTS_DEL_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=product, exception=ProductsNotExist)
+        return record_not_exist(instance=product, exception=ProductsNotExist)

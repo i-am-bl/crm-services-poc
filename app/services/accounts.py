@@ -19,7 +19,7 @@ from ..schemas.accounts import (
 )
 from ..statements.accounts import AccountsStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist
 
 
 class ReadSrvc:
@@ -40,14 +40,14 @@ class ReadSrvc:
         account = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=account, exception=AccsNotExist)
+        return record_not_exist(instance=account, exception=AccsNotExist)
 
     async def get_accounts_by_uuids(self, account_uuids: List[UUID4], db: AsyncSession):
         statement = self._statements.get_accounts_by_uuids(account_uuids=account_uuids)
         accounts = await self._db_ops.return_all_rows(
             service=cnst.ACCOUNTS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=accounts, exception=AccsNotExist)
+        return record_not_exist(instance=accounts, exception=AccsNotExist)
 
     async def get_accounts(
         self,
@@ -109,7 +109,7 @@ class CreateSrvc:
             data=account_data,
             db=db,
         )
-        return di.record_not_exist(instance=account, exception=AccsNotExist)
+        return record_not_exist(instance=account, exception=AccsNotExist)
 
 
 class UpdateSrvc:
@@ -137,7 +137,7 @@ class UpdateSrvc:
         account = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_UPDATE_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=account, exception=AccsNotExist)
+        return record_not_exist(instance=account, exception=AccsNotExist)
 
 
 class DelSrvc:
@@ -165,4 +165,4 @@ class DelSrvc:
         account = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_UPDATE_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=account, exception=AccsNotExist)
+        return record_not_exist(instance=account, exception=AccsNotExist)

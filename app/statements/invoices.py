@@ -2,7 +2,7 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 
 from ..models.invoices import Invoices
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class InvoicesStms:
@@ -52,6 +52,6 @@ class InvoicesStms:
         return (
             update(invoices)
             .where(and_(invoices.uuid == invoice_uuid, invoices.sys_deleted_at == None))
-            .values(di.set_empty_strs_null(values=invoice_data))
+            .values(set_empty_strs_null(values=invoice_data))
             .returning(invoices)
         )

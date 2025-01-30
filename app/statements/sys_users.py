@@ -3,7 +3,7 @@ from sqlalchemy import Select, Update, and_, func, update, values
 
 from ..models.sys_users import SysUsers
 
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class SysUsersStms:
@@ -72,6 +72,6 @@ class SysUsersStms:
                     sys_users.sys_deleted_at == None,
                 )
             )
-            .values(di.set_empty_strs_null(values=sys_user_data))
+            .values(set_empty_strs_null(values=sys_user_data))
             .returning(sys_users)
         )

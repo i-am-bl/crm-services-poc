@@ -18,7 +18,7 @@ from ..schemas.invoice_items import (
 )
 from ..statements.invoice_items import InvoiceItemsStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist
 
 
 class ReadSrvc:
@@ -43,7 +43,7 @@ class ReadSrvc:
         invoice_item: InvoiceItemsRes = await self._db_ops.return_one_row(
             service=cnst.INVOICE_ITEMS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
+        return record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
 
     async def get_invoices_items(
         self,
@@ -58,9 +58,7 @@ class ReadSrvc:
         invoice_items: List[InvoiceItemsRes] = await self._db_ops.return_all_rows(
             cnst.INVOICE_ITEMS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(
-            instance=invoice_items, exception=InvoiceItemNotExist
-        )
+        return record_not_exist(instance=invoice_items, exception=InvoiceItemNotExist)
 
     async def get_invoices_items_ct(
         self,
@@ -71,7 +69,7 @@ class ReadSrvc:
         invoice_items = await self._db_ops.return_count(
             cnst.INVOICE_ITEMS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(model=invoice_items)
+        return record_not_exist(model=invoice_items)
 
     async def paginated_invoice_items(
         self, invoice_uuid: UUID4, page: int, limit: int, db: AsyncSession
@@ -123,7 +121,7 @@ class CreateSrvc:
             data=invoice_item_data,
             db=db,
         )
-        return di.record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
+        return record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
 
 
 class UpdateSrvc:
@@ -154,7 +152,7 @@ class UpdateSrvc:
         invoice_item = await self._db_ops.return_one_row(
             cnst.INVOICE_ITEMS_UPDATE_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
+        return record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
 
 
 class DelSrvc:
@@ -185,4 +183,4 @@ class DelSrvc:
         invoice_item: InvoiceItemsDelRes = await self._db_ops.return_one_row(
             cnst.INVOICE_ITEMS_DEL_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)
+        return record_not_exist(instance=invoice_item, exception=InvoiceItemNotExist)

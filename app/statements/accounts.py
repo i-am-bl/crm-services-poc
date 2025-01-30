@@ -4,7 +4,7 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, select, update
 
 from ..models.accounts import Accounts
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class AccountsStms:
@@ -52,6 +52,6 @@ class AccountsStms:
         return (
             update(accounts)
             .where(and_(accounts.uuid == account_uuid, accounts.sys_deleted_at == None))
-            .values(di.set_empty_strs_null(account_data))
+            .values(set_empty_strs_null(account_data))
             .returning(accounts)
         )

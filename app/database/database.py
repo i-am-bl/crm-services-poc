@@ -1,15 +1,11 @@
 from contextlib import asynccontextmanager
-from typing import Annotated, List
+from typing import List
 
 from config import settings as set
-from fastapi import Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
-from typing_extensions import Doc
 
-from ..utilities.logger import logger
-from ..utilities.utilities import DataUtils as di
 
 connection_string = f"{set.db_connector}://{set.db_usrnm}:{set.db_pwd}@{set.db_hst}:{set.db_port}/{set.db_nm}"
 

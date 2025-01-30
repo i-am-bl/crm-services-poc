@@ -4,9 +4,7 @@ from sqlalchemy import Select, and_, func, update
 
 from ..database.operations import Operations
 from ..models.entities import Entities
-from ..models.individuals import Individuals
-from ..models.non_individuals import NonIndividuals
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class EntitiesStms:
@@ -76,6 +74,6 @@ class EntitiesStms:
         return (
             update(entities)
             .where(and_(entities.uuid == entity_uuid, entities.sys_deleted_at == None))
-            .values(di.set_empty_strs_null(entity_data))
+            .values(set_empty_strs_null(entity_data))
             .returning(entities)
         )

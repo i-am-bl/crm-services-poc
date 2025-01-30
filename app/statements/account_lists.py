@@ -3,7 +3,7 @@ from sqlalchemy import Select, and_, func, update, values
 
 
 from ..models.account_lists import AccountLists
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class AccountListsStms:
@@ -103,6 +103,6 @@ class AccountListsStms:
                     account_lists.sys_deleted_at == None,
                 )
             )
-            .values(di.set_empty_strs_null(values=account_list_data))
+            .values(set_empty_strs_null(values=account_list_data))
             .returning(account_lists)
         )

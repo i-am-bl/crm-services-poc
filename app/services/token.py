@@ -14,7 +14,8 @@ from ..database.database import transaction_manager
 from ..schemas.token import TokenData, TokenRequest
 from ..schemas.sys_users import SysUserLogin
 from ..services.sys_users import ReadSrvc
-from ..utilities.utilities import DataUtils as di, Password
+from ..utilities.password import validate_hash
+from ..utilities.data import m_dumps
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=cnst.TOKEN_URL)
 
@@ -41,7 +42,7 @@ class TokenSrvc:
         token_dict["sub"] = str(sys_user.uuid)
         token_dict["exp"] = self.context_helper(expires_delta=expires_delta)
         valid_token = TokenData(**token_dict)
-        return di.m_dumps(data=valid_token)
+        return m_dumps(data=valid_token)
 
     async def _create_access_token(self, token_claims) -> any:
         to_encode = token_claims.copy()
@@ -51,7 +52,7 @@ class TokenSrvc:
         sys_user = await self._sys_user_read_srvc.get_sys_user_by_username(
             username=form_data.username, db=db
         )
-        if Password.validate_hash(password=form_data.password, hash=sys_user.password):
+        if validate_hash(password=form_data.password, hash=sys_user.password):
             return sys_user
 
     async def create_session(self, form_data: SysUserLogin, db: AsyncSession):

@@ -2,7 +2,7 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 
 from ..models.non_individuals import NonIndividuals
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class NonInvdividualsStms:
@@ -67,6 +67,6 @@ class NonInvdividualsStms:
                     non_individuals.sys_deleted_at == None,
                 )
             )
-            .values(di.set_empty_strs_null(non_individual_data))
+            .values(set_empty_strs_null(non_individual_data))
             .returning(non_individuals)
         )

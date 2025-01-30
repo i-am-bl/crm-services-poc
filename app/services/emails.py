@@ -18,7 +18,7 @@ from ..schemas.emails import (
 )
 from ..statements.emails import EmailsStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist, record_exists
 
 
 class ReadSrvc:
@@ -46,7 +46,7 @@ class ReadSrvc:
         email: EmailsRes = await self._db_ops.return_one_row(
             service=cnst.EMAILS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=email, exception=EmailNotExist)
+        return record_not_exist(instance=email, exception=EmailNotExist)
 
     async def get_emails(
         self,
@@ -61,7 +61,7 @@ class ReadSrvc:
         emails: List[EmailsRes] = await self._db_ops.return_all_rows(
             service=cnst.EMAILS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=emails, exception=EmailNotExist)
+        return record_not_exist(instance=emails, exception=EmailNotExist)
 
     async def get_email_ct(
         self,
@@ -123,12 +123,12 @@ class CreateSrvc:
         email_exists: EmailsRes = await self._db_ops.return_one_row(
             service=cnst.EMAILS_CREATE_SERVICE, statement=statement, db=db
         )
-        di.record_exists(instance=email_exists, exception=EmailExists)
+        record_exists(instance=email_exists, exception=EmailExists)
 
         email = await self._db_ops.add_instance(
             service=cnst.EMAILS_CREATE_SERVICE, model=emails, data=email_data, db=db
         )
-        return di.record_not_exist(instance=email, exception=EmailNotExist)
+        return record_not_exist(instance=email, exception=EmailNotExist)
 
 
 class UpdateSrvc:
@@ -157,7 +157,7 @@ class UpdateSrvc:
         email: EmailsRes = await Operations.return_one_row(
             service=cnst.EMAILS_UPDATE_SERVICE, statement=statment, db=db
         )
-        return di.record_not_exist(instance=email, exception=EmailNotExist)
+        return record_not_exist(instance=email, exception=EmailNotExist)
 
 
 class DelSrvc:
@@ -186,4 +186,4 @@ class DelSrvc:
         email: EmailsDelRes = await self._db_ops.return_one_row(
             service=cnst.EMAILS_DEL_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=email, exception=EmailNotExist)
+        return record_not_exist(instance=email, exception=EmailNotExist)

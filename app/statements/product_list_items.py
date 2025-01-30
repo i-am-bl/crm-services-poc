@@ -4,7 +4,7 @@ from pydantic import UUID4
 from sqlalchemy import Select, Update, and_, func, update
 
 from ..models import ProductListItems
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class ProductListItemsStms:
@@ -84,6 +84,6 @@ class ProductListItemsStms:
                     product_list_items.sys_deleted_at == None,
                 )
             )
-            .values(di.set_empty_strs_null(product_list_item_data))
+            .values(set_empty_strs_null(product_list_item_data))
             .returning(product_list_items)
         )

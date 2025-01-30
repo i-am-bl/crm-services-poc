@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..utilities.logger import logger
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import m_dumps
 
 
 class Operations:
@@ -78,7 +78,7 @@ class Operations:
         Commits one item or inserts one row to the database.
         """
         logger.info("Dumping data into model.")
-        instance = model(**di.m_dumps(data=data))
+        instance = model(**m_dumps(data=data))
         logger.info(f"Executing database operation for sevice: {service}.")
         db.add(instance=instance)
         logger.info(f"Committing entry to the database for service: {service}.")
@@ -95,7 +95,7 @@ class Operations:
         Commits many items or rows to the database.
         """
         logger.info("Dumping data into model.")
-        instances = [model(**di.m_dumps(instance)) for instance in data]
+        instances = [model(**m_dumps(instance)) for instance in data]
         db.add_all(instances=instances)
         logger.info(f"Committing entry to the database for service: {service}.")
         return instances

@@ -2,7 +2,7 @@ from pydantic import UUID4
 from sqlalchemy import Select, and_, func, update, values
 
 from ..models.individuals import Individuals
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class IndividualsStms:
@@ -53,5 +53,5 @@ class IndividualsStms:
                     individuals.sys_deleted_at == None,
                 )
             )
-            .values(di.set_empty_strs_null(individual_data))
+            .values(set_empty_strs_null(individual_data))
         ).returning(individuals)

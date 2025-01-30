@@ -15,7 +15,7 @@ from ..schemas.entity_accounts import (
     EntityAccountsUpdate,
 )
 from ..statements.entity_accounts import EntityAccountsStms
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_exists, record_not_exist
 
 
 class ReadSrvc:
@@ -43,7 +43,7 @@ class ReadSrvc:
         entity_account: EntityAccountsRes = await self._db_ops.return_one_row(
             service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
     async def get_account_entity(
         self,
@@ -57,7 +57,7 @@ class ReadSrvc:
         entity_account: EntityAccountsRes = await self._db_ops.return_one_row(
             service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
     async def get_account_entities(
         self,
@@ -72,7 +72,7 @@ class ReadSrvc:
         entity_account: List[EntityAccountsRes] = await self._db_ops.return_all_rows(
             service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
     async def get_entity_accounts(
         self,
@@ -87,7 +87,7 @@ class ReadSrvc:
         entity_account = await self._db_ops.return_all_rows(
             service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
     async def get_entity_accounts_ct(
         self,
@@ -149,7 +149,7 @@ class CreateSrvc:
             service=cnst.ENTITY_ACCOUNTS_CREATE_SERV, statement=statement, db=db
         )
 
-        di.record_exists(instance=entity_account_exists, exception=EntityAccExists)
+        record_exists(instance=entity_account_exists, exception=EntityAccExists)
 
         entity_account: EntityAccountsRes = await self._db_ops.add_instance(
             service=cnst.ENTITY_ACCOUNTS_CREATE_SERV,
@@ -157,7 +157,7 @@ class CreateSrvc:
             data=entity_account_data,
             db=db,
         )
-        return di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
     async def create_account_entity(
         self,
@@ -175,7 +175,7 @@ class CreateSrvc:
             service=cnst.ENTITY_ACCOUNTS_CREATE_SERV, statement=statement, db=db
         )
 
-        di.record_exists(instance=entity_account_exists, exception=EntityAccExists)
+        record_exists(instance=entity_account_exists, exception=EntityAccExists)
 
         entity_account: EntityAccountsRes = await self._db_ops.add_instance(
             service=cnst.ENTITY_ACCOUNTS_CREATE_SERV,
@@ -183,7 +183,7 @@ class CreateSrvc:
             data=entity_account_data,
             db=db,
         )
-        return di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
 
 class UpdateSrvc:
@@ -216,7 +216,7 @@ class UpdateSrvc:
             statement=statement,
             db=db,
         )
-        return di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
     async def update_account_entity(
         self,
@@ -235,7 +235,7 @@ class UpdateSrvc:
             statement=statement,
             db=db,
         )
-        return di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
 
 class DelSrvc:
@@ -268,7 +268,7 @@ class DelSrvc:
             statement=statement,
             db=db,
         )
-        return di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
     async def soft_del_account_entity(
         self,
@@ -287,4 +287,4 @@ class DelSrvc:
             statement=statement,
             db=db,
         )
-        return di.record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)

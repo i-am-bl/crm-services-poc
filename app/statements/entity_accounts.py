@@ -3,7 +3,7 @@ from sqlalchemy import Select, Update, and_, func, update, values
 
 from ..models.entity_accounts import EntityAccounts
 
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class EntityAccountsStms:
@@ -118,7 +118,7 @@ class EntityAccountsStms:
                     entity_accounts.sys_deleted_at == None,
                 )
             )
-            .values(di.set_empty_strs_null(entity_account_data))
+            .values(set_empty_strs_null(entity_account_data))
             .returning(entity_accounts)
         )
 
@@ -138,6 +138,6 @@ class EntityAccountsStms:
                     entity_accounts.sys_deleted_at == None,
                 )
             )
-            .values(di.set_empty_strs_null(entity_account_data))
+            .values(set_empty_strs_null(entity_account_data))
             .returning(entity_accounts)
         )

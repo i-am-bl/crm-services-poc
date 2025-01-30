@@ -18,7 +18,7 @@ from ..schemas.product_list_items import (
 )
 from ..statements.product_list_items import ProductListItemsStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist, record_exists
 
 
 class ReadSrvc:
@@ -49,7 +49,7 @@ class ReadSrvc:
         product_list_item: ProductListItemsRes = await self._db_ops.return_one_row(
             service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=product_list_item, exception=ProductListItemNotExist
         )
 
@@ -68,7 +68,7 @@ class ReadSrvc:
                 service=cnst.PRODUCT_LIST_ITEMS_READ_SERV, statement=statement, db=db
             )
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=product_list_items, exception=ProductListItemNotExist
         )
 
@@ -152,7 +152,7 @@ class CreateSrvc:
                 db=db,
             )
         )
-        di.record_exists(
+        record_exists(
             instance=product_list_item_exists, exception=ProductListItemExists
         )
         product_list_items: List[ProductListItemsRes] = (
@@ -163,7 +163,7 @@ class CreateSrvc:
                 db=db,
             )
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=product_list_items, exception=ProductListItemNotExist
         )
 
@@ -198,7 +198,7 @@ class UpdateSrvc:
         product_list_item: ProductListItemsRes = await self._db_ops.return_one_row(
             service=cnst.PRODUCT_LIST_ITEMS_UPDATE_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=product_list_item, exception=ProductListItemNotExist
         )
 
@@ -233,6 +233,6 @@ class DelSrvc:
         product_list_item: ProductListItemsDelRes = await self._db_ops.return_one_row(
             service=cnst.PRODUCT_LIST_ITEMS_UPDATE_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=product_list_item, exception=ProductListItemNotExist
         )

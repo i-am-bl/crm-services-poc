@@ -17,7 +17,7 @@ from ..schemas.orders import (
 )
 from ..statements.orders import OrdersStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist
 
 
 class ReadSrvc:
@@ -38,7 +38,7 @@ class ReadSrvc:
         order: OrdersRes = await self._db_ops.return_one_row(
             service=cnst.ORDERS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=order, exception=OrderNotExist)
+        return record_not_exist(instance=order, exception=OrderNotExist)
 
     async def get_orders(
         self, limt: int, offset: int, db: AsyncSession
@@ -47,7 +47,7 @@ class ReadSrvc:
         orders: List[OrdersRes] = await self._db_ops.return_all_rows(
             service=cnst.ORDERS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=orders, exception=OrderNotExist)
+        return record_not_exist(instance=orders, exception=OrderNotExist)
 
     async def get_orders_ct(self, db: AsyncSession) -> int:
         statement = self._statements.get_orders_ct()
@@ -89,7 +89,7 @@ class CreateSrvc:
         order: OrdersRes = await self._db_ops.add_instance(
             service=cnst.ORDERS_CREATE_SERVICE, model=orders, data=order_data, db=db
         )
-        return di.record_not_exist(instance=order, exception=OrderNotExist)
+        return record_not_exist(instance=order, exception=OrderNotExist)
 
 
 class UpdateSrvc:
@@ -118,7 +118,7 @@ class UpdateSrvc:
         order: OrdersRes = await self._db_ops.return_one_row(
             service=cnst.ORDERS_UPDATE_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=order, exception=OrderNotExist)
+        return record_not_exist(instance=order, exception=OrderNotExist)
 
 
 class DelSrvc:
@@ -147,4 +147,4 @@ class DelSrvc:
         order: OrdersDelRes = await self._db_ops.return_one_row(
             service=cnst.ORDERS_DEL_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=order, exception=OrderNotExist)
+        return record_not_exist(instance=order, exception=OrderNotExist)

@@ -21,8 +21,8 @@ from ..schemas.sys_users import (
 )
 from ..statements.sys_users import SysUsersStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
-from ..utilities.utilities import Password
+from ..utilities.password import create_hash
+from ..utilities.data import record_exists, record_not_exist
 
 
 class ReadSrvc:
@@ -47,7 +47,7 @@ class ReadSrvc:
         sys_user = await self._db_ops.return_one_row(
             service=cnst.SYS_USER_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
+        return record_not_exist(instance=sys_user, exception=SysUserNotExist)
 
     async def get_sys_user_by_username(
         self,
@@ -58,7 +58,7 @@ class ReadSrvc:
         sys_user = await self._db_ops.return_one_row(
             service=cnst.SYS_USER_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=sys_user, exception=InvalidCredentials)
+        return record_not_exist(instance=sys_user, exception=InvalidCredentials)
 
     async def get_sys_users(
         self,
@@ -70,7 +70,7 @@ class ReadSrvc:
         sys_users: List[SysUsersRes] = await self._db_ops.return_all_rows(
             service=cnst.SYS_USER_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=sys_users, exception=SysUserNotExist)
+        return record_not_exist(instance=sys_users, exception=SysUserNotExist)
 
     async def get_sys_users_ct(
         self,
@@ -129,15 +129,15 @@ class CreateSrvc:
         user_exists: SysUsersRes = await self._db_ops.return_one_row(
             service=cnst.SYS_USER_CREATE_SERV, statement=statement, db=db
         )
-        di.record_exists(instance=user_exists, exception=SysUserExists)
-        sys_user_data.password = Password.create_hash(password=sys_user_data.password)
+        record_exists(instance=user_exists, exception=SysUserExists)
+        sys_user_data.password = create_hash(password=sys_user_data.password)
         sys_user: SysUsersRes = await self._db_ops.add_instance(
             service=cnst.SYS_USER_CREATE_SERV,
             model=sys_users,
             data=sys_user_data,
             db=db,
         )
-        return di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
+        return record_not_exist(instance=sys_user, exception=SysUserNotExist)
 
 
 class UpdateSrvc:
@@ -166,7 +166,7 @@ class UpdateSrvc:
         sys_user: SysUsersRes = await self._db_ops.return_one_row(
             service=cnst.SYS_USER_UPDATE_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
+        return record_not_exist(instance=sys_user, exception=SysUserNotExist)
 
     async def disable_sys_user(
         self,
@@ -180,7 +180,7 @@ class UpdateSrvc:
         sys_user: SysUsersDisable = await self._db_ops.return_one_row(
             service=cnst.SYS_USER_UPDATE_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
+        return record_not_exist(instance=sys_user, exception=SysUserNotExist)
 
 
 class DelSrvc:
@@ -208,4 +208,4 @@ class DelSrvc:
         sys_user: SysUsersDelRes = await self._db_ops.return_one_row(
             service=cnst.SYS_USER_UPDATE_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=sys_user, exception=SysUserNotExist)
+        return record_not_exist(instance=sys_user, exception=SysUserNotExist)

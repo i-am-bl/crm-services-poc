@@ -17,7 +17,7 @@ from ..schemas.order_items import (
 )
 from ..statements.order_items import OrderItemsStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist
 
 
 class ReadSrvc:
@@ -45,7 +45,7 @@ class ReadSrvc:
         order_item: OrderItemsRes = await self._db_ops.return_one_row(
             cnst.ORDERS_ITEMS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
+        return record_not_exist(instance=order_item, exception=OrderItemNotExist)
 
     async def get_order_items(
         self,
@@ -60,7 +60,7 @@ class ReadSrvc:
         order_items: List[OrderItemsRes] = await self._db_ops.return_all_rows(
             service=cnst.ORDERS_ITEMS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=order_items, exception=OrderItemNotExist)
+        return record_not_exist(instance=order_items, exception=OrderItemNotExist)
 
     async def get_order_items_ct(
         self,
@@ -126,7 +126,7 @@ class CreateSrvc:
             data=order_item_data,
             db=db,
         )
-        return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
+        return record_not_exist(instance=order_item, exception=OrderItemNotExist)
 
 
 class UpdateSrvc:
@@ -157,7 +157,7 @@ class UpdateSrvc:
         order_item: OrderItemsRes = await self._db_ops.return_one_row(
             service=cnst.ORDERS_ITEMS_UPDATE_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
+        return record_not_exist(instance=order_item, exception=OrderItemNotExist)
 
 
 class DelSrvc:
@@ -188,4 +188,4 @@ class DelSrvc:
         order_item: OrderItemsDelRes = await self._db_ops.return_one_row(
             service=cnst.ORDERS_ITEMS_DEL_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=order_item, exception=OrderItemNotExist)
+        return record_not_exist(instance=order_item, exception=OrderItemNotExist)

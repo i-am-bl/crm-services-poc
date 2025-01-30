@@ -2,7 +2,7 @@ from pydantic import UUID4
 from sqlalchemy import Select, Update, and_, func, update, values
 
 from ..models.invoice_items import InvoiceItems
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class InvoiceItemsStms:
@@ -63,6 +63,6 @@ class InvoiceItemsStms:
                     invoice_items.sys_deleted_at == None,
                 )
             )
-            .values(di.set_empty_strs_null(values=invoice_item_data))
+            .values(set_empty_strs_null(values=invoice_item_data))
             .returning(invoice_items)
         )

@@ -16,7 +16,7 @@ from ..schemas.account_products import (
     AccountProductsUpdate,
 )
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist, record_exists
 
 
 class ReadSrvc:
@@ -46,7 +46,7 @@ class ReadSrvc:
         account_product = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=account_product, exception=AccProductstNotExist
         )
 
@@ -63,7 +63,7 @@ class ReadSrvc:
         account_products: List[AccountProductsRes] = await self._db_ops.return_all_rows(
             service=cnst.ACCOUNTS_PRODUCTS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=account_products, exception=AccProductstNotExist
         )
 
@@ -141,14 +141,14 @@ class CreateSrvc:
             statement=statement,
             db=db,
         )
-        di.record_exists(instance=account_product_exists, exception=AccProductsExists)
+        record_exists(instance=account_product_exists, exception=AccProductsExists)
         account_product: AccountProductsRes = await self._db_ops.add_instance(
             service=cnst.ACCOUNTS_PRODUCTS_CREATE_SERVICE,
             model=accont_products,
             data=account_product_data,
             db=db,
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=account_product, exception=AccProductstNotExist
         )
 
@@ -185,7 +185,7 @@ class UpdateSrvc:
             statement=statement,
             db=db,
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=account_product, exception=AccProductstNotExist
         )
 
@@ -220,6 +220,6 @@ class DelSrvc:
         account_product: AccountProductsDelRes = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_PRODUCTS_DEL_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=account_product, exception=AccProductstNotExist
         )

@@ -16,7 +16,7 @@ from ..schemas.websites import (
 )
 from ..statements.websites import WebsitesStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_exists, record_not_exist
 
 
 class ReadSrvc:
@@ -45,7 +45,7 @@ class ReadSrvc:
         website: WebsitesRes = await self._db_ops.return_one_row(
             service=cnst.WEBSITES_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=website, exception=WebsitesNotExist)
+        return record_not_exist(instance=website, exception=WebsitesNotExist)
 
     async def get_websites(
         self,
@@ -61,7 +61,7 @@ class ReadSrvc:
         websites: List[WebsitesRes] = await self._db_ops.return_all_rows(
             service=cnst.WEBSITES_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=websites, exception=WebsitesNotExist)
+        return record_not_exist(instance=websites, exception=WebsitesNotExist)
 
     async def get_websites_ct(
         self,
@@ -127,14 +127,14 @@ class CreateSrvc:
         website_exists = await self._db_ops.return_one_row(
             service=cnst.WEBSITES_CREATE_SERVICE, statement=statement, db=db
         )
-        di.record_exists(instance=website_exists, exception=WebsitesExists)
+        record_exists(instance=website_exists, exception=WebsitesExists)
         website: WebsitesRes = await self._db_ops.add_instance(
             service=cnst.WEBSITES_CREATE_SERVICE,
             model=websites,
             data=website_data,
             db=db,
         )
-        return di.record_not_exist(instance=website, exception=WebsitesNotExist)
+        return record_not_exist(instance=website, exception=WebsitesNotExist)
 
 
 class UpdateSrvc:
@@ -166,7 +166,7 @@ class UpdateSrvc:
         website: WebsitesRes = await self._db_ops.return_one_row(
             service=cnst.WEBSITES_UPDATE_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=website, exception=WebsitesNotExist)
+        return record_not_exist(instance=website, exception=WebsitesNotExist)
 
 
 class DelSrvc:
@@ -198,4 +198,4 @@ class DelSrvc:
         website: WebsiteDelRes = await self._db_ops.return_one_row(
             service=cnst.WEBSITES_DEL_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=website, exception=WebsitesNotExist)
+        return record_not_exist(instance=website, exception=WebsitesNotExist)

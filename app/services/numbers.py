@@ -16,7 +16,7 @@ from ..schemas.numbers import (
 )
 from ..statements.numbers import NumberStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_exists, record_not_exist
 
 
 class ReadSrvc:
@@ -46,7 +46,7 @@ class ReadSrvc:
         number: NumbersRes = await self._db_ops.return_one_row(
             service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=number, exception=NumbersNotExist)
+        return record_not_exist(instance=number, exception=NumbersNotExist)
 
     async def get_numbers(
         self,
@@ -62,7 +62,7 @@ class ReadSrvc:
         numbers: List[NumbersRes] = await self._db_ops.return_all_rows(
             service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=numbers, exception=NumbersNotExist)
+        return record_not_exist(instance=numbers, exception=NumbersNotExist)
 
     async def get_numbers_ct(
         self,
@@ -132,14 +132,14 @@ class CreateSrvc:
         number_exists: NumbersRes = await self._db_ops.return_one_row(
             service=cnst.NUMBERS_CREATE_SERVICE, statement=statement, db=db
         )
-        di.record_exists(instance=number_exists, exception=NumberExists)
+        record_exists(instance=number_exists, exception=NumberExists)
         number: NumbersRes = await self._db_ops.add_instance(
             service=cnst.NUMBERS_CREATE_SERVICE,
             model=numbers,
             data=number_data,
             db=db,
         )
-        return di.record_not_exist(instance=number, exception=NumbersNotExist)
+        return record_not_exist(instance=number, exception=NumbersNotExist)
 
 
 class UpdateSrvc:
@@ -170,7 +170,7 @@ class UpdateSrvc:
         number: NumbersRes = await self._db_ops.return_one_row(
             service=cnst.NUMBERS_UPDATE_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(instance=number, exception=NumbersNotExist)
+        return record_not_exist(instance=number, exception=NumbersNotExist)
 
 
 class DelSrvc:
@@ -203,4 +203,4 @@ class DelSrvc:
             statement=statement,
             db=db,
         )
-        return di.record_not_exist(instance=number, exception=NumbersNotExist)
+        return record_not_exist(instance=number, exception=NumbersNotExist)

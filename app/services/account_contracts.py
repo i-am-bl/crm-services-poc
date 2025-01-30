@@ -1,8 +1,5 @@
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Callable
-
-import app.schemas.account_contracts as schema
 
 from ..constants import constants as cnst
 from ..database.operations import Operations
@@ -18,7 +15,7 @@ from ..schemas.account_contracts import (
 )
 from ..statements.account_contracts import AccountContractStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist
 
 
 class ReadSrvc:
@@ -77,7 +74,7 @@ class ReadSrvc:
         account_contract: AccountContractsRes = await self._db_ops.return_one_row(
             service=cnst.ACCOUNTS_CONTRACTS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=account_contract, exception=AccContractNotExist
         )
 
@@ -112,7 +109,7 @@ class ReadSrvc:
         account_contracts: AccountContractsRes = await self._db_ops.return_all_rows(
             service=cnst.ACCOUNTS_CONTRACTS_READ_SERVICE, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=account_contracts, exception=AccContractNotExist
         )
 
@@ -222,7 +219,7 @@ class CreateSrvc:
             data=account_contract_data,
             db=db,
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=account_contract, exception=AccContractNotExist
         )
 
@@ -290,7 +287,7 @@ class UpdateSrvc:
             statement=statement,
             db=db,
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=account_contract, exception=AccContractNotExist
         )
 
@@ -358,6 +355,6 @@ class DeleteSrvc:
             statement=statement,
             db=db,
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=account_contract, exception=AccContractNotExist
         )

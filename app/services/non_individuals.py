@@ -14,7 +14,7 @@ from ..schemas.non_individuals import (
     NonIndividualsUpdate,
 )
 from ..statements.non_individuals import NonInvdividualsStms
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_not_exist, record_exists
 
 
 class ReadSrvc:
@@ -41,7 +41,7 @@ class ReadSrvc:
         non_individual: NonIndividualsRes = await self._db_ops.return_one_row(
             service=cnst.NON_INDIVIDUALS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=non_individual, exception=NonIndividualNotExist
         )
 
@@ -52,7 +52,7 @@ class ReadSrvc:
         non_individual: List[NonIndividualsRes] = await self._db_ops.return_all_rows(
             service=cnst.NON_INDIVIDUALS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=non_individual, exception=NonIndividualNotExist
         )
 
@@ -101,14 +101,14 @@ class CreateSrvc:
         non_individual_exists: NonIndividualsRes = await self._db_ops.return_one_row(
             service=cnst.NON_INDIVIDUALS_CREATE_SERV, statement=statement, db=db
         )
-        di.record_exists(instance=non_individual_exists, exception=NonIndividualExists)
+        record_exists(instance=non_individual_exists, exception=NonIndividualExists)
         non_individual: NonIndividualsRes = await self._db_ops.add_instance(
             service=cnst.NON_INDIVIDUALS_CREATE_SERV,
             model=non_individuals,
             data=non_individual_data,
             db=db,
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=non_individual, exception=NonIndividualNotExist
         )
 
@@ -141,7 +141,7 @@ class UpdateSrvc:
         non_individual: NonIndividualsRes = await self._db_ops.return_one_row(
             service=cnst.NON_INDIVIDUALS_UPDATE_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=non_individual, exception=NonIndividualNotExist
         )
 
@@ -176,6 +176,6 @@ class DelSrvc:
         non_individual: NonIndividualsDelRes = await self._db_ops.return_one_row(
             service=cnst.NON_INDIVIDUALS_UPDATE_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(
+        return record_not_exist(
             instance=non_individual, exception=NonIndividualNotExist
         )

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.websites import Websites
 
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import set_empty_strs_null
 
 
 class WebsitesStms:
@@ -86,6 +86,6 @@ class WebsitesStms:
                 websites.uuid == website_uuid,
                 websites.sys_deleted_at == None,
             )
-            .values(di.set_empty_strs_null(website_data))
+            .values(set_empty_strs_null(website_data))
             .returning(websites)
         )

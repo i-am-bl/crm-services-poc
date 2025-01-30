@@ -17,7 +17,7 @@ from ..schemas.product_lists import (
 )
 from ..statements.product_lists import ProductListsStms
 from ..utilities import pagination
-from ..utilities.utilities import DataUtils as di
+from ..utilities.data import record_exists, record_not_exist
 
 
 class ReadSrvc:
@@ -43,7 +43,7 @@ class ReadSrvc:
         product_list: ProductListsRes = await self._db_ops.return_one_row(
             service=cnst.PRODUCT_LISTS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=product_list, exception=ProductListNotExist)
+        return record_not_exist(instance=product_list, exception=ProductListNotExist)
 
     async def get_product_lists_by_uuids(
         self, product_list_uuids: List[UUID4], db: AsyncSession
@@ -55,9 +55,7 @@ class ReadSrvc:
         product_lists: List[ProductListsRes] = await self._db_ops.return_all_rows(
             service=cnst.PRODUCT_LISTS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(
-            instance=product_lists, exception=ProductListNotExist
-        )
+        return record_not_exist(instance=product_lists, exception=ProductListNotExist)
 
     async def get_product_lists(
         self, limit: int, offset: int, db: AsyncSession
@@ -67,9 +65,7 @@ class ReadSrvc:
         product_lists = await self._db_ops.return_all_rows(
             service=cnst.PRODUCT_LISTS_READ_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(
-            instance=product_lists, exception=ProductListNotExist
-        )
+        return record_not_exist(instance=product_lists, exception=ProductListNotExist)
 
     async def get_product_lists_ct(self, db: AsyncSession):
 
@@ -78,9 +74,7 @@ class ReadSrvc:
             service=cnst.PRODUCT_LISTS_READ_SERV, statement=statement, db=db
         )
 
-        return di.record_not_exist(
-            instance=product_lists, exception=ProductListNotExist
-        )
+        return record_not_exist(instance=product_lists, exception=ProductListNotExist)
 
     async def paginated_product_lists(
         self, page: int, limit: int, db: AsyncSession
@@ -136,7 +130,7 @@ class CreateSrvc:
         product_list_exists = await self._db_ops.return_one_row(
             service=cnst.PRODUCT_LISTS_CREATE_SERV, statement=statement, db=db
         )
-        di.record_exists(instance=product_list_exists, exception=ProductListExists)
+        record_exists(instance=product_list_exists, exception=ProductListExists)
 
         product_list: ProductListsRes = await self._db_ops.add_instance(
             service=cnst.PRODUCT_LISTS_CREATE_SERV,
@@ -144,7 +138,7 @@ class CreateSrvc:
             data=product_list_data,
             db=db,
         )
-        return di.record_not_exist(instance=product_list, exception=ProductListNotExist)
+        return record_not_exist(instance=product_list, exception=ProductListNotExist)
 
 
 class UpdateSrvc:
@@ -172,7 +166,7 @@ class UpdateSrvc:
         product_list: ProductListsRes = await self._db_ops.return_one_row(
             service=cnst.PRODUCT_LISTS_UPDATE_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=product_list, exception=ProductListNotExist)
+        return record_not_exist(instance=product_list, exception=ProductListNotExist)
 
 
 class DelSrvc:
@@ -200,4 +194,4 @@ class DelSrvc:
         product_list: ProductListsDelRes = await self._db_ops.return_one_row(
             service=cnst.PRODUCT_LISTS_DEL_SERV, statement=statement, db=db
         )
-        return di.record_not_exist(instance=product_list, exception=ProductListNotExist)
+        return record_not_exist(instance=product_list, exception=ProductListNotExist)
