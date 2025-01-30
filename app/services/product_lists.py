@@ -102,7 +102,7 @@ class ReadSrvc:
         :rtype: List[ProductListsRes]
         :raises ProductListNotExist: If no product lists are found.
         """
-        statement = self._statements.sel_prod_lists_by_uuids(
+        statement = self._statements.get_product_lists_by_uuids(
             product_list_uuids=product_list_uuids
         )
         product_lists: List[ProductListsRes] = await self._db_ops.return_all_rows(
@@ -127,7 +127,7 @@ class ReadSrvc:
         :rtype: List[ProductListsRes]
         :raises ProductListNotExist: If no product lists are found.
         """
-        statement = self._statements.sel_prod_lists(limit=limit, offset=offset)
+        statement = self._statements.get_product_lists(limit=limit, offset=offset)
         product_lists = await self._db_ops.return_all_rows(
             service=cnst.PRODUCT_LISTS_READ_SERV, statement=statement, db=db
         )
