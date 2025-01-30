@@ -3,13 +3,12 @@ from typing import TypedDict
 from ..database.operations import Operations
 
 
-"""
-This package encapsulates multiple containers for globally managing dependency injections.
+class DatabaseContainer(TypedDict):
+    """
+    A container that holds dependencies related to database operations.
 
-The containers in this package handle the management and injection of dependencies
-across various modules, providing a central place to access shared services and components.
-"""
-
+    This container is used to manage and inject dependencies for database-related operations.
+    """
 
     operations: Operations
 
