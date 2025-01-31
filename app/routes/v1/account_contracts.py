@@ -106,14 +106,14 @@ async def create_account_contract(
     Create one account contract.
     """
 
+    sys_user, _ = user_token
+    _account_contract_data: AccountContractsInternalCreate = internal_schema_validation(
+        data=account_contract_data,
+        schema=AccountContractsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        _account_contract_data = internal_schema_validation(
-            data=account_contract_data,
-            schema=AccountContractsInternalCreate,
-            setter_method=sys_values.sys_created_by,
-            sys_user_uuid=sys_user.uuid,
-        )
         return await account_contract_create_srvc.create_account_contract(
             account_uuid=account_uuid,
             account_contract_data=_account_contract_data,
@@ -143,14 +143,14 @@ async def update_account_contract(
     Update one account contract.
     """
 
+    sys_user, _ = user_token
+    _account_contract_data: AccountContractsInternalUpdate = internal_schema_validation(
+        schema=AccountContractsInternalUpdate,
+        data=account_contract_data,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        _account_contract_data = internal_schema_validation(
-            schema=AccountContractsInternalUpdate,
-            data=account_contract_data,
-            setter_method=sys_values.sys_updated_by,
-            sys_user_uuid=sys_user.uuid,
-        )
 
         return await account_contract_update_srvc.update_account_contract(
             account_uuid=account_uuid,
@@ -181,13 +181,13 @@ async def soft_delete_account_contract(
     Soft delete one account contract.
     """
 
+    sys_user, _ = user_token
+    _account_contract_data: AccountContractsDel = internal_schema_validation(
+        schema=AccountContractsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        _account_contract_data = internal_schema_validation(
-            schema=AccountContractsDel,
-            setter_method=sys_values.sys_deleted_by,
-            sys_user_uuid=sys_user.uuid,
-        )
 
         await account_contracts_delete_srvc.soft_delete_account_contract(
             account_uuid=account_uuid,

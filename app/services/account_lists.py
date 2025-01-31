@@ -7,9 +7,9 @@ from ..constants import constants as cnst
 from ..exceptions import AccListExists, AccListNotExist
 from ..models.account_lists import AccountLists
 from ..schemas.account_lists import (
-    AccountListsCreate,
     AccountListsDel,
     AccountListsDelRes,
+    AccountListsInternalCreate,
     AccountListsUpdate,
     AccountListsRes,
     AccountListsOrchPgRes,
@@ -195,7 +195,7 @@ class CreateSrvc:
     async def create_account_list(
         self,
         account_uuid: UUID4,
-        account_list_data: AccountListsCreate,
+        account_list_data: AccountListsInternalCreate,
         db: AsyncSession,
     ) -> AccountListsRes:
         """
@@ -204,7 +204,7 @@ class CreateSrvc:
         :param account_uuid: The UUID of the account.
         :type account_uuid: UUID4
         :param account_list_data: The data for the account list to be created.
-        :type account_list_data: AccountListsCreate
+        :type account_list_data: AccountListsInternalCreate
         :param db: The database session.
         :type db: AsyncSession
         :return: The created account list.

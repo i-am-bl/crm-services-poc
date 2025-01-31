@@ -107,7 +107,7 @@ async def create_account_entity(
     """
 
     sys_user, _ = user_token
-    _entity_account_data = internal_schema_validation(
+    _entity_account_data: AccountEntityInternalCreate = internal_schema_validation(
         data=entity_account_data,
         schema=AccountEntityInternalCreate,
         setter_method=sys_values.sys_created_by,
@@ -142,7 +142,7 @@ async def update_account_entity(
     """
 
     sys_user, _ = user_token
-    _entity_account_data = internal_schema_validation(
+    _entity_account_data: EntityAccountsInternalUpdate = internal_schema_validation(
         data=entity_account_data,
         schema=EntityAccountsInternalUpdate,
         setter_method=sys_values.sys_updated_by,

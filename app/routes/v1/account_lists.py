@@ -14,6 +14,7 @@ from ...orchestrators.account_lists import AccountListsReadOrch
 from ...schemas.account_lists import (
     AccountListsCreate,
     AccountListsDelRes,
+    AccountListsInternalCreate,
     AccountListsOrchPgRes,
     AccountListsUpdate,
     AccountListsRes,
@@ -23,6 +24,7 @@ from ...services.account_lists import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 
 router = APIRouter()
@@ -107,18 +109,28 @@ async def create_account_list(
     Create one account list link to an existing product list..
     """
 
+    sys_user, _ = user_token
+    _account_list_data: AccountListsInternalCreate = internal_schema_validation(
+        data=account_list_data,
+        schema=AccountListsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(data=account_list_data, sys_user_uuid=sys_user.uuid)
+
         return await account_lists_create_srvc.create_account_list(
-            account_uuid=account_uuid, account_list_data=account_list_data, db=db
+            account_uuid=account_uuid, account_list_data=_account_list_data, db=db
         )
 
 
+# There is no need for this at this point in time.
+# TODO: Remove if there no future need for it.
 @router.put(
     "/{account_uuid}/account-lists/{account_list_uuid}/",
     response_model=AccountListsRes,
     status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+    deprecated=True,
 )
 @set_auth_cookie
 @handle_exceptions([AccListNotExist])
@@ -126,7 +138,6 @@ async def update_account_list(
     response: Response,
     account_uuid: UUID4,
     account_list_uuid: UUID4,
-    account_list_data: AccountListsUpdate,
     user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     db: AsyncSession = Depends(get_db),
     account_lists_udpate_srvc: UpdateSrvc = Depends(
@@ -137,13 +148,17 @@ async def update_account_list(
     Update one account list link to a product list.
     """
 
+    sys_user, token = user_token
+    _account_list_data: AccountListsUpdate = internal_schema_validation(
+        schema=AccountListsUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, token = user_token
-        sys_values.sys_updated_by(data=account_list_data, sys_user_uuid=sys_user.uuid)
         return await account_lists_udpate_srvc.update_account_list(
             account_uuid=account_uuid,
             account_list_uuid=account_list_uuid,
-            account_list_data=account_list_data,
+            account_list_data=_account_list_data,
             db=db,
         )
 
@@ -170,13 +185,16 @@ async def soft_del_account_list(
     Soft delete one account list link to a product list.
     """
 
+    sys_user, _ = user_token
+    _account_list_data: AccountListsDel = internal_schema_validation(
+        schema=AccountListsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        account_list_data = AccountListsDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=account_list_data, sys_user_uuid=sys_user.uuid)
         return await account_lists_delete_srvc.soft_del_account_list(
             account_uuid=account_uuid,
             account_list_uuid=account_list_uuid,
-            account_list_data=account_list_data,
+            account_list_data=_account_list_data,
             db=db,
         )

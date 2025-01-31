@@ -7,7 +7,7 @@ from ._variables import TimeStamp
 from .product_lists import ProductListsRes
 
 
-class AccountLists(BaseModel):
+class AccountListsCreate(BaseModel):
     """
     Model representing an account list with associated product list and contract dates.
     """
@@ -24,9 +24,10 @@ class AccountLists(BaseModel):
     )
 
 
-class AccountListsCreate(AccountLists):
+class AccountListsInternalCreate(AccountListsCreate):
     """
-    Model representing an account list being created, including system metadata.
+    Model representing an account list being created, including system metadata,
+    hiding system level fields from the client.
     """
 
     sys_created_at: datetime = Field(

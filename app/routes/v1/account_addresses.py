@@ -139,7 +139,7 @@ async def create_address(
     """
 
     sys_user, _ = user_token
-    _address_data = internal_schema_validation(
+    _address_data: AccountAddressesInternalCreate = internal_schema_validation(
         data=address_data,
         schema=AccountAddressesInternalCreate,
         setter_method=sys_values.sys_created_by,
@@ -184,7 +184,7 @@ async def update_address(
     - **AddressesRes**: The updated address data.
     """
     sys_user, _ = user_token
-    _address_data = internal_schema_validation(
+    _address_data: AddressesInternalUpdate = internal_schema_validation(
         data=address_data,
         schema=AddressesInternalUpdate,
         setter_method=sys_values.sys_updated_by,
@@ -230,7 +230,7 @@ async def soft_del_address(
     - **None**: No content is returned on success (204 No Content).
     """
     sys_user, _ = user_token
-    _address_data = internal_schema_validation(
+    _address_data: AddressesDel = internal_schema_validation(
         schema=AddressesDel,
         setter_method=sys_values.sys_deleted_by,
         sys_user_uuid=sys_user.uuid,
