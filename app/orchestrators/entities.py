@@ -121,16 +121,12 @@ class EntitiesCreateOrch:
                 entity_data=_entity_data, db=db
             )
             await db.flush()
-            print(">>>", entity.uuid)
             individual_data: IndividualsInitCreate = IndividualsInitCreate(
                 **entity_data.model_dump(),
                 entity_uuid=entity.uuid,
                 sys_created_by=sys_user.uuid,
             )
-            print(">>> model_dump output", entity_data.model_dump())
-            print(">>> model_dump output", individual_data.model_dump())
 
-            # print(">>>", individual_data.entity_uuid)
             return await self._individuals_create_srvc.create_individual(
                 entity_uuid=entity.uuid, individual_data=individual_data, db=db
             )

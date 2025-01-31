@@ -32,6 +32,7 @@ from ...services.entities import ReadSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -99,17 +100,21 @@ async def create_entity(
     ),
 ) -> NonIndividualsRes | IndividualsRes:
 
+    sys_user, _ = user_token
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
         return await entities_creates_srvc.create_entity(
             entity_data=entity_data, db=db, sys_user=sys_user
         )
 
 
+# There is no need for this at this time.
+# TODO: Remove if there no future use.
 @router.put(
     "/{entity_uuid}/",
     response_model=EntitiesCombinedRes,
     status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+    deprecated=True,
 )
 @set_auth_cookie
 @handle_exceptions(
@@ -125,7 +130,6 @@ async def create_entity(
 async def update_entity(
     response: Response,
     entity_uuid: UUID4,
-    entity_data: EntitiesUpdate,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     entities_update_srvc: UpdateSrvc = Depends(services_container["entities_update"]),
@@ -134,11 +138,16 @@ async def update_entity(
     Update one entity by entity_uuid.
     """
     # TODO: if type changes, the child record based on type must be deleted.
+    sys_user, _ = user_token
+    _entity_data: EntitiesUpdate = internal_schema_validation(
+        schema=EntitiesUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=entity_data, sys_user_uuid=sys_user.uuid)
+
         return await entities_update_srvc.update_entity(
-            entity_uuid=entity_uuid, entity_data=entity_data, db=db
+            entity_uuid=entity_uuid, entity_data=_entity_data, db=db
         )
 
 
@@ -164,10 +173,14 @@ async def soft_del_entity(
     """
     Soft del one entity by entity_uuid.
     """
+    sys_user, _ = user_token
+    _entity_data: EntitiesDel = internal_schema_validation(
+        schema=EntitiesDel,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        entity_data = EntitiesDel()
-        sys_values.sys_deleted_by(data=entity_data, sys_user_uuid=sys_user.uuid)
+
         await entities_delete_srvc.soft_del_entity(
-            entity_uuid=entity_uuid, entity_data=entity_data, db=db
+            entity_uuid=entity_uuid, entity_data=_entity_data, db=db
         )
