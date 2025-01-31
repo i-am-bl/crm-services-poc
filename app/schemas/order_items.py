@@ -8,7 +8,7 @@ from ..constants.enums import ItemAdjustmentType
 from ._variables import ConstrainedDec, TimeStamp
 
 
-class OrderItems(BaseModel):
+class OrderItemsCreate(BaseModel):
     """Represents an individual order item, including details about the product, price, and quantity."""
 
     order_uuid: UUID4 = Field(..., description="UUID of the associated order.")
@@ -39,8 +39,11 @@ class OrderItems(BaseModel):
         return value.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
 
 
-class OrderItemsCreate(OrderItems):
-    """Model for creating a new order item."""
+class OrderItemsInternalCreate(OrderItemsCreate):
+    """Model for creating a new order item.
+
+    Hiding system level fields from client.
+    """
 
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp when the order item was created."
@@ -72,13 +75,6 @@ class OrderItemsUpdate(BaseModel):
         None, description="Updated price adjustment."
     )
 
-    sys_updated_at: datetime = Field(
-        TimeStamp, description="Timestamp when the order item was last updated."
-    )
-    sys_updated_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who last updated the order item."
-    )
-
     @field_validator("original_price", mode="before")
     def round_price(cls, value):
         """Rounds the original price to two decimal places."""
@@ -87,6 +83,20 @@ class OrderItemsUpdate(BaseModel):
         elif not isinstance(value, Decimal):
             raise ValueError("Price must be a number")
         return value.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
+
+
+class OrderItemsInternalUpdate(OrderItemsUpdate):
+    """Model for updating an existing order item.
+
+    Hiding system level fields from the client.
+    """
+
+    sys_updated_at: datetime = Field(
+        TimeStamp, description="Timestamp when the order item was last updated."
+    )
+    sys_updated_by: Optional[UUID4] = Field(
+        None, description="UUID of the user who last updated the order item."
+    )
 
 
 class OrderItemsDel(BaseModel):

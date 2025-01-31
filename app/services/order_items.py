@@ -8,12 +8,12 @@ from ..database.operations import Operations
 from ..exceptions import OrderItemNotExist
 from ..models.order_items import OrderItems
 from ..schemas.order_items import (
-    OrderItemsCreate,
+    OrderItemsInternalCreate,
     OrderItemsDel,
     OrderItemsDelRes,
     OrderItemsPgRes,
     OrderItemsRes,
-    OrderItemsUpdate,
+    OrderItemsInternalUpdate,
 )
 from ..statements.order_items import OrderItemsStms
 from ..utilities import pagination
@@ -247,7 +247,7 @@ class CreateSrvc:
     async def create_order_item(
         self,
         order_uuid: UUID4,
-        order_item_data: OrderItemsCreate,
+        order_item_data: List[OrderItemsInternalCreate],
         db: AsyncSession,
     ) -> OrderItemsRes:
         """
@@ -258,7 +258,7 @@ class CreateSrvc:
         :param order_uuid: The UUID of the order to which the order item belongs.
         :type order_uuid: UUID4
         :param order_item_data: The data for the new order item to be created.
-        :type order_item_data: OrderItemsCreate
+        :type order_item_data: OrderItemsInternalCreate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 
@@ -324,7 +324,7 @@ class UpdateSrvc:
         self,
         order_uuid: UUID4,
         order_item_uuid: UUID4,
-        order_item_data: OrderItemsUpdate,
+        order_item_data: OrderItemsInternalUpdate,
         db: AsyncSession,
     ) -> OrderItemsRes:
         """
@@ -338,7 +338,7 @@ class UpdateSrvc:
         :param order_item_uuid: The UUID of the specific order item to be updated.
         :type order_item_uuid: UUID4
         :param order_item_data: The updated data for the order item.
-        :type order_item_data: OrderItemsUpdate
+        :type order_item_data: OrderItemsInternalUpdate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 

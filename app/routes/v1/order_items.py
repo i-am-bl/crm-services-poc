@@ -12,6 +12,8 @@ from ...models.sys_users import SysUsers
 from ...schemas.order_items import (
     OrderItemsCreate,
     OrderItemsDel,
+    OrderItemsInternalCreate,
+    OrderItemsInternalUpdate,
     OrderItemsPgRes,
     OrderItemsRes,
     OrderItemsUpdate,
@@ -20,6 +22,7 @@ from ...services.order_items import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -97,11 +100,17 @@ async def create_order_item(
     Create order item.
     """
 
+    sys_user, _ = user_token
+    _order_item_data: List[OrderItemsInternalCreate] = internal_schema_validation(
+        data=order_item_data,
+        schema=OrderItemsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(data=order_item_data, sys_user_uuid=sys_user.uuid)
         return await order_items_create_srvc.create_order_item(
-            order_uuid=order_uuid, order_item_data=order_item_data, db=db
+            order_uuid=order_uuid, order_item_data=_order_item_data, db=db
         )
 
 
@@ -127,13 +136,19 @@ async def update_order_item(
     Update order item.
     """
 
+    sys_user, _ = user_token
+    _order_item_data: OrderItemsInternalUpdate = internal_schema_validation(
+        data=order_item_data,
+        schema=OrderItemsInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=order_item_data, sys_user_uuid=sys_user.uuid)
         return await order_items_update_srvc.update_order_item(
             order_uuid=order_uuid,
             order_item_uuid=order_item_uuid,
-            order_item_data=order_item_data,
+            order_item_data=_order_item_data,
             db=db,
         )
 
@@ -158,13 +173,17 @@ async def soft_del_order_item(
     Soft del order item.
     """
 
+    sys_user, _ = user_token
+    _order_item_data: OrderItemsDel = internal_schema_validation(
+        schema=OrderItemsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        order_item_data = OrderItemsDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=order_item_data, sys_user_uuid=sys_user.uuid)
         return await order_items_delete_srvc.soft_del_order_item(
             order_uuid=order_uuid,
             order_item_uuid=order_item_uuid,
-            order_item_data=order_item_data,
+            order_item_data=_order_item_data,
             db=db,
         )
