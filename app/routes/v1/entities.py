@@ -29,10 +29,11 @@ from ...schemas.entities import (
 from ...schemas.individuals import Individuals as IndividualsCreate
 from ...schemas.non_individuals import NonIndividuals as NonIndividualsCreate
 from ...services.entities import ReadSrvc, UpdateSrvc, DelSrvc
-from ...services.token import set_auth_cookie
+from ...services.token import set_auth_cookie, TokenSrvc
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
 
+token = TokenSrvc(sys_user_read_srvc=services_container["sys_users_read"])
 router = APIRouter()
 
 
@@ -93,7 +94,7 @@ async def create_entity(
     response: Response,
     entity_data: IndividualsCreate | NonIndividualsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    user_token: Tuple[SysUsers, str] = Depends(token.validate_session),
     entities_creates_srvc: EntitiesCreateOrch = Depends(
         orchs_container["entities_create_orch"]
     ),

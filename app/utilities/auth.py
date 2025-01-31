@@ -5,6 +5,7 @@ Auth utilities for session validation and creation, assisting with dependency in
 from typing import Callable, Tuple
 
 from ..containers.auth import container as auth_container
+from ..services.token import TokenSrvc
 from ..models.sys_users import SysUsers
 
 
@@ -16,4 +17,5 @@ def get_validated_session() -> Callable[[], Tuple[SysUsers, str]]:
     :return: Callable[[], Tuple[SysUsers, str]]: A function that validates the session and returns a tuple
             consisting of a `SysUsers` object and a session status string.
     """
-    return auth_container["token_srvc"].validate_session
+    token_srvc: TokenSrvc = auth_container["token_srvc"]()
+    return token_srvc.validate_session()

@@ -17,6 +17,6 @@ class AuthContainer(TypedDict):
 # Container initialization for authentication services.
 container: AuthContainer = {
     "token_srvc": lambda: token_srvcs.TokenSrvc(
-        sys_user_read_srvc=services_container["sys_users_read"]
+        sys_user_read_srvc=services_container["sys_users_read"]()
     )
 }
