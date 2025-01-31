@@ -5,7 +5,7 @@ from pydantic import UUID4, BaseModel, Field
 from ._variables import ConstrainedStr, TimeStamp
 
 
-class Products(BaseModel):
+class ProductsCreate(BaseModel):
     """Model representing a product."""
 
     name: ConstrainedStr = Field(..., description="The name of the product.")
@@ -32,8 +32,11 @@ class Products(BaseModel):
     )
 
 
-class ProductsCreate(Products):
-    """Model for creating a new product, inheriting from `Products`."""
+class ProductsInternalCreate(ProductsCreate):
+    """Model for creating a new product, inheriting from `ProductsCreate`.
+
+    Hides system level fields from the client.
+    """
 
     sys_created_at: datetime = Field(
         ...,
@@ -75,6 +78,14 @@ class ProductsUpdate(BaseModel):
         None,
         description="Whether price decrease is allowed (manufacturer-controlled, optional).",
     )
+
+
+class ProductsInternalUpdate(ProductsUpdate):
+    """Model for updating an existing product.
+
+    Hides system level fields from client.
+    """
+
     sys_updated_at: datetime = Field(
         ...,
         description="The timestamp when the product was last updated, automatically set.",

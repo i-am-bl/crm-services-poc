@@ -9,12 +9,12 @@ from ..database.operations import Operations
 from ..exceptions import ProductsExists, ProductsNotExist
 from ..models.products import Products
 from ..schemas.products import (
-    ProductsCreate,
+    ProductsInternalCreate,
     ProductsDel,
     ProductsDelRes,
     ProductsPgRes,
     ProductsRes,
-    ProductsUpdate,
+    ProductsInternalUpdate,
 )
 from ..statements.products import ProductsStms
 from ..utilities import pagination
@@ -245,7 +245,7 @@ class CreateSrvc:
 
     async def create_product(
         self,
-        product_data: ProductsCreate,
+        product_data: ProductsInternalCreate,
         db: AsyncSession,
         transaction_type: Optional[bool] = True,
     ) -> ProductsRes:
@@ -259,7 +259,7 @@ class CreateSrvc:
         for duplicates.
 
         :param product_data: The data used to create the new product.
-        :type product_data: ProductsCreate
+        :type product_data: ProductsInternalCreate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
         :param transaction_type: A flag indicating whether to check for existing products
@@ -350,7 +350,7 @@ class UpdateSrvc:
     async def update_product(
         self,
         product_uuid: UUID4,
-        product_data: ProductsUpdate,
+        product_data: ProductsInternalUpdate,
         db: AsyncSession,
     ) -> ProductsRes:
         """
@@ -362,7 +362,7 @@ class UpdateSrvc:
         :param product_uuid: The UUID of the product to update.
         :type product_uuid: UUID4
         :param product_data: The data used to update the product.
-        :type product_data: ProductsUpdate
+        :type product_data: ProductsInternalUpdate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 
