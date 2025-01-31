@@ -8,14 +8,12 @@ from ..database.operations import Operations
 from ..exceptions import AddressExists, AddressNotExist
 from ..models.addresses import Addresses
 from ..schemas.addresses import (
-    AccountAddressesCreate,
     AccountAddressesInternalCreate,
-    EntityAddressesCreate,
+    AddressesInternalUpdate,
     AddressesDel,
     AddressesDelRes,
     AddressesPgRes,
     AddressesRes,
-    AddressesUpdate,
     EntityAddressesInternalCreate,
 )
 from ..statements.addresses import AddressesStms
@@ -358,7 +356,7 @@ class UpdateSrvc:
         parent_uuid: UUID4,
         parent_table: Literal["entities", "accounts"],
         address_uuid: UUID4,
-        address_data: AddressesUpdate,
+        address_data: AddressesInternalUpdate,
         db: AsyncSession,
     ) -> AddressesRes:
         """
@@ -371,7 +369,7 @@ class UpdateSrvc:
         :param address_uuid: The UUID of the address to update.
         :type address_uuid: UUID4
         :param address_data: The new data to update the address with.
-        :type address_data: AddressesUpdate
+        :type address_data: AddressesInternalUpdate
         :param db: The database session.
         :type db: AsyncSession
         :return: The updated address.

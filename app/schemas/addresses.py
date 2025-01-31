@@ -95,6 +95,13 @@ class AddressesUpdate(Addresses):
         None,
         description="UUID representing the type of value associated with the address.",
     )
+
+
+class AddressesInternalUpdate(AddressesUpdate):
+    """
+    Model for intrnal updating an address hiding system level fields from client.
+    """
+
     sys_updated_at: datetime = Field(
         TimeStamp, description="Timestamp of when the address was last updated."
     )

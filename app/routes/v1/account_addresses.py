@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...containers.services import container as services_container
 from ...database.database import get_db, transaction_manager
-from ...exceptions import AddressExists, AddressNotExist
+from ...exceptions import AddressNotExist
 from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
 from ...schemas.addresses import (
@@ -15,6 +15,7 @@ from ...schemas.addresses import (
     AccountAddressesInternalCreate,
     AddressesDel,
     AddressesDel,
+    AddressesInternalUpdate,
     AddressesPgRes,
     AddressesRes,
     AddressesUpdate,
@@ -23,6 +24,7 @@ from ...services.addresses import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities.auth import get_validated_session
 from ...utilities import sys_values
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -136,16 +138,17 @@ async def create_address(
     - **AddressesRes**: The created address data.
     """
 
-    data = AccountAddressesInternalCreate(**address_data.model_dump())
-    print(">>>", data.model_dump())
+    sys_user, _ = user_token
+    _address_data = internal_schema_validation(
+        data=address_data,
+        schema=AccountAddressesInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(
-            sys_user_uuid=sys_user.uuid,
-            data=data,
-        )
+
         return await addresses_create_srvc.create_address(
-            parent_uuid=account_uuid, address_data=data, db=db
+            parent_uuid=account_uuid, address_data=_address_data, db=db
         )
 
 
@@ -180,14 +183,19 @@ async def update_address(
     ### Returns:
     - **AddressesRes**: The updated address data.
     """
+    sys_user, _ = user_token
+    _address_data = internal_schema_validation(
+        data=address_data,
+        schema=AddressesInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(sys_user_uuid=sys_user.uuid, data=address_data)
         return await addresses_update_srvc.update_address(
             parent_uuid=account_uuid,
             parent_table="accounts",
             address_uuid=address_uuid,
-            address_data=address_data,
+            address_data=_address_data,
             db=db,
         )
 
@@ -221,14 +229,17 @@ async def soft_del_address(
     ### Returns:
     - **None**: No content is returned on success (204 No Content).
     """
+    sys_user, _ = user_token
+    _address_data = internal_schema_validation(
+        schema=AddressesDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        address_data = AddressesDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(sys_user_uuid=sys_user.uuid, data=address_data)
         return await addresses_delete_srvc.soft_del_address(
             parent_uuid=account_uuid,
             parent_table="accounts",
             address_uuid=address_uuid,
-            address_data=address_data,
+            address_data=_address_data,
             db=db,
         )
