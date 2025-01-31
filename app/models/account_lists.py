@@ -38,7 +38,10 @@ class AccountLists(SysBase):
         Integer, primary_key=True, nullable=False, autoincrement=True
     )
     uuid: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
+        UUID(as_uuid=True),
+        nullable=False,
+        unique=True,
+        server_default=text("gen_random_uuid()"),
     )
 
     account_uuid: Mapped[UUID] = mapped_column(
@@ -54,5 +57,5 @@ class AccountLists(SysBase):
     end_on: Mapped[date] = mapped_column(Date, nullable=True)
 
     # Parent relationships
-    account = relationship("Accounts", back_populates="sales.acc_accounts")
+    account = relationship("Accounts", back_populates="account_lists")
     product_list = relationship("ProductLists", back_populates="account_lists")

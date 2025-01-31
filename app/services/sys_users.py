@@ -282,6 +282,7 @@ class CreateSrvc:
         """
         sys_users = self._model
         # Check if the user already exists by email
+        print(">>>", self._statements)
         statement = self._statements.get_sys_user_by_email(email=sys_user_data.email)
         user_exists: SysUsersRes = await self._db_ops.return_one_row(
             service=cnst.SYS_USER_CREATE_SERV, statement=statement, db=db

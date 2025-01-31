@@ -61,7 +61,9 @@ class InvoiceItems(SysBase):
         UUID(as_uuid=True), ForeignKey(column="sales.om_invoices.uuid"), nullable=False
     )
     order_item_uuid: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey(column="om_order_items.uuid"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey(column="sales.om_order_items.uuid"),
+        nullable=False,
     )
 
     product_list_item_uuid: Mapped[UUID] = mapped_column(

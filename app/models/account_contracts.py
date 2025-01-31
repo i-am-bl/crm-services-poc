@@ -45,7 +45,10 @@ class AccountContracts(SysBase):
         Integer, primary_key=True, nullable=False, autoincrement=True
     )
     uuid: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
+        UUID(as_uuid=True),
+        nullable=False,
+        unique=True,
+        server_default=text("gen_random_uuid()"),
     )
 
     account_uuid: Mapped[UUID] = mapped_column(

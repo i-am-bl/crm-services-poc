@@ -42,12 +42,15 @@ class Invoices(SysBase):
         Integer, primary_key=True, nullable=False, autoincrement=True
     )
     uuid: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
+        UUID(as_uuid=True),
+        nullable=False,
+        unique=True,
+        server_default=text("gen_random_uuid()"),
     )
 
     order_uuid: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey(column="sales._om_sales.orders.uuid"),
+        ForeignKey(column="sales.om_sales_orders.uuid"),
         nullable=False,
     )
     sys_value_status_uuid: Mapped[UUID] = mapped_column(

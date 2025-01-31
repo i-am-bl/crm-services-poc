@@ -46,7 +46,10 @@ class Products(SysBase):
         Integer, primary_key=True, nullable=False, autoincrement=True
     )
     uuid: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
+        UUID(as_uuid=True),
+        nullable=False,
+        unique=True,
+        server_default=text("gen_random_uuid()"),
     )
 
     name: Mapped[str] = mapped_column(String(100), nullable=False)

@@ -475,8 +475,8 @@ container: ServicesContainer = {
     ),
     # sys_users services
     "sys_users_create": lambda: sys_users_srvcs.CreateSrvc(
-        statements=statements_container["sys_users_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["sys_users_stms"](),
+        db_operations=database_container["operations"](),
         model=SysUsers,
     ),
     "sys_users_read": lambda: sys_users_srvcs.ReadSrvc(

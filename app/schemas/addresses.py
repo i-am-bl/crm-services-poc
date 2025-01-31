@@ -32,16 +32,25 @@ class AccountAddressesCreate(Addresses):
     """
 
     parent_uuid: UUID4 = Field(..., description="UUID of the associated account.")
-    parent_table: AddressesParentTable = Field(
-        default=AddressesParentTable.ACCOUNTS,
-        description="Table the address belongs to.",
-    )
     sys_value_type_uuid: Optional[UUID4] = Field(
         None,
         description="UUID representing the type of value associated with the address.",
     )
+
+
+class AccountAddressesInternalCreate(AccountAddressesCreate):
+    """
+    Model for internal use only for validating system level fields.
+    """
+
+    parent_table: AddressesParentTable = Field(
+        default=AddressesParentTable.ACCOUNTS,
+        description="Table the address belongs to.",
+    )
     sys_created_at: datetime = Field(
-        TimeStamp, description="Timestamp of when the address was created."
+        TimeStamp,
+        description="Timestamp of when the address was created.",
+        exclude=True,
     )
     sys_created_by: Optional[UUID4] = Field(
         None, description="UUID of the user who created the address."
@@ -54,13 +63,20 @@ class EntityAddressesCreate(Addresses):
     """
 
     parent_uuid: UUID4 = Field(..., description="UUID of the associated entity.")
-    parent_table: AddressesParentTable = Field(
-        default=AddressesParentTable.ENTITIES,
-        description="Table the address belongs to.",
-    )
     sys_value_type_uuid: Optional[UUID4] = Field(
         None,
         description="UUID representing the type of value associated with the address.",
+    )
+
+
+class EntityAddressesInternalCreate(EntityAddressesCreate):
+    """
+    Model for internal use only for validating system level fields.
+    """
+
+    parent_table: AddressesParentTable = Field(
+        default=AddressesParentTable.ENTITIES,
+        description="Table the address belongs to.",
     )
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp of when the address was created."

@@ -9,12 +9,14 @@ from ..exceptions import AddressExists, AddressNotExist
 from ..models.addresses import Addresses
 from ..schemas.addresses import (
     AccountAddressesCreate,
+    AccountAddressesInternalCreate,
     EntityAddressesCreate,
     AddressesDel,
     AddressesDelRes,
     AddressesPgRes,
     AddressesRes,
     AddressesUpdate,
+    EntityAddressesInternalCreate,
 )
 from ..statements.addresses import AddressesStms
 from ..utilities import pagination
@@ -270,7 +272,7 @@ class CreateSrvc:
     async def create_address(
         self,
         parent_uuid: UUID4,
-        address_data: AccountAddressesCreate | EntityAddressesCreate,
+        address_data: AccountAddressesInternalCreate | EntityAddressesInternalCreate,
         db: AsyncSession,
     ) -> AddressesRes:
         """

@@ -14,4 +14,4 @@ class DatabaseContainer(TypedDict):
 
 
 # Container initialization for database operations services.
-container: DatabaseContainer = {"operations": lambda: (Operations)}
+container: DatabaseContainer = {"operations": lambda: Operations}

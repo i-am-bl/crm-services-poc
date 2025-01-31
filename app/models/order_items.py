@@ -50,7 +50,10 @@ class OrderItems(SysBase):
         Integer, primary_key=True, nullable=False, autoincrement=True
     )
     uuid: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False, server_default=text("gen_random_uuid()")
+        UUID(as_uuid=True),
+        nullable=False,
+        unique=True,
+        server_default=text("gen_random_uuid()"),
     )
 
     order_uuid: Mapped[UUID] = mapped_column(
@@ -60,7 +63,7 @@ class OrderItems(SysBase):
     )
     product_list_item_uuid: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey(column="sales.product_list_items.uuid"),
+        ForeignKey(column="sales.pm_product_list_items.uuid"),
         nullable=False,
     )
     owner_uuid: Mapped[UUID] = mapped_column(UUID(as_uuid=True), nullable=False)

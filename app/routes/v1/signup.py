@@ -17,7 +17,7 @@ router = APIRouter()
     response_model=SysUsersRes,
     status_code=status.HTTP_201_CREATED,
 )
-@handle_exceptions([SysUserNotExist, SysUserExists])
+# @handle_exceptions([SysUserNotExist, SysUserExists])
 async def create_sys_user(
     sys_user_data: SysUsersCreate,
     db: AsyncSession = Depends(get_db),
@@ -26,6 +26,7 @@ async def create_sys_user(
     """
     Create one system user.
     """
+    print(">>>>", sys_user_create_srvc)
 
     async with transaction_manager(db=db):
         return await sys_user_create_srvc.create_sys_user(
