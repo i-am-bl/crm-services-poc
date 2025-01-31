@@ -71,7 +71,7 @@
 
 ### Purpose
 
-It is intended to demonstrate technical acumen with various technologies that include Python, PostgreSQL, and Docker. This project is primarily focused on APIs, data flow, and the enforcing of data integrity. Data models exclude indexing and foreign key constraints at the data model layer to simplify the demonstration and interaction with the APIs. Primarily focusing on APIs, front-end development was excluded.
+It is intended to demonstrate technical acumen with various technologies that include Python, PostgreSQL, and Docker. This project is primarily focused on APIs, data flow, and the enforcing of data integrity. Primarily focusing on APIs, front-end development was excluded.
 
 This project originates from first-hand experience with Customer Relationship Management (CRM) tools. Experience includes the personas of managing pricing models for client lifecycles as a product manager, billing products or services for products or services extended, and retroactively analyzing the data produced for actionable insights.
 
