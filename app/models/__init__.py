@@ -1,4 +1,12 @@
-from .account_contracts import AcccountContracts
+"""
+Package: models
+
+This package contains all the SQLAlchemy models used in the application, representing various 
+entities related to accounts, orders, invoices, and more. These models map to the corresponding 
+tables in the database and define the relationships between them.
+"""
+
+from .account_contracts import AccountContracts
 from .account_lists import AccountLists
 from .account_products import AccountProducts
 from .accounts import Accounts

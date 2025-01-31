@@ -4,60 +4,75 @@ from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...containers.orchestrators import container as orchs_container
+from ...containers.services import container as services_container
 from ...database.database import get_db, transaction_manager
-from ...exceptions import (AccsExists, AccsNotExist, EntityAccExists,
-                           EntityAccNotExist, EntityNotExist)
+from ...exceptions import (
+    AccsExists,
+    AccsNotExist,
+    EntityAccExists,
+    EntityAccNotExist,
+    EntityNotExist,
+)
 from ...handlers.handler import handle_exceptions
-from ...schemas import accounts as s_accounts
-from ...schemas import entity_accounts as s_entity_accounts
-from ...services.accounts import AccountsServices
-from ...services.authetication import SessionService, TokenService
-from ...services.entities import EntitiesServices
-from ...services.entity_accounts import EntityAccountsServices
-from ...utilities.logger import logger
-from ...utilities.set_values import SetField, SetSys
-from ...utilities.utilities import Pagination as pg
+from ...models.sys_users import SysUsers
+from ...orchestrators.entity_accounts import (
+    EntityAccountsReadOrch,
+    EntityAccountsCreateOrch,
+)
+from ...schemas.accounts import AccountsCreate, AccountsInternalCreate
+from ...schemas.entity_accounts import (
+    AccountEntityCreate,
+    EntityAccountParentRes,
+    EntityAccountsCreate,
+    EntityAccountsDel,
+    EntityAccountsInternalCreate,
+    EntityAccountsInternalUpdate,
+    EntityAccountsPgRes,
+    EntityAccountsUpdate,
+    EntityAccountsRes,
+)
+from ...services import entity_accounts as entity_accounts_srvcs
+from ...services.token import set_auth_cookie
+from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
-serv_entity_accounts_r = EntityAccountsServices.ReadService()
-serv_entity_accounts_c = EntityAccountsServices.CreateService()
-serv_entity_accounts_u = EntityAccountsServices.UpdateService()
-serv_entity_accounts_d = EntityAccountsServices.DelService()
-serv_accounts_c = AccountsServices.CreateService()
-serv_accounts_r = AccountsServices.ReadService()
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
 @router.get(
     "/{entity_uuid}/entity-accounts/{entity_account_uuid}/",
-    response_model=s_entity_accounts.EntityAccountsResponse,
+    response_model=EntityAccountsRes,
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EntityAccNotExist])
 async def get_entity_account(
     response: Response,
     entity_uuid: UUID4,
     entity_account_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_entity_accounts.EntityAccountsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    entity_accounts_read_srvc: entity_accounts_srvcs.ReadSrvc = Depends(
+        services_container["entity_accounts_read"]
+    ),
+) -> EntityAccountsRes:
     """get active account relationship"""
 
     async with transaction_manager(db=db):
-        return await serv_entity_accounts_r.get_entity_account(
+        return await entity_accounts_read_srvc.get_entity_account(
             entity_uuid=entity_uuid, entity_account_uuid=entity_account_uuid, db=db
         )
 
 
 @router.get(
     "/{entity_uuid}/entity-accounts/",
-    response_model=s_entity_accounts.EntityAccountsPagResponse,
+    response_model=EntityAccountsPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EntityAccNotExist, EntityNotExist, AccsNotExist])
 async def get_entity_accounts(
     response: Response,
@@ -65,8 +80,11 @@ async def get_entity_accounts(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_entity_accounts.EntityAccountsPagResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    entity_accounts_read_orch: EntityAccountsReadOrch = Depends(
+        orchs_container["entity_accounts_read_orch"]
+    ),
+) -> EntityAccountsPgRes:
     """
     Get many active account relationships by entity.
 
@@ -74,156 +92,165 @@ async def get_entity_accounts(
     """
 
     async with transaction_manager(db=db):
-        offset = pg.pagination_offset(page=page, limit=limit)
-        total_count = await serv_entity_accounts_r.get_entity_accounts_ct(
-            entity_uuid=entity_uuid, db=db
-        )
-        entity_accounts = await serv_entity_accounts_r.get_entity_accounts(
-            entity_uuid=entity_uuid, limit=limit, offset=offset, db=db
-        )
-        account_uuids = []
-        for value in entity_accounts:
-            account_uuids.append(value.account_uuid)
-        accounts = await serv_accounts_r.get_accounts_by_uuids(
-            account_uuids=account_uuids, db=db
-        )
-        if not isinstance(accounts, list):
-            accounts = [accounts]
-        has_more = pg.has_more(total_count=total_count, page=page, limit=limit)
-        return s_entity_accounts.EntityAccountsPagResponse(
-            total=total_count,
-            page=page,
-            limit=limit,
-            has_more=has_more,
-            accounts=accounts,
+        return await entity_accounts_read_orch.paginated_entity_accounts(
+            entity_uuid=entity_uuid, page=page, limit=limit, db=db
         )
 
 
 @router.post(
     "/{entity_uuid}/entity-accounts/",
-    response_model=s_entity_accounts.EntityAccountsResponse,
+    response_model=EntityAccountsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EntityAccNotExist])
 async def create_entity_account(
     response: Response,
     entity_uuid: UUID4,
-    entity_account_data: s_entity_accounts.EntityAccountsCreate,
+    entity_account_data: EntityAccountsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_entity_accounts.EntityAccountsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    entity_accounts_create_srvc: entity_accounts_srvcs.CreateSrvc = Depends(
+        services_container["entity_accounts_create"]
+    ),
+) -> EntityAccountsRes:
     """
     create new account relationship with existing account.
 
     This adds an entity to an active account.
     """
-
+    sys_user, _ = user_token
+    _entity_account_data: EntityAccountsInternalCreate = internal_schema_validation(
+        data=entity_account_data,
+        schema=EntityAccountsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        SetSys.sys_created_by(sys_user=sys_user, data=entity_account_data)
-        return await serv_entity_accounts_c.create_entity_account(
-            entity_uuid=entity_uuid, entity_account_data=entity_account_data, db=db
+        return await entity_accounts_create_srvc.create_entity_account(
+            entity_uuid=entity_uuid, entity_account_data=_entity_account_data, db=db
         )
 
 
 @router.post(
     "/{entity_uuid}/entity-accounts/new-account/",
-    response_model=s_entity_accounts.EntityAccountAccountRespone,
+    response_model=EntityAccountsRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccsExists, EntityAccNotExist, EntityAccExists])
 async def create_entity_account_account(
     response: Response,
     entity_uuid: UUID4,
-    account_data: s_accounts.AccountsCreate,
-    entity_account_data: s_entity_accounts.EntityAccountsAccountCreate,
+    account_data: AccountsCreate,
+    entity_account_data: AccountEntityCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_entity_accounts.EntityAccountAccountRespone:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    entity_accounts_read_orch: EntityAccountsCreateOrch = Depends(
+        orchs_container["entity_accounts_create_orch"]
+    ),
+) -> EntityAccountsRes:
     """
     Create new account relationship with no existing account.
 
     A new account can be created from the context of the entity.
     """
 
+    sys_user, _ = user_token
+    _account_data: AccountsInternalCreate = internal_schema_validation(
+        data=account_data,
+        schema=AccountsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+    _entity_account_data: EntityAccountsInternalCreate = internal_schema_validation(
+        data=entity_account_data,
+        schema=EntityAccountsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, token = user_token
-        SetSys.sys_created_by(data=account_data, sys_user=sys_user)
-        account = await serv_accounts_c.create_account(account_data=account_data, db=db)
-        await db.flush()
 
-        SetSys.sys_created_by(data=entity_account_data, sys_user=sys_user)
-        SetField.set_field_value(
-            field="account_uuid", value=account.uuid, data=entity_account_data
-        )
-        entity_account = await serv_entity_accounts_c.create_entity_account(
-            entity_uuid=entity_uuid, entity_account_data=entity_account_data, db=db
-        )
-        await db.flush()
-        return s_entity_accounts.EntityAccountAccountRespone(
-            account=account, entity_account=entity_account
+        return await entity_accounts_read_orch.create_account(
+            entity_uuid=entity_uuid,
+            account_data=_account_data,
+            entity_account_data=_entity_account_data,
+            db=db,
         )
 
 
 @router.put(
     "/{entity_uuid}/entity-accounts/{entity_account_uuid}/",
-    response_model=s_entity_accounts.EntityAccountsResponse,
+    response_model=EntityAccountsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EntityAccNotExist])
 async def update_entity_account(
     response: Response,
     entity_uuid: UUID4,
     entity_account_uuid: UUID4,
-    entity_account_data: s_entity_accounts.EntityAccountsUpdate,
+    entity_account_data: EntityAccountsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_entity_accounts.EntityAccountsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    entity_accounts_update_srvc: entity_accounts_srvcs.UpdateSrvc = Depends(
+        services_container["entity_accounts_update"]
+    ),
+) -> EntityAccountsRes:
     """
     Update existing account relationship.
     """
 
+    sys_user, _ = user_token
+    _entity_account_data: EntityAccountsInternalUpdate = internal_schema_validation(
+        data=entity_account_data,
+        schema=EntityAccountsInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        SetSys.sys_updated_by(data=entity_account_data, sys_user=sys_user)
-        return await serv_entity_accounts_u.update_entity_account(
+
+        return await entity_accounts_update_srvc.update_entity_account(
             entity_uuid=entity_uuid,
             entity_account_uuid=entity_account_uuid,
-            entity_account_data=entity_account_data,
+            entity_account_data=_entity_account_data,
             db=db,
         )
 
 
 @router.delete(
     "/v1/entity-management/entities/{entity_uuid}/entity-accounts/{entity_account_uuid}/",
-    response_model=s_entity_accounts.EntityAccountsDelResponse,
+    response_model=None,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([EntityAccNotExist])
 async def soft_del_entity_account(
     response: Response,
     entity_uuid: UUID4,
     entity_account_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_entity_accounts.EntityAccountsDelResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    entity_accounts_update_srvc: entity_accounts_srvcs.DelSrvc = Depends(
+        services_container["entity_accounts_update"]
+    ),
+) -> None:
     """
     Soft delete account relationship with entity.
 
     This will remove the entity from an active account.
     """
-
+    sys_user, _ = user_token
+    _entity_account_data: EntityAccountsDel = internal_schema_validation(
+        schema=EntityAccountsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        entity_account_data = s_entity_accounts.EntityAccountsDel()
-        SetSys.sys_deleted_by(data=entity_account_data, sys_user=sys_user)
-        return await serv_entity_accounts_d.soft_del_entity_account(
+
+        return await entity_accounts_update_srvc.soft_del_entity_account(
             entity_uuid=entity_uuid,
             entity_account_uuid=entity_account_uuid,
-            entity_account_data=entity_account_data,
+            entity_account_data=_entity_account_data,
             db=db,
         )

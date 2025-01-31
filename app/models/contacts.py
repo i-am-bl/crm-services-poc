@@ -7,7 +7,7 @@ from .sys_base import SysBase
 
 
 class Contacts(SysBase):
-    # TODO: marking this as abstract until finished, excluding for v1
+    # TODO: Marking this as abstract until finished, excluding for v1
     __abstract__ = True
     __tablename__ = "em_contacts"
     __table_args__ = {"schema": "sales"}

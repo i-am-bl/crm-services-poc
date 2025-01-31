@@ -1,414 +1,594 @@
-from math import e
-
-from fastapi import Depends, status
+from typing import List
 from pydantic import UUID4
-from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.models.entity_accounts as m_entity_accounts
-import app.schemas.entity_accounts as s_entity_accounts
-
 from ..constants import constants as cnst
-from ..database.database import Operations, get_db
+from ..database.operations import Operations
 from ..exceptions import EntityAccExists, EntityAccNotExist
-from ..utilities.utilities import DataUtils as di
+from ..models.entity_accounts import EntityAccounts
+
+from ..schemas.entity_accounts import (
+    AccountEntityInternalCreate,
+    EntityAccountsInternalCreate,
+    EntityAccountsDel,
+    EntityAccountsDelRes,
+    EntityAccountsInternalUpdate,
+    EntityAccountsRes,
+    EntityAccountsInternalUpdate,
+)
+from ..statements.entity_accounts import EntityAccountsStms
+from ..utilities.data import record_exists, record_not_exist
 
 
-class EntityAccountsModels:
-    entity_accounts = m_entity_accounts.EntityAccounts
+class ReadSrvc:
+    """
+    Service for reading entity account data from the database.
+
+    This class provides functionality to fetch entity account records based on various criteria.
+
+    :param statements: The SQL statements used for fetching entity account data.
+    :type statements: EntityAccountsStms
+    :param db_operations: The database operations object used for executing queries.
+    :type db_operations: Operations
+    """
+
+    def __init__(self, statements: EntityAccounts, db_operations: Operations) -> None:
+        """
+        Initializes the ReadSrvc class with the provided statements and database operations.
+
+        :param statements: The SQL statements used for fetching entity account data.
+        :type statements: EntityAccountsStms
+        :param db_operations: The database operations object used for executing queries.
+        :type db_operations: Operations
+        """
+        self._statements: EntityAccountsStms = statements
+        self._db_ops: Operations = db_operations
+
+    @property
+    def statements(self) -> EntityAccountsStms:
+        """
+        Returns the entity account-related SQL statements.
+
+        :return: The entity account-related SQL statements.
+        :rtype: EntityAccountsStms
+        """
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        """
+        Returns the database operations object.
+
+        :return: The database operations object.
+        :rtype: Operations
+        """
+        return self._db_ops
+
+    async def get_entity_account(
+        self,
+        entity_uuid: UUID4,
+        entity_account_uuid: UUID4,
+        db: AsyncSession,
+    ) -> EntityAccountsRes:
+        """
+        Fetches a specific entity account record based on the entity UUID and entity account UUID.
+
+        :param entity_uuid: The UUID of the entity.
+        :type entity_uuid: UUID4
+        :param entity_account_uuid: The UUID of the entity account.
+        :type entity_account_uuid: UUID4
+        :param db: The database session.
+        :type db: AsyncSession
+        :return: The entity account data.
+        :rtype: EntityAccountsRes
+        :raises EntityAccNotExist: If the entity account does not exist.
+        """
+        statement = self._statements.get_entity_account(
+            entity_uuid=entity_uuid, entity_account_uuid=entity_account_uuid
+        )
+        entity_account: EntityAccountsRes = await self._db_ops.return_one_row(
+            service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
+        )
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+
+    async def get_account_entity(
+        self,
+        account_uuid: UUID4,
+        entity_account_uuid: UUID4,
+        db: AsyncSession,
+    ) -> EntityAccountsRes:
+        """
+        Fetches a specific entity account record based on the account UUID and entity account UUID.
+
+        :param account_uuid: The UUID of the account.
+        :type account_uuid: UUID4
+        :param entity_account_uuid: The UUID of the entity account.
+        :type entity_account_uuid: UUID4
+        :param db: The database session.
+        :type db: AsyncSession
+        :return: The entity account data.
+        :rtype: EntityAccountsRes
+        :raises EntityAccNotExist: If the entity account does not exist.
+        """
+        statement = self._statements.get_account_entity(
+            account_uuid=account_uuid, entity_account_uuid=entity_account_uuid
+        )
+        entity_account: EntityAccountsRes = await self._db_ops.return_one_row(
+            service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
+        )
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+
+    async def get_account_entities(
+        self,
+        account_uuid: UUID4,
+        limit: int,
+        offset: int,
+        db: AsyncSession,
+    ) -> List[EntityAccountsRes]:
+        """
+        Fetches a list of entity account records for a specific account, with pagination support.
+
+        :param account_uuid: The UUID of the account.
+        :type account_uuid: UUID4
+        :param limit: The maximum number of records to fetch.
+        :type limit: int
+        :param offset: The number of records to skip before starting to return results.
+        :type offset: int
+        :param db: The database session.
+        :type db: AsyncSession
+        :return: A list of entity account data.
+        :rtype: List[EntityAccountsRes]
+        :raises EntityAccNotExist: If no entity accounts are found.
+        """
+        statement = self._statements.get_account_entities(
+            account_uuid=account_uuid, limit=limit, offset=offset
+        )
+        entity_account: List[EntityAccountsRes] = await self._db_ops.return_all_rows(
+            service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
+        )
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+
+    async def get_entity_accounts(
+        self,
+        entity_uuid: UUID4,
+        limit: int,
+        offset: int,
+        db: AsyncSession,
+    ) -> List[EntityAccountsRes]:
+        """
+        Fetches a list of entity account records for a specific entity, with pagination support.
+
+        :param entity_uuid: The UUID of the entity.
+        :type entity_uuid: UUID4
+        :param limit: The maximum number of records to fetch.
+        :type limit: int
+        :param offset: The number of records to skip before starting to return results.
+        :type offset: int
+        :param db: The database session.
+        :type db: AsyncSession
+        :return: A list of entity account data.
+        :rtype: List[EntityAccountsRes]
+        :raises EntityAccNotExist: If no entity accounts are found.
+        """
+        statement = self._statements.get_entity_accounts(
+            entity_uuid=entity_uuid, limit=limit, offset=offset
+        )
+        entity_account = await self._db_ops.return_all_rows(
+            service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
+        )
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+
+    async def get_entity_accounts_ct(
+        self,
+        entity_uuid: UUID4,
+        db: AsyncSession,
+    ) -> int:
+        """
+        Fetches the count of entity accounts for a specific entity.
+
+        :param entity_uuid: The UUID of the entity.
+        :type entity_uuid: UUID4
+        :param db: The database session.
+        :type db: AsyncSession
+        :return: The count of entity accounts for the entity.
+        :rtype: int
+        """
+        statement = self._statements.get_entity_account_ct(entity_uuid=entity_uuid)
+        return await self._db_ops.return_count(
+            service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
+        )
+
+    async def get_account_entities_ct(
+        self,
+        account_uuid: UUID4,
+        db: AsyncSession,
+    ) -> int:
+        """
+        Fetches the count of entity accounts for a specific account.
+
+        :param account_uuid: The UUID of the account.
+        :type account_uuid: UUID4
+        :param db: The database session.
+        :type db: AsyncSession
+        :return: The count of entity accounts for the account.
+        :rtype: int
+        """
+        statement = self._statements.get_account_entities_ct(account_uuid=account_uuid)
+        return await self._db_ops.return_count(
+            service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
+        )
 
 
-class EntityAccountsStatements:
-    pass
+class CreateSrvc:
+    """
+    Handles the creation of EntityAccounts records in the database.
 
-    class SelStatements:
-        pass
+    This service provides functionality to create new entity account records in the database,
+    ensuring that no duplicate records exist for the given entity and account UUIDs.
 
-        @staticmethod
-        def sel_e_acc_by_uuid(entity_uuid: UUID4, entity_account_uuid: UUID4):
-            entity_accounts = EntityAccountsModels.entity_accounts
-            statement = Select(entity_accounts).where(
-                entity_accounts.entity_uuid == entity_uuid,
-                entity_accounts.uuid == entity_account_uuid,
-                entity_accounts.sys_deleted_at == None,
-            )
-            return statement
+    :param statements: The SQL statements used for interacting with EntityAccounts.
+    :type statements: EntityAccountsStms
+    :param db_operations: The database operations object used for executing queries.
+    :type db_operations: Operations
+    :param model: The EntityAccounts model used for creating records in the database.
+    :type model: EntityAccounts
+    """
 
-        @staticmethod
-        def sel_e_acc_by_uuid_acc(account_uuid: UUID4, entity_account_uuid: UUID4):
-            entity_accounts = EntityAccountsModels.entity_accounts
-            statement = Select(entity_accounts).where(
-                entity_accounts.account_uuid == account_uuid,
-                entity_accounts.uuid == entity_account_uuid,
-                entity_accounts.sys_deleted_at == None,
-            )
-            return statement
+    def __init__(
+        self,
+        statements: EntityAccounts,
+        db_operations: Operations,
+        model: EntityAccounts,
+    ) -> None:
+        """
+        Initializes the CreateSrvc class with the provided statements, database operations,
+        and the EntityAccounts model.
 
-        @staticmethod
-        def sel_e_accs_by_entity(entity_uuid: UUID4, limit: int, offset: int):
-            entity_accounts = EntityAccountsModels.entity_accounts
-            statement = (
-                Select(entity_accounts)
-                .where(
-                    and_(
-                        entity_accounts.entity_uuid == entity_uuid,
-                        entity_accounts.sys_deleted_at == None,
-                    )
-                )
-                .offset(offset=offset)
-                .limit(limit=limit)
-            )
-            return statement
+        :param statements: The SQL statements used for interacting with EntityAccounts.
+        :type statements: EntityAccountsStms
+        :param db_operations: The database operations object used for executing queries.
+        :type db_operations: Operations
+        :param model: The EntityAccounts model used for creating records in the database.
+        :type model: EntityAccounts
+        """
+        self._statements: EntityAccountsStms = statements
+        self._db_ops: Operations = db_operations
+        self._model: EntityAccounts = model
 
-        @staticmethod
-        def sel_e_accs_by_acc(account_uuid: UUID4, limit: int, offset: int):
-            entity_accounts = EntityAccountsModels.entity_accounts
-            statement = (
-                Select(entity_accounts)
-                .where(
-                    and_(
-                        entity_accounts.account_uuid == account_uuid,
-                        entity_accounts.sys_deleted_at == None,
-                    )
-                )
-                .offset(offset=offset)
-                .limit(limit=limit)
-            )
-            return statement
+    @property
+    def statements(self) -> EntityAccountsStms:
+        """
+        Returns the instance of EntityAccountsStms.
 
-        @staticmethod
-        def sel_entity_acc_ct(entity_uuid: UUID4):
-            entity_accounts = EntityAccountsModels.entity_accounts
-            statement = (
-                Select(func.count())
-                .select_from(entity_accounts)
-                .where(
-                    and_(
-                        entity_accounts.entity_uuid == entity_uuid,
-                        entity_accounts.sys_deleted_at == None,
-                    )
-                )
-            )
-            return statement
+        :returns: The SQL statements for EntityAccounts operations.
+        :rtype: EntityAccountsStms
+        """
+        return self._statements
 
-        @staticmethod
-        def sel_acc_entities_ct(account_uuid: UUID4):
-            entity_accounts = EntityAccountsModels.entity_accounts
-            statement = (
-                Select(func.count())
-                .select_from(entity_accounts)
-                .where(
-                    and_(
-                        entity_accounts.account_uuid == account_uuid,
-                        entity_accounts.sys_deleted_at == None,
-                    )
-                )
-            )
-            return statement
+    @property
+    def db_operations(self) -> Operations:
+        """
+        Returns the instance of Operations.
 
-        @staticmethod
-        def sel_e_acc_by_parent_uuids(entity_uuid: UUID4, account_uuid: UUID4):
-            entity_accounts = EntityAccountsModels.entity_accounts
-            statement = Select(entity_accounts).where(
-                and_(
-                    entity_accounts.entity_uuid == entity_uuid,
-                    entity_accounts.account_uuid == account_uuid,
-                    entity_accounts.sys_deleted_at == None,
-                )
-            )
-            return statement
+        :returns: The database operations handler.
+        :rtype: Operations
+        """
+        return self._db_ops
 
-    class UpdateStatements:
-        pass
+    @property
+    def model(self) -> EntityAccounts:
+        """
+        Returns the EntityAccounts model.
 
-        @staticmethod
-        def update_e_acc_by_uuid(
-            entity_uuid: UUID4, entity_account_uuid: UUID4, entity_account_data: object
-        ):
-            entity_accounts = EntityAccountsModels.entity_accounts
-            statement = (
-                update(entity_accounts)
-                .where(
-                    and_(
-                        entity_accounts.entity_uuid == entity_uuid,
-                        entity_accounts.uuid == entity_account_uuid,
-                        entity_accounts.sys_deleted_at == None,
-                    )
-                )
-                .values(di.set_empty_strs_null(entity_account_data))
-                .returning(entity_accounts)
-            )
-            return statement
+        :returns: The model used for creating records.
+        :rtype: EntityAccounts
+        """
+        return self._model
 
-        @staticmethod
-        def update_acc_e_by_uuid(
-            account_uuid: UUID4, entity_account_uuid: UUID4, entity_account_data: object
-        ):
-            entity_accounts = EntityAccountsModels.entity_accounts
-            statement = (
-                update(entity_accounts)
-                .where(
-                    and_(
-                        entity_accounts.account_uuid == account_uuid,
-                        entity_accounts.uuid == entity_account_uuid,
-                        entity_accounts.sys_deleted_at == None,
-                    )
-                )
-                .values(di.set_empty_strs_null(entity_account_data))
-                .returning(entity_accounts)
-            )
-            return statement
+    async def create_entity_account(
+        self,
+        entity_uuid: UUID4,
+        entity_account_data: EntityAccountsInternalCreate,
+        db: AsyncSession,
+    ) -> EntityAccountsRes:
+        """
+        Creates a new EntityAccounts record by first checking if the account already exists
+        for the given entity_uuid and entity_account_data.account_uuid.
+
+        :param entity_uuid: The UUID of the entity for which the account is being created.
+        :type entity_uuid: UUID4
+        :param entity_account_data: The data used to create a new EntityAccounts record.
+        :type entity_account_data: EntityAccountsInternalCreate
+        :param db: The asynchronous session for database operations.
+        :type db: AsyncSession
+
+        :returns: The result of the creation process, either the created entity account
+                  or an error if the record already exists.
+        :rtype: EntityAccountsRes
+        """
+        statement = self._statements.get_entity_account_by_parent(
+            entity_uuid=entity_uuid,
+            account_uuid=entity_account_data.account_uuid,
+        )
+        entity_accounts = self._model
+
+        entity_account_exists: EntityAccountsRes = await self._db_ops.return_one_row(
+            service=cnst.ENTITY_ACCOUNTS_CREATE_SERV, statement=statement, db=db
+        )
+
+        record_exists(instance=entity_account_exists, exception=EntityAccExists)
+
+        entity_account: EntityAccountsRes = await self._db_ops.add_instance(
+            service=cnst.ENTITY_ACCOUNTS_CREATE_SERV,
+            model=entity_accounts,
+            data=entity_account_data,
+            db=db,
+        )
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+
+    async def create_account_entity(
+        self,
+        account_uuid: UUID4,
+        entity_account_data: AccountEntityInternalCreate,
+        db: AsyncSession,
+    ) -> EntityAccountsRes:
+        """
+        Creates a new EntityAccounts record by first checking if the entity already exists
+        for the given account_uuid and entity_account_data.entity_uuid.
+
+        :param account_uuid: The UUID of the account for which the entity account is being created.
+        :type account_uuid: UUID4
+        :param entity_account_data: The data used to create a new EntityAccounts record.
+        :type entity_account_data: AccountEntityInternalCreate
+        :param db: The asynchronous session for database operations.
+        :type db: AsyncSession
+
+        :returns: The result of the creation process, either the created account entity
+                  or an error if the record already exists.
+        :rtype: EntityAccountsRes
+        """
+        statement = self._statements.get_entity_account_by_parent(
+            entity_uuid=entity_account_data.entity_uuid,
+            account_uuid=account_uuid,
+        )
+        entity_accounts = self._model
+
+        entity_account_exists: EntityAccountsRes = await self._db_ops.return_one_row(
+            service=cnst.ENTITY_ACCOUNTS_CREATE_SERV, statement=statement, db=db
+        )
+
+        record_exists(instance=entity_account_exists, exception=EntityAccExists)
+
+        entity_account: EntityAccountsRes = await self._db_ops.add_instance(
+            service=cnst.ENTITY_ACCOUNTS_CREATE_SERV,
+            model=entity_accounts,
+            data=entity_account_data,
+            db=db,
+        )
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
 
-class EntityAccountsServices:
-    pass
+class UpdateSrvc:
+    """
+    Service for updating entity account data in the database.
 
-    class ReadService:
-        def __init__(self) -> None:
-            pass
+    This class provides functionality to update existing entity account records.
 
-        async def get_entity_account(
-            self,
-            entity_uuid: UUID4,
-            entity_account_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = EntityAccountsStatements.SelStatements.sel_e_acc_by_uuid(
-                entity_uuid=entity_uuid, entity_account_uuid=entity_account_uuid
-            )
-            entity_account = await Operations.return_one_row(
-                service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=entity_account, exception=EntityAccNotExist
-            )
+    :param statements: The SQL statements used for updating entity account data.
+    :type statements: EntityAccountsStms
+    :param db_operations: The database operations object used for executing queries.
+    :type db_operations: Operations
+    """
 
-        async def get_account_entity(
-            self,
-            account_uuid: UUID4,
-            entity_account_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = EntityAccountsStatements.SelStatements.sel_e_acc_by_uuid_acc(
-                account_uuid=account_uuid, entity_account_uuid=entity_account_uuid
-            )
-            entity_account = await Operations.return_one_row(
-                service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=entity_account, exception=EntityAccNotExist
-            )
+    def __init__(self, statements: EntityAccounts, db_operations: Operations) -> None:
+        """
+        Initializes the UpdateSrvc class with the provided statements and database operations.
 
-        async def get_account_entities(
-            self,
-            account_uuid: UUID4,
-            limit: int,
-            offset: int,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = EntityAccountsStatements.SelStatements.sel_e_accs_by_acc(
-                account_uuid=account_uuid, limit=limit, offset=offset
-            )
-            entity_account = await Operations.return_all_rows(
-                service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=entity_account, exception=EntityAccNotExist
-            )
+        :param statements: The SQL statements used for updating entity account data.
+        :type statements: EntityAccountsStms
+        :param db_operations: The database operations object used for executing queries.
+        :type db_operations: Operations
+        """
+        self._statements: EntityAccountsStms = statements
+        self._db_ops: Operations = db_operations
 
-        async def get_entity_accounts(
-            self,
-            entity_uuid: UUID4,
-            limit: int,
-            offset: int,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = EntityAccountsStatements.SelStatements.sel_e_accs_by_entity(
-                entity_uuid=entity_uuid, limit=limit, offset=offset
-            )
-            entity_account = await Operations.return_all_rows(
-                service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
-            )
-            return di.record_not_exist(
-                instance=entity_account, exception=EntityAccNotExist
-            )
+    @property
+    def statements(self) -> EntityAccountsStms:
+        """
+        Returns the entity account-related SQL statements.
 
-        async def get_entity_accounts_ct(
-            self,
-            entity_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = EntityAccountsStatements.SelStatements.sel_entity_acc_ct(
-                entity_uuid=entity_uuid
-            )
-            return await Operations.return_count(
-                service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
-            )
+        :return: The entity account-related SQL statements.
+        :rtype: EntityAccountsStms
+        """
+        return self._statements
 
-        async def get_account_entities_ct(
-            self,
-            account_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = EntityAccountsStatements.SelStatements.sel_acc_entities_ct(
-                account_uuid=account_uuid
-            )
-            return await Operations.return_count(
-                service=cnst.ENTITY_ACCOUNTS_READ_SERV, statement=statement, db=db
-            )
+    @property
+    def db_operations(self) -> Operations:
+        """
+        Returns the database operations object.
 
-    class CreateService:
-        def __init__(self) -> None:
-            pass
+        :return: The database operations object.
+        :rtype: Operations
+        """
+        return self._db_ops
 
-        async def create_entity_account(
-            self,
-            entity_uuid: UUID4,
-            entity_account_data: s_entity_accounts.EntityAccountsCreate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = (
-                EntityAccountsStatements.SelStatements.sel_e_acc_by_parent_uuids(
-                    entity_uuid=entity_uuid,
-                    account_uuid=entity_account_data.account_uuid,
-                )
-            )
-            entity_accounts = EntityAccountsModels.entity_accounts
+    async def update_entity_account(
+        self,
+        entity_uuid: UUID4,
+        entity_account_uuid: UUID4,
+        entity_account_data: EntityAccountsInternalUpdate,
+        db: AsyncSession,
+    ) -> EntityAccountsRes:
+        """
+        Updates an entity account record in the database.
 
-            entity_account_exists = await Operations.return_one_row(
-                service=cnst.ENTITY_ACCOUNTS_CREATE_SERV, statement=statement, db=db
-            )
+        :param entity_uuid: The UUID of the entity whose account is being updated.
+        :type entity_uuid: UUID4
+        :param entity_account_uuid: The UUID of the entity account to update.
+        :type entity_account_uuid: UUID4
+        :param entity_account_data: The data to update the entity account with.
+        :type entity_account_data: EntityAccountsInternalUpdate
+        :param db: The database session used to execute the query.
+        :type db: AsyncSession
 
-            di.record_exists(instance=entity_account_exists, exception=EntityAccExists)
+        :return: The updated entity account record.
+        :rtype: EntityAccountsRes
+        """
+        statement = self._statements.update_entity_account(
+            entity_uuid=entity_uuid,
+            entity_account_uuid=entity_account_uuid,
+            entity_account_data=entity_account_data,
+        )
+        entity_account = await self._db_ops.return_one_row(
+            service=cnst.ENTITY_ACCOUNTS_UPDATE_SERV,
+            statement=statement,
+            db=db,
+        )
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
-            entity_account = await Operations.add_instance(
-                service=cnst.ENTITY_ACCOUNTS_CREATE_SERV,
-                model=entity_accounts,
-                data=entity_account_data,
-                db=db,
-            )
-            return di.record_not_exist(
-                instance=entity_account, exception=EntityAccNotExist
-            )
+    async def update_account_entity(
+        self,
+        account_uuid: UUID4,
+        entity_account_uuid: UUID4,
+        entity_account_data: EntityAccountsInternalUpdate,
+        db: AsyncSession,
+    ) -> EntityAccountsRes:
+        """
+        Updates an account entity record in the database.
 
-        async def create_account_entity(
-            self,
-            account_uuid: UUID4,
-            entity_account_data: s_entity_accounts.EntityAccountsCreate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = (
-                EntityAccountsStatements.SelStatements.sel_e_acc_by_parent_uuids(
-                    entity_uuid=entity_account_data.entity_uuid,
-                    account_uuid=account_uuid,
-                )
-            )
-            entity_accounts = EntityAccountsModels.entity_accounts
+        :param account_uuid: The UUID of the account whose entity is being updated.
+        :type account_uuid: UUID4
+        :param entity_account_uuid: The UUID of the entity account to update.
+        :type entity_account_uuid: UUID4
+        :param entity_account_data: The data to update the account entity with.
+        :type entity_account_data: EntityAccountsInternalUpdate
+        :param db: The database session used to execute the query.
+        :type db: AsyncSession
 
-            entity_account_exists = await Operations.return_one_row(
-                service=cnst.ENTITY_ACCOUNTS_CREATE_SERV, statement=statement, db=db
-            )
+        :return: The updated account entity record.
+        :rtype: EntityAccountsRes
+        """
+        statement = self._statements.update_account_entity(
+            account_uuid=account_uuid,
+            entity_account_uuid=entity_account_uuid,
+            entity_account_data=entity_account_data,
+        )
+        entity_account = await self._db_ops.return_one_row(
+            service=cnst.ENTITY_ACCOUNTS_UPDATE_SERV,
+            statement=statement,
+            db=db,
+        )
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
 
-            di.record_exists(instance=entity_account_exists, exception=EntityAccExists)
 
-            entity_account = await Operations.add_instance(
-                service=cnst.ENTITY_ACCOUNTS_CREATE_SERV,
-                model=entity_accounts,
-                data=entity_account_data,
-                db=db,
-            )
-            return di.record_not_exist(
-                instance=entity_account, exception=EntityAccNotExist
-            )
+class DelSrvc:
+    """
+    Service for deleting (soft delete) entity account data in the database.
 
-    class UpdateService:
-        def __init__(self) -> None:
-            pass
+    This class provides functionality to delete entity account records with soft deletion.
 
-        async def update_entity_account(
-            self,
-            entity_uuid: UUID4,
-            entity_account_uuid: UUID4,
-            entity_account_data: s_entity_accounts.EntityAccountsUpdate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = EntityAccountsStatements.UpdateStatements.update_e_acc_by_uuid(
-                entity_uuid=entity_uuid,
-                entity_account_uuid=entity_account_uuid,
-                entity_account_data=entity_account_data,
-            )
-            entity_account = await Operations.return_one_row(
-                service=cnst.ENTITY_ACCOUNTS_UPDATE_SERV,
-                statement=statement,
-                db=db,
-            )
-            return di.record_not_exist(
-                instance=entity_account, exception=EntityAccNotExist
-            )
+    :param statements: The SQL statements used for soft deleting entity account data.
+    :type statements: EntityAccountsStms
+    :param db_operations: The database operations object used for executing queries.
+    :type db_operations: Operations
+    """
 
-        async def update_account_entity(
-            self,
-            account_uuid: UUID4,
-            entity_account_uuid: UUID4,
-            entity_account_data: s_entity_accounts.EntityAccountsUpdate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = EntityAccountsStatements.UpdateStatements.update_acc_e_by_uuid(
-                account_uuid=account_uuid,
-                entity_account_uuid=entity_account_uuid,
-                entity_account_data=entity_account_data,
-            )
-            entity_account = await Operations.return_one_row(
-                service=cnst.ENTITY_ACCOUNTS_UPDATE_SERV,
-                statement=statement,
-                db=db,
-            )
-            return di.record_not_exist(
-                instance=entity_account, exception=EntityAccNotExist
-            )
+    def __init__(self, statements: EntityAccounts, db_operations: Operations) -> None:
+        """
+        Initializes the DelSrvc class with the provided statements and database operations.
 
-    class DelService:
-        def __init__(self) -> None:
-            pass
+        :param statements: The SQL statements used for soft deleting entity account data.
+        :type statements: EntityAccountsStms
+        :param db_operations: The database operations object used for executing queries.
+        :type db_operations: Operations
+        """
+        self._statements: EntityAccountsStms = statements
+        self._db_ops: Operations = db_operations
 
-        async def soft_del_entity_account(
-            self,
-            entity_uuid: UUID4,
-            entity_account_uuid: UUID4,
-            entity_account_data: s_entity_accounts.EntityAccountsDel,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = EntityAccountsStatements.UpdateStatements.update_e_acc_by_uuid(
-                entity_uuid=entity_uuid,
-                entity_account_uuid=entity_account_uuid,
-                entity_account_data=entity_account_data,
-            )
-            entity_account = await Operations.return_one_row(
-                service=cnst.ENTITY_ACCOUNTS_UPDATE_SERV,
-                statement=statement,
-                db=db,
-            )
-            return di.record_not_exist(
-                instance=entity_account, exception=EntityAccNotExist
-            )
+    @property
+    def statements(self) -> EntityAccountsStms:
+        """
+        Returns the entity account-related SQL statements.
 
-        async def soft_del_account_entity(
-            self,
-            account_uuid: UUID4,
-            entity_account_uuid: UUID4,
-            entity_account_data: s_entity_accounts.EntityAccountsDel,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = EntityAccountsStatements.UpdateStatements.update_acc_e_by_uuid(
-                account_uuid=account_uuid,
-                entity_account_uuid=entity_account_uuid,
-                entity_account_data=entity_account_data,
-            )
-            entity_account = await Operations.return_one_row(
-                service=cnst.ENTITY_ACCOUNTS_UPDATE_SERV,
-                statement=statement,
-                db=db,
-            )
-            return di.record_not_exist(
-                instance=entity_account, exception=EntityAccNotExist
-            )
+        :return: The entity account-related SQL statements.
+        :rtype: EntityAccountsStms
+        """
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        """
+        Returns the database operations object.
+
+        :return: The database operations object.
+        :rtype: Operations
+        """
+        return self._db_ops
+
+    async def soft_del_entity_account(
+        self,
+        entity_uuid: UUID4,
+        entity_account_uuid: UUID4,
+        entity_account_data: EntityAccountsDel,
+        db: AsyncSession,
+    ) -> EntityAccountsDelRes:
+        """
+        Soft deletes an entity account record from the database.
+
+        :param entity_uuid: The UUID of the entity whose account is being deleted.
+        :type entity_uuid: UUID4
+        :param entity_account_uuid: The UUID of the entity account to delete.
+        :type entity_account_uuid: UUID4
+        :param entity_account_data: The data used to perform the soft delete.
+        :type entity_account_data: EntityAccountsDel
+        :param db: The database session used to execute the query.
+        :type db: AsyncSession
+
+        :return: The deleted entity account record.
+        :rtype: EntityAccountsDelRes
+        """
+        statement = self._statements.update_entity_account(
+            entity_uuid=entity_uuid,
+            entity_account_uuid=entity_account_uuid,
+            entity_account_data=entity_account_data,
+        )
+        entity_account = await self._db_ops.return_one_row(
+            service=cnst.ENTITY_ACCOUNTS_UPDATE_SERV,
+            statement=statement,
+            db=db,
+        )
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)
+
+    async def soft_del_account_entity(
+        self,
+        account_uuid: UUID4,
+        entity_account_uuid: UUID4,
+        entity_account_data: EntityAccountsDel,
+        db: AsyncSession,
+    ) -> EntityAccountsDelRes:
+        """
+        Soft deletes an account entity record from the database.
+
+        :param account_uuid: The UUID of the account whose entity is being deleted.
+        :type account_uuid: UUID4
+        :param entity_account_uuid: The UUID of the entity account to delete.
+        :type entity_account_uuid: UUID4
+        :param entity_account_data: The data used to perform the soft delete.
+        :type entity_account_data: EntityAccountsDel
+        :param db: The database session used to execute the query.
+        :type db: AsyncSession
+
+        :return: The deleted account entity record.
+        :rtype: EntityAccountsDelRes
+        """
+        statement = self._statements.update_account_entity(
+            account_uuid=account_uuid,
+            entity_account_uuid=entity_account_uuid,
+            entity_account_data=entity_account_data,
+        )
+        entity_account = await self._db_ops.return_one_row(
+            service=cnst.ENTITY_ACCOUNTS_UPDATE_SERV,
+            statement=statement,
+            db=db,
+        )
+        return record_not_exist(instance=entity_account, exception=EntityAccNotExist)

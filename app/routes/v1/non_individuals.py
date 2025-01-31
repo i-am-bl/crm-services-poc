@@ -4,117 +4,145 @@ from fastapi import APIRouter, Depends, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...containers.services import container as service_container
 from ...database.database import get_db, transaction_manager
 from ...exceptions import NonIndividualExists, NonIndividualNotExist
 from ...handlers.handler import handle_exceptions
-from ...schemas import non_individuals as s_non_individuals
-from ...services.authetication import SessionService, TokenService
-from ...services.non_individuals import NonIndividualsServices
-from ...utilities.set_values import SetSys
+from ...models.sys_users import SysUsers
+from ...schemas.non_individuals import (
+    NonIndividualsCreate,
+    NonIndividualsDel,
+    NonIndividualsInternalUpdate,
+    NonIndividualsRes,
+    NonIndividualsUpdate,
+)
+from ...services.non_individuals import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
+from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
-serv_non_indiv_r = NonIndividualsServices.ReadService()
-serv_non_indiv_c = NonIndividualsServices.CreateService()
-serv_non_indiv_u = NonIndividualsServices.UpdateService()
-serv_non_indiv_d = NonIndividualsServices.DelService()
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
 @router.get(
     "/{entity_uuid}/non-individuals/{non_individual_uuid}/",
-    response_model=s_non_individuals.NonIndividualsResponse,
+    response_model=NonIndividualsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NonIndividualNotExist])
 async def get_non_individual(
     response: Response,
     entity_uuid: UUID4,
     non_individual_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_non_individuals.NonIndividualsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    non_invdivuals_read_srvc: ReadSrvc = Depends(
+        service_container["non_individuals_read"]
+    ),
+) -> NonIndividualsRes:
     """get one non_individual"""
 
     async with transaction_manager(db=db):
-        return await serv_non_indiv_r.get_non_individual(
+        return await non_invdivuals_read_srvc.get_non_individual(
             entity_uuid=entity_uuid, non_individual_uuid=non_individual_uuid, db=db
         )
 
 
+# Deprecating this, the entities router operations will create all entities.
+# TODO: Remove this.
 @router.post(
     "/{entity_uuid}/non-individuals/",
-    response_model=s_non_individuals.NonIndividualsResponse,
+    response_model=NonIndividualsRes,
     status_code=status.HTTP_201_CREATED,
+    include_in_schema=False,
+    deprecated=True,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NonIndividualNotExist, NonIndividualExists])
 async def create_non_individual(
     response: Response,
     entity_uuid: UUID4,
-    non_individual_data: s_non_individuals.NonIndividualsCreate,
+    non_individual_data: NonIndividualsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_non_individuals.NonIndividualsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    non_individual_create_srvc: CreateSrvc = Depends(
+        service_container["non_individuals_create"]
+    ),
+) -> NonIndividualsRes:
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        SetSys.sys_created_by(data=non_individual_data, sys_user=sys_user)
-        return await serv_non_indiv_c.create_non_individual(
+        sys_values.sys_created_by(data=non_individual_data, sys_user_uuid=sys_user.uuid)
+        return await non_individual_create_srvc.create_non_individual(
             entity_uuid=entity_uuid, non_individual_data=non_individual_data, db=db
         )
 
 
 @router.put(
     "/{entity_uuid}/non-individuals/{non_individual_uuid}/",
-    response_model=s_non_individuals.NonIndividualsResponse,
+    response_model=NonIndividualsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NonIndividualNotExist])
 async def update_non_individual(
     response: Response,
     entity_uuid: UUID4,
     non_individual_uuid: UUID4,
-    non_individual_data: s_non_individuals.NonIndividualsUpdate,
+    non_individual_data: NonIndividualsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_non_individuals.NonIndividualsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    non_individuals_update_srvc: UpdateSrvc = Depends(
+        service_container["non_individuals_update"]
+    ),
+) -> NonIndividualsRes:
 
+    sys_user, _ = user_token
+    _non_individual_data: NonIndividualsInternalUpdate = internal_schema_validation(
+        data=non_individual_data,
+        schema=NonIndividualsInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        SetSys.sys_updated_by(data=non_individual_data, sys_user=sys_user)
-        return await serv_non_indiv_u.update_non_individual(
+        return await non_individuals_update_srvc.update_non_individual(
             entity_uuid=entity_uuid,
             non_individual_uuid=non_individual_uuid,
-            non_individual_data=non_individual_data,
+            non_individual_data=_non_individual_data,
             db=db,
         )
 
 
 @router.delete(
     "/{entity_uuid}/non-individuals/{non_individual_uuid}/",
-    response_model=s_non_individuals.NonIndividualsDelResponse,
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([NonIndividualNotExist])
 async def soft_del_non_individual(
     response: Response,
     entity_uuid: UUID4,
     non_individual_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: str = Depends(serv_session.validate_session),
-) -> s_non_individuals.NonIndividualsDelResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    non_individuals_delete_srvc: DelSrvc = Depends(
+        service_container["non_individuals_delete"]
+    ),
+) -> None:
+
+    sys_user, _ = user_token
+    _non_individual_data: NonIndividualsDel = internal_schema_validation(
+        schema=NonIndividualsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
 
     async with transaction_manager(db=db):
-        non_individual_data = s_non_individuals.NonIndividualsDel()
-        sys_user, _ = user_token
-        SetSys.sys_deleted_by(data=non_individual_data, sys_user=sys_user)
-        return await serv_non_indiv_d.soft_del_non_individual(
+        return await non_individuals_delete_srvc.soft_del_non_individual(
             entity_uuid=entity_uuid,
             non_individual_uuid=non_individual_uuid,
-            non_individual_data=non_individual_data,
+            non_individual_data=_non_individual_data,
             db=db,
         )

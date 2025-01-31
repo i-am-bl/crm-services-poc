@@ -1,244 +1,454 @@
-from typing import Optional
-
-from fastapi import Depends
+from typing import List
 from pydantic import UUID4
-from sqlalchemy import Select, and_, func, update, values
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import constants as cnst
-from ..database.database import Operations, get_db
+from ..database.operations import Operations
 from ..exceptions import NumberExists, NumbersNotExist
-from ..models import numbers as m_numbers
-from ..schemas import numbers as s_numbers
-from ..utilities.utilities import DataUtils as di
+from ..models.numbers import Numbers
+from ..schemas.numbers import (
+    NumbersInternalCreate,
+    NumbersDel,
+    NumbersDelRes,
+    NumbersPgRes,
+    NumbersRes,
+    NumbersInternalUpdate,
+)
+from ..statements.numbers import NumbersStms
+from ..utilities import pagination
+from ..utilities.data import record_exists, record_not_exist
 
 
-class NumbersModels:
-    numbers = m_numbers.Numbers
+class ReadSrvc:
+    """
+    Service for reading number data related to an entity.
+
+    This class provides methods to retrieve individual numbers or a collection of numbers
+    for a given entity, including paginated results.
+
+    :param statements: The SQL statements used for querying number data from the database.
+    :type statements: NumbersStms
+    :param db_operations: The database operations object used for executing queries.
+    :type db_operations: Operations
+    """
+
+    def __init__(self, statements: NumbersStms, db_operations: Operations) -> None:
+        """
+        Initializes the ReadSrvc class with the provided statements and database operations.
+
+        :param statements: The SQL statements used for querying number data from the database.
+        :type statements: NumbersStms
+        :param db_operations: The database operations object used for executing queries.
+        :type db_operations: Operations
+        """
+        self._statements: NumbersStms = statements
+        self._db_ops: Operations = db_operations
+
+    @property
+    def statements(self) -> NumbersStms:
+        """
+        Returns the instance of NumbersStms.
+
+        :returns: The SQL statements for querying number data.
+        :rtype: NumbersStms
+        """
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        """
+        Returns the instance of Operations.
+
+        :returns: The database operations handler.
+        :rtype: Operations
+        """
+        return self._db_ops
+
+    async def get_number(
+        self,
+        entity_uuid: UUID4,
+        number_uuid: UUID4,
+        db: AsyncSession,
+    ) -> NumbersRes:
+        """
+        Retrieves a specific number by its UUID and associated entity UUID.
+
+        :param entity_uuid: The UUID of the entity to which the number belongs.
+        :type entity_uuid: UUID4
+        :param number_uuid: The UUID of the number to be retrieved.
+        :type number_uuid: UUID4
+        :param db: The asynchronous session for database operations.
+        :type db: AsyncSession
+
+        :returns: The number data for the specified UUID.
+        :rtype: NumbersRes
+        """
+        statement = self._statements.get_number(
+            entity_uuid=entity_uuid,
+            number_uuid=number_uuid,
+        )
+        number: NumbersRes = await self._db_ops.return_one_row(
+            service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
+        )
+        return record_not_exist(instance=number, exception=NumbersNotExist)
+
+    async def get_numbers(
+        self,
+        entity_uuid: UUID4,
+        limit: int,
+        offset: int,
+        db: AsyncSession,
+    ) -> List[NumbersRes]:
+        """
+        Retrieves a list of numbers associated with a specific entity.
+
+        :param entity_uuid: The UUID of the entity to which the numbers belong.
+        :type entity_uuid: UUID4
+        :param limit: The maximum number of numbers to retrieve.
+        :type limit: int
+        :param offset: The starting point to retrieve numbers (for pagination).
+        :type offset: int
+        :param db: The asynchronous session for database operations.
+        :type db: AsyncSession
+
+        :returns: A list of numbers associated with the given entity.
+        :rtype: List[NumbersRes]
+        """
+        statement = self._statements.get_number_by_entity(
+            entity_uuid=entity_uuid, limit=limit, offset=offset
+        )
+        numbers: List[NumbersRes] = await self._db_ops.return_all_rows(
+            service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
+        )
+        return record_not_exist(instance=numbers, exception=NumbersNotExist)
+
+    async def get_numbers_ct(
+        self,
+        entity_uuid: UUID4,
+        db: AsyncSession,
+    ) -> int:
+        """
+        Retrieves the count of numbers associated with a specific entity.
+
+        :param entity_uuid: The UUID of the entity to count the associated numbers for.
+        :type entity_uuid: UUID4
+        :param db: The asynchronous session for database operations.
+        :type db: AsyncSession
+
+        :returns: The count of numbers associated with the given entity.
+        :rtype: int
+        """
+        statement = self._statements.get_number_by_entity_ct(entity_uuid=entity_uuid)
+        return await self._db_ops.return_count(
+            service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
+        )
+
+    async def paginated_numbers(
+        self, entity_uuid: UUID4, page: int, limit: int, db: AsyncSession
+    ) -> NumbersPgRes:
+        """
+        Retrieves paginated numbers for a specific entity.
+
+        This method includes the total count of numbers, the current page, and whether more numbers
+        are available on the next page.
+
+        :param entity_uuid: The UUID of the entity to which the numbers belong.
+        :type entity_uuid: UUID4
+        :param page: The page number to retrieve.
+        :type page: int
+        :param limit: The number of items per page.
+        :type limit: int
+        :param db: The asynchronous session for database operations.
+        :type db: AsyncSession
+
+        :returns: A paginated result containing numbers, total count, and pagination information.
+        :rtype: NumbersPgRes
+        """
+        total_count = await self.get_numbers_ct(entity_uuid=entity_uuid, db=db)
+        offset = pagination.page_offset(page=page, limit=limit)
+        has_more = pagination.has_more_items(
+            total_count=total_count, page=page, limit=limit
+        )
+        numbers = await self.get_numbers(
+            entity_uuid=entity_uuid, offset=offset, limit=limit, db=db
+        )
+        return NumbersPgRes(
+            total=total_count,
+            page=page,
+            limit=limit,
+            has_more=has_more,
+            numbers=numbers,
+        )
 
 
-class NumbersStatements:
-    pass
+class CreateSrvc:
+    """
+    Service for creating number data related to an entity.
 
-    class SelStatements:
-        pass
+    This class provides the method to create a new number entry for a specific entity
+    and ensures the uniqueness of the number before adding it to the database.
 
-        @staticmethod
-        def sel_num_by_uuid(entity_uuid: UUID4, number_uuid: UUID4):
-            numbers = NumbersModels.numbers
-            statement = Select(numbers).where(
-                and_(
-                    numbers.entity_uuid == entity_uuid,
-                    numbers.uuid == number_uuid,
-                )
-            )
+    :param statements: The SQL statements used for querying and manipulating number data in the database.
+    :type statements: NumbersStms
+    :param db_operations: The database operations object used for executing queries.
+    :type db_operations: Operations
+    :param model: The model representing the number data structure.
+    :type model: Numbers
+    """
 
-            return statement
+    def __init__(
+        self, statements: NumbersStms, db_operations: Operations, model: Numbers
+    ) -> None:
+        """
+        Initializes the CreateSrvc class with the provided statements, database operations, and model.
 
-        @staticmethod
-        def sel_num_by_entity(
-            entity_uuid: UUID4,
-            limit: int,
-            offset: int,
-        ):
-            numbers = NumbersModels.numbers
-            statement = (
-                Select(numbers)
-                .where(
-                    and_(
-                        numbers.entity_uuid == entity_uuid,
-                        numbers.sys_deleted_at == None,
-                    )
-                )
-                .offset(offset=offset)
-                .limit(limit=limit)
-            )
+        :param statements: The SQL statements used for querying and manipulating number data in the database.
+        :type statements: NumbersStms
+        :param db_operations: The database operations object used for executing queries.
+        :type db_operations: Operations
+        :param model: The model representing the number data structure.
+        :type model: Numbers
+        """
+        self._statements: NumbersStms = statements
+        self._db_ops: Operations = db_operations
+        self._model: Numbers = model
 
-            return statement
+    @property
+    def statements(self) -> NumbersStms:
+        """
+        Returns the instance of NumbersStms.
 
-        @staticmethod
-        def sel_num_by_entity_ct(entity_uuid: UUID4):
-            numbers = NumbersModels.numbers
-            statement = (
-                Select(func.count())
-                .select_from(numbers)
-                .where(
-                    and_(
-                        numbers.entity_uuid == entity_uuid,
-                        numbers.sys_deleted_at == None,
-                    )
-                )
-            )
+        :returns: The SQL statements for querying and manipulating number data.
+        :rtype: NumbersStms
+        """
+        return self._statements
 
-            return statement
+    @property
+    def db_operations(self) -> Operations:
+        """
+        Returns the instance of Operations.
 
-        @staticmethod
-        def sel_num_by_ent_num(
-            entity_uuid: Optional[UUID4],
-            country_code: Optional[str],
-            area_code: Optional[str],
-            line_number: Optional[str],
-            ext: Optional[str],
-        ):
-            numbers = NumbersModels.numbers
-            statement = Select(numbers).where(
-                and_(
-                    numbers.entity_uuid == entity_uuid,
-                    numbers.country_code == country_code,
-                    numbers.area_code == area_code,
-                    numbers.line_number == line_number,
-                    numbers.extension == ext,
-                    numbers.sys_deleted_at == None,
-                )
-            )
+        :returns: The database operations handler.
+        :rtype: Operations
+        """
+        return self._db_ops
 
-            return statement
+    @property
+    def model(self) -> Numbers:
+        """
+        Returns the instance of Numbers model.
 
-    class UpdateStatements:
-        pass
+        :returns: The model representing the number data.
+        :rtype: Numbers
+        """
+        return self._model
 
-        @staticmethod
-        def update_ent_num_uuid(
-            entity_uuid: UUID4, number_uuid: UUID4, number_data: object
-        ):
-            numbers = NumbersModels.numbers
-            statement = (
-                update(numbers)
-                .where(
-                    and_(
-                        numbers.entity_uuid == entity_uuid,
-                        numbers.uuid == number_uuid,
-                        numbers.sys_deleted_at == None,
-                    )
-                )
-                .values(di.set_empty_strs_null(number_data))
-                .returning(numbers)
-            )
-            return statement
+    async def create_number(
+        self,
+        entity_uuid: UUID4,
+        number_data: NumbersInternalCreate,
+        db: AsyncSession,
+    ) -> NumbersRes:
+        """
+        Creates a new number entry for a specific entity after checking for its uniqueness.
+
+        This method checks if the number already exists in the database based on
+        the combination of country code, area code, line number, and extension.
+        If the number exists, it raises an exception. If the number doesn't exist,
+        it adds the new number to the database.
+
+        :param entity_uuid: The UUID of the entity to which the number belongs.
+        :type entity_uuid: UUID4
+        :param number_data: The data for the new number to be created.
+        :type number_data: NumbersInternalCreate
+        :param db: The asynchronous session for database operations.
+        :type db: AsyncSession
+
+        :returns: The created number data if the operation is successful.
+        :rtype: NumbersRes
+        :raises NumberExists: If the number already exists in the database.
+        :raises NumbersNotExist: If the number could not be created.
+        """
+        numbers = self._model
+        statement = self._statements.get_number_by_number(
+            entity_uuid=entity_uuid,
+            country_code=number_data.country_code,
+            area_code=number_data.area_code,
+            line_number=number_data.line_number,
+            ext=number_data.extension,
+        )
+        number_exists: NumbersRes = await self._db_ops.return_one_row(
+            service=cnst.NUMBERS_CREATE_SERVICE, statement=statement, db=db
+        )
+        record_exists(instance=number_exists, exception=NumberExists)
+
+        number: NumbersRes = await self._db_ops.add_instance(
+            service=cnst.NUMBERS_CREATE_SERVICE,
+            model=numbers,
+            data=number_data,
+            db=db,
+        )
+        return record_not_exist(instance=number, exception=NumbersNotExist)
 
 
-class NumbersServices:
-    pass
+class UpdateSrvc:
+    """
+    Service for updating number data related to an entity.
 
-    class ReadService:
-        def __init__(self) -> None:
-            pass
+    This class provides the method to update the number details for a specific entity.
 
-        async def get_number(
-            self,
-            entity_uuid: UUID4,
-            number_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
+    :param statements: The SQL statements used for querying and manipulating number data in the database.
+    :type statements: NumbersStms
+    :param db_operations: The database operations object used for executing queries.
+    :type db_operations: Operations
+    """
 
-            statement = NumbersStatements.SelStatements.sel_num_by_uuid(
-                entity_uuid=entity_uuid,
-                number_uuid=number_uuid,
-            )
-            number = await Operations.return_one_row(
-                service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=number, exception=NumbersNotExist)
+    def __init__(self, statements: NumbersStms, db_operations: Operations) -> None:
+        """
+        Initializes the UpdateSrvc class with the provided statements and database operations.
 
-        async def get_numbers(
-            self,
-            entity_uuid: UUID4,
-            limit: int,
-            offset: int,
-            db: AsyncSession = Depends(get_db),
-        ):
+        :param statements: The SQL statements used for querying and manipulating number data in the database.
+        :type statements: NumbersStms
+        :param db_operations: The database operations object used for executing queries.
+        :type db_operations: Operations
+        """
+        self._statements: NumbersStms = statements
+        self._db_ops: Operations = db_operations
 
-            statement = NumbersStatements.SelStatements.sel_num_by_entity(
-                entity_uuid=entity_uuid, limit=limit, offset=offset
-            )
-            numbers = await Operations.return_all_rows(
-                service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=numbers, exception=NumbersNotExist)
+    @property
+    def statements(self) -> NumbersStms:
+        """
+        Returns the instance of NumbersStms.
 
-        async def get_numbers_ct(
-            self,
-            entity_uuid: UUID4,
-            db: AsyncSession = Depends(get_db),
-        ):
+        :returns: The SQL statements for querying and manipulating number data.
+        :rtype: NumbersStms
+        """
+        return self._statements
 
-            statement = NumbersStatements.SelStatements.sel_num_by_entity_ct(
-                entity_uuid=entity_uuid
-            )
-            return await Operations.return_count(
-                service=cnst.NUMBERS_READ_SERVICE, statement=statement, db=db
-            )
+    @property
+    def db_operations(self) -> Operations:
+        """
+        Returns the instance of Operations.
 
-    class CreateService:
-        def __init__(self) -> None:
-            pass
+        :returns: The database operations handler.
+        :rtype: Operations
+        """
+        return self._db_ops
 
-        async def create_num(
-            self,
-            entity_uuid: UUID4,
-            number_data: s_numbers.NumbersCreate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            numbers = NumbersModels.numbers
-            statement = NumbersStatements.SelStatements.sel_num_by_ent_num(
-                entity_uuid=entity_uuid,
-                country_code=number_data.country_code,
-                area_code=number_data.area_code,
-                line_number=number_data.line_number,
-                ext=number_data.extension,
-            )
-            number_exists = await Operations.return_one_row(
-                service=cnst.NUMBERS_CREATE_SERVICE, statement=statement, db=db
-            )
-            di.record_exists(instance=number_exists, exception=NumberExists)
-            number = await Operations.add_instance(
-                service=cnst.NUMBERS_CREATE_SERVICE,
-                model=numbers,
-                data=number_data,
-                db=db,
-            )
-            return di.record_not_exist(instance=number, exception=NumbersNotExist)
+    async def update_number(
+        self,
+        entity_uuid: UUID4,
+        number_uuid: UUID4,
+        number_data: NumbersInternalUpdate,
+        db: AsyncSession,
+    ) -> NumbersRes:
+        """
+        Updates an existing number for a specific entity.
 
-    class UpdateService:
-        def __init__(self) -> None:
-            pass
+        This method checks if the number exists in the database and updates it with the provided data.
+        If the number doesn't exist, it raises an exception.
 
-        async def update_num(
-            self,
-            entity_uuid: UUID4,
-            number_uuid: UUID4,
-            number_data: s_numbers.NumbersUpdate,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = NumbersStatements.UpdateStatements.update_ent_num_uuid(
-                entity_uuid=entity_uuid,
-                number_uuid=number_uuid,
-                number_data=number_data,
-            )
-            number = await Operations.return_one_row(
-                service=cnst.NUMBERS_UPDATE_SERVICE, statement=statement, db=db
-            )
-            return di.record_not_exist(instance=number, exception=NumbersNotExist)
+        :param entity_uuid: The UUID of the entity that owns the number.
+        :type entity_uuid: UUID4
+        :param number_uuid: The UUID of the number to be updated.
+        :type number_uuid: UUID4
+        :param number_data: The new data for the number.
+        :type number_data: NumbersInternalUpdate
+        :param db: The asynchronous session for database operations.
+        :type db: AsyncSession
 
-    class DelService:
-        def __init__(self) -> None:
-            pass
+        :returns: The updated number data if the operation is successful.
+        :rtype: NumbersRes
+        :raises NumbersNotExist: If the number doesn't exist in the database.
+        """
+        statement = self._statements.update_number(
+            entity_uuid=entity_uuid,
+            number_uuid=number_uuid,
+            number_data=number_data,
+        )
+        number: NumbersRes = await self._db_ops.return_one_row(
+            service=cnst.NUMBERS_UPDATE_SERVICE, statement=statement, db=db
+        )
+        return record_not_exist(instance=number, exception=NumbersNotExist)
 
-        async def soft_del_num_eng(
-            self,
-            entity_uuid: UUID4,
-            number_uuid: UUID4,
-            number_data: s_numbers.NumbersDel,
-            db: AsyncSession = Depends(get_db),
-        ):
-            statement = NumbersStatements.UpdateStatements.update_ent_num_uuid(
-                entity_uuid=entity_uuid,
-                number_uuid=number_uuid,
-                number_data=number_data,
-            )
-            number = await Operations.return_one_row(
-                service=cnst.NUMBERS_DEL_SERVICE,
-                statement=statement,
-                db=db,
-            )
-            return di.record_not_exist(instance=number, exception=NumbersNotExist)
+
+class DelSrvc:
+    """
+    Service for deleting number data related to an entity.
+
+    This class provides the method to soft delete a number entry from the database.
+
+    :param statements: The SQL statements used for querying and manipulating number data in the database.
+    :type statements: NumbersStms
+    :param db_operations: The database operations object used for executing queries.
+    :type db_operations: Operations
+    """
+
+    def __init__(self, statements: NumbersStms, db_operations: Operations) -> None:
+        """
+        Initializes the DelSrvc class with the provided statements and database operations.
+
+        :param statements: The SQL statements used for querying and manipulating number data in the database.
+        :type statements: NumbersStms
+        :param db_operations: The database operations object used for executing queries.
+        :type db_operations: Operations
+        """
+        self._statements: NumbersStms = statements
+        self._db_ops: Operations = db_operations
+
+    @property
+    def statements(self) -> NumbersStms:
+        """
+        Returns the instance of NumbersStms.
+
+        :returns: The SQL statements for querying and manipulating number data.
+        :rtype: NumbersStms
+        """
+        return self._statements
+
+    @property
+    def db_operations(self) -> Operations:
+        """
+        Returns the instance of Operations.
+
+        :returns: The database operations handler.
+        :rtype: Operations
+        """
+        return self._db_ops
+
+    async def soft_delete_number(
+        self,
+        entity_uuid: UUID4,
+        number_uuid: UUID4,
+        number_data: NumbersDel,
+        db: AsyncSession,
+    ) -> NumbersDelRes:
+        """
+        Soft deletes a number entry for a specific entity.
+
+        This method marks the number as deleted without removing it from the database.
+
+        :param entity_uuid: The UUID of the entity that owns the number.
+        :type entity_uuid: UUID4
+        :param number_uuid: The UUID of the number to be deleted.
+        :type number_uuid: UUID4
+        :param number_data: The data indicating how the number should be soft deleted.
+        :type number_data: NumbersDel
+        :param db: The asynchronous session for database operations.
+        :type db: AsyncSession
+
+        :returns: The soft-deleted number data if the operation is successful.
+        :rtype: NumbersDelRes
+        :raises NumbersNotExist: If the number doesn't exist in the database.
+        """
+        statement = self._statements.update_number(
+            entity_uuid=entity_uuid,
+            number_uuid=number_uuid,
+            number_data=number_data,
+        )
+        number: NumbersDelRes = await self._db_ops.return_one_row(
+            service=cnst.NUMBERS_DEL_SERVICE,
+            statement=statement,
+            db=db,
+        )
+        return record_not_exist(instance=number, exception=NumbersNotExist)

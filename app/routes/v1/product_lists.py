@@ -4,156 +4,177 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...containers.services import container as service_container
 from ...database.database import get_db, transaction_manager
 from ...exceptions import ProductListExists, ProductListNotExist
 from ...handlers.handler import handle_exceptions
-from ...schemas import product_lists as s_product_lists
-from ...services.authetication import SessionService, TokenService
-from ...services.product_lists import ProductListsServices
-from ...utilities.set_values import SetSys
-from ...utilities.utilities import Pagination as pg
+from ...models.sys_users import SysUsers
+from ...schemas.product_lists import (
+    ProductListsCreate,
+    ProductListsDel,
+    ProductListsInternalCreate,
+    ProductListsInternalUpdate,
+    ProductListsPgRes,
+    ProductListsRes,
+    ProductListsUpdate,
+)
+from ...services.product_lists import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
+from ...utilities import sys_values
+from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
-serv_product_lists_r = ProductListsServices.ReadService()
-serv_product_lists_c = ProductListsServices.CreateService()
-serv_product_lists_u = ProductListsServices.UpdateService()
-serv_product_lists_d = ProductListsServices.DelService()
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
 @router.get(
     "/{product_list_uuid}/",
-    response_model=s_product_lists.ProductListsResponse,
+    response_model=ProductListsRes,
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductListNotExist])
 async def get_product_list(
     response: Response,
     product_list_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_product_lists.ProductListsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    product_lists_read_srvc: ReadSrvc = Depends(
+        service_container["product_lists_read"]
+    ),
+) -> ProductListsRes:
     """get one product list"""
 
     async with transaction_manager(db=db):
-        return await serv_product_lists_r.get_product_list(
+        return await product_lists_read_srvc.get_product_list(
             product_list_uuid=product_list_uuid, db=db
         )
 
 
 @router.get(
     "/",
-    response_model=s_product_lists.ProductListsPagResponse,
+    response_model=ProductListsPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductListNotExist])
 async def get_product_lists(
     response: Response,
     page: int = Query(default=10, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_product_lists.ProductListsPagResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    product_lists_read_srvc: ReadSrvc = Depends(
+        service_container["product_lists_read"]
+    ),
+) -> ProductListsPgRes:
     """
     Get many product lists.
     """
 
     async with transaction_manager(db=db):
-        offset = pg.pagination_offset(page=page, limit=limit)
-        total_count = await serv_product_lists_r.get_product_lists_ct(db=db)
-        product_lists = await serv_product_lists_r.get_product_lists(
-            limit=limit, offset=offset, db=db
-        )
-        has_more = pg.has_more(total_count=total_count, page=page, limit=limit)
-        return s_product_lists.ProductListsPagResponse(
-            total=total_count,
-            page=page,
-            limit=limit,
-            has_more=has_more,
-            product_lists=product_lists,
+        return await product_lists_read_srvc.paginated_product_lists(
+            page=page, limit=limit, db=db
         )
 
 
 @router.post(
     "/",
-    response_model=s_product_lists.ProductListsResponse,
+    response_model=ProductListsRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductListNotExist, ProductListExists])
 async def create_product_list(
     response: Response,
-    product_list_data: s_product_lists.ProductListsCreate,
+    product_list_data: ProductListsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_product_lists.ProductListsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    product_lists_create_srvc: CreateSrvc = Depends(
+        service_container["product_lists_create"]
+    ),
+) -> ProductListsRes:
     """
     Create one product list.
     """
 
+    sys_user, _ = user_token
+    _product_list_data: ProductListsInternalCreate = internal_schema_validation(
+        data=product_list_data,
+        schema=ProductListsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        SetSys.sys_created_by(data=product_list_data, sys_user=sys_user)
-        return await serv_product_lists_c.create_product_list(
-            product_list_data=product_list_data, db=db
+        return await product_lists_create_srvc.create_product_list(
+            product_list_data=_product_list_data, db=db
         )
 
 
 @router.put(
     "/{product_list_uuid}/",
-    response_model=s_product_lists.ProductListsResponse,
+    response_model=ProductListsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductListNotExist])
 async def update_product_list(
     response: Response,
     product_list_uuid: UUID4,
-    product_list_data: s_product_lists.ProductListsUpdate,
+    product_list_data: ProductListsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_product_lists.ProductListsResponse:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    product_lists_update_srvc: UpdateSrvc = Depends(
+        service_container["product_lists_update"]
+    ),
+) -> ProductListsRes:
     """
     Update one product list.
     """
-
+    sys_user, _ = user_token
+    _product_list_data: ProductListsInternalUpdate = internal_schema_validation(
+        data=product_list_data,
+        schema=ProductListsInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        SetSys.sys_updated_by(data=product_list_data, sys_user=sys_user)
-        return await serv_product_lists_u.update_product_list(
+        return await product_lists_update_srvc.update_product_list(
             product_list_uuid=product_list_uuid,
-            product_list_data=product_list_data,
+            product_list_data=_product_list_data,
             db=db,
         )
 
 
 @router.delete(
     "/{product_list_uuid}/",
-    response_model=s_product_lists.ProductListsDelResponse,
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([ProductListNotExist])
 async def soft_del_poduct_list(
     response: Response,
     product_list_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: str = Depends(serv_session.validate_session),
-) -> s_product_lists.ProductListsDelResponse:
+    user_token: str = Depends(get_validated_session),
+    product_lists_delete_srvc: DelSrvc = Depends(
+        service_container["product_lists_delete"]
+    ),
+) -> None:
     """
     Soft del one product list.
     """
-
+    sys_user, _ = user_token
+    _product_list_data: ProductListsDel = internal_schema_validation(
+        schema=ProductListsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        product_list_data = s_product_lists.ProductListsDel()
-        sys_user, _ = user_token
-        SetSys.sys_deleted_by(data=product_list_data, sys_user=sys_user)
-        return await serv_product_lists_d.soft_del_product_list(
+        await product_lists_delete_srvc.soft_del_product_list(
             product_list_uuid=product_list_uuid,
-            product_list_data=product_list_data,
+            product_list_data=_product_list_data,
             db=db,
         )

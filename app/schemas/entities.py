@@ -1,95 +1,190 @@
 from datetime import datetime
-from token import OP
-from typing import Annotated, List, Literal, Optional
+from typing import Annotated, List, Optional
 
-from click import Option
-from pydantic import UUID4, BaseModel
+from pydantic import UUID4, BaseModel, Field
 
 from ..constants.enums import EntityTypes
 from ._variables import TimeStamp
-from .individuals import IndividualsDelResponse, IndividualsResponse
-from .non_individuals import NonIndividualsDelResponse, NonIndividualsResponse
+from .individuals import IndividualsDelRes, IndividualsRes
+from .non_individuals import NonIndividualsDelRes, NonIndividualsRes
 
 
 class Entities(BaseModel):
-    type: Annotated[EntityTypes, EntityTypes]
+    """
+    Base model representing an entity.
+    """
+
+    type: Annotated[EntityTypes, EntityTypes] = Field(
+        ..., description="Type of entity (e.g., Individual, Organization)."
+    )
 
 
 class EntitiesCreate(Entities):
-    sys_created_at: datetime = TimeStamp
-    sys_created_by: Optional[UUID4] = None
+    """
+    Model for creating a new entity record.
+    """
+
+    sys_created_at: datetime = Field(
+        TimeStamp, description="Timestamp of when the entity was created."
+    )
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the entity."
+    )
 
 
-class EntitiesUpdate(BaseModel):
-    type: Annotated[EntityTypes, EntityTypes]
-    sys_updated_at: datetime = TimeStamp
-    sys_updated_by: Optional[UUID4] = None
+class EntitiesUpdate(Entities):
+    """
+    Model for updating an existing entity record.
+    """
+
+    sys_updated_at: datetime = Field(
+        TimeStamp, description="Timestamp of when the entity was last updated."
+    )
+    sys_updated_by: Optional[UUID4] = Field(
+        None, description="UUID of the user who last updated the entity."
+    )
 
 
 class EntitiesDel(BaseModel):
-    sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[UUID4] = None
+    """
+    Model for marking an entity as deleted.
+    """
+
+    sys_deleted_at: datetime = Field(
+        TimeStamp, description="Timestamp of when the entity was deleted."
+    )
+    sys_deleted_by: Optional[UUID4] = Field(
+        None, description="UUID of the user who deleted the entity."
+    )
 
 
-class EntitiesResponse(Entities):
-    id: int
-    uuid: UUID4
-    sys_created_at: datetime
-    sys_created_by: Optional[UUID4] = None
-    sys_updated_at: Optional[datetime] = None
-    sys_updated_by: Optional[UUID4] = None
+class EntitiesRes(Entities):
+    """
+    Response model representing an entity.
+    """
 
-    class Config:
-        from_attributes = True
-
-
-class EntitiesIndivNonIndivResponse(BaseModel):
-    entity_uuid: Optional[UUID4] = None
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    company_name: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-class EntitiesIndivResponse(Entities):
-    id: int
-    uuid: UUID4
-    information: IndividualsResponse
-    sys_created_at: datetime
-    sys_created_by: Optional[UUID4] = None
-    sys_updated_at: Optional[datetime] = None
-    sys_updated_by: Optional[UUID4] = None
+    id: int = Field(..., description="Unique identifier of the entity.")
+    uuid: UUID4 = Field(..., description="UUID of the entity.")
+    sys_created_at: datetime = Field(
+        ..., description="Timestamp of when the entity was created."
+    )
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the entity."
+    )
+    sys_updated_at: Optional[datetime] = Field(
+        None, description="Timestamp of when the entity was last updated."
+    )
+    sys_updated_by: Optional[UUID4] = Field(
+        None, description="UUID of the user who last updated the entity."
+    )
 
     class Config:
         from_attributes = True
 
 
-class EntitiesCombinedResponse(BaseModel):
-    entity: Optional[EntitiesResponse] = None
-    individual: Optional[IndividualsResponse] = None
-    non_individual: Optional[NonIndividualsResponse] = None
+class IndividualNonIndividualRes(BaseModel):
+    """
+    Model representing common fields for individuals and non-individuals.
+    """
 
-
-class EntitiesPagResponse(BaseModel):
-    total: int
-    page: int
-    limit: int
-    has_more: bool
-    individuals: Optional[List[IndividualsResponse]] = None
-    non_individuals: Optional[List[NonIndividualsResponse]] = None
-
-
-class EntitiesDelResponse(EntitiesResponse):
-    sys_deleted_at: datetime = TimeStamp
-    sys_deleted_by: Optional[UUID4] = None
+    entity_uuid: Optional[UUID4] = Field(
+        None, description="UUID of the associated entity."
+    )
+    first_name: Optional[str] = Field(
+        None, description="First name (if an individual)."
+    )
+    last_name: Optional[str] = Field(None, description="Last name (if an individual).")
+    company_name: Optional[str] = Field(
+        None, description="Company name (if a non-individual)."
+    )
 
     class Config:
         from_attributes = True
 
 
-class EntitiesCombinedDelResponse(BaseModel):
-    entity: Optional[EntitiesDelResponse] = None
-    individual: Optional[IndividualsDelResponse] = None
-    non_individual: Optional[NonIndividualsDelResponse] = None
+class EntitiesIndividualRes(Entities):
+    """
+    Response model for an entity that is an individual.
+    """
+
+    id: int = Field(..., description="Unique identifier of the entity.")
+    uuid: UUID4 = Field(..., description="UUID of the entity.")
+    information: IndividualsRes = Field(
+        ..., description="Detailed information about the individual."
+    )
+    sys_created_at: datetime = Field(
+        ..., description="Timestamp of when the entity was created."
+    )
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the entity."
+    )
+    sys_updated_at: Optional[datetime] = Field(
+        None, description="Timestamp of when the entity was last updated."
+    )
+    sys_updated_by: Optional[UUID4] = Field(
+        None, description="UUID of the user who last updated the entity."
+    )
+
+    class Config:
+        from_attributes = True
+
+
+class EntitiesCombinedRes(BaseModel):
+    """
+    Response model combining entity, individual, and non-individual data.
+    """
+
+    entity: Optional[EntitiesRes] = Field(None, description="Entity response object.")
+    individual: Optional[IndividualsRes] = Field(
+        None, description="Individual response object (if applicable)."
+    )
+    non_individual: Optional[NonIndividualsRes] = Field(
+        None, description="Non-individual response object (if applicable)."
+    )
+
+
+class EntitiesPgRes(BaseModel):
+    """
+    Paginated response model for entities.
+    """
+
+    total: int = Field(..., description="Total number of entity records available.")
+    page: int = Field(..., description="Current page number.")
+    limit: int = Field(..., description="Number of entity records per page.")
+    has_more: bool = Field(
+        ...,
+        description="Indicates if there are more entity records beyond the current page.",
+    )
+    data: List[EntitiesRes] = Field(..., description="List of entity response objects.")
+
+
+class EntitiesDelRes(EntitiesRes):
+    """
+    Response model for a deleted entity.
+    """
+
+    sys_deleted_at: datetime = Field(
+        TimeStamp, description="Timestamp of when the entity was deleted."
+    )
+    sys_deleted_by: Optional[UUID4] = Field(
+        None, description="UUID of the user who deleted the entity."
+    )
+
+    class Config:
+        from_attributes = True
+
+
+class EntitiesCombinedDelRes(BaseModel):
+    """
+    Response model combining deleted entity, individual, and non-individual data.
+    """
+
+    entity: Optional[EntitiesDelRes] = Field(
+        None, description="Deleted entity response object."
+    )
+    individual: Optional[IndividualsDelRes] = Field(
+        None, description="Deleted individual response object (if applicable)."
+    )
+    non_individual: Optional[NonIndividualsDelRes] = Field(
+        None, description="Deleted non-individual response object (if applicable)."
+    )

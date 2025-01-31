@@ -4,43 +4,53 @@ from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...containers.services import container as services_container
 from ...database.database import get_db, transaction_manager
 from ...exceptions import AccContractExists, AccContractNotExist
 from ...handlers.handler import handle_exceptions
-from ...schemas import account_contracts as s_account_contracts
-from ...services.account_contracts import AccountContractsServices
-from ...services.authetication import SessionService, TokenService
-from ...utilities.set_values import SetSys
-from ...utilities.utilities import Pagination as pg
+from ...models.sys_users import SysUsers
+from ...schemas.account_contracts import (
+    AccountContractsCreate,
+    AccountContractsDel,
+    AccountContractsInternalCreate,
+    AccountContractsInternalUpdate,
+    AccountContractsPgRes,
+    AccountContractsRes,
+    AccountContractsUpdate,
+)
+from ...services.account_contracts import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
+from ...services.token import set_auth_cookie
+from ...utilities import sys_values
+from ...utilities.data import internal_schema_validation
+from ...utilities.auth import get_validated_session
 
-serv_acc_contr_r = AccountContractsServices.ReadService()
-serv_acc_contr_c = AccountContractsServices.CreateService()
-serv_acc_contr_u = AccountContractsServices.UpdateService()
-serv_acc_contr_d = AccountContractsServices.DelService()
-serv_session = SessionService()
-serv_token = TokenService()
 router = APIRouter()
 
 
 @router.get(
     "/{account_uuid}/account-contracts/{account_contract_uuid}/",
-    response_model=s_account_contracts.AccountContractsReponse,
+    response_model=AccountContractsRes,
     status_code=status.HTTP_200_OK,
     include_in_schema=False,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccContractNotExist])
 async def get_account_contract(
     response: Response,
     account_uuid: UUID4,
     account_contract_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_contracts.AccountContractsReponse:
-    """get one account contract"""
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    account_contract_read_srvc: ReadSrvc = Depends(
+        services_container["account_contracts_read"]
+    ),
+) -> AccountContractsRes:
+    """
+    Fetch one account contract by account and account contract uuid.
+    """
 
     async with transaction_manager(db=db):
-        return await serv_acc_contr_r.get_account_contract(
+        return await account_contract_read_srvc.get_account_contract(
             account_uuid=account_uuid,
             account_contract_uuid=account_contract_uuid,
             db=db,
@@ -49,10 +59,10 @@ async def get_account_contract(
 
 @router.get(
     "/{account_uuid}/account-contracts/",
-    response_model=s_account_contracts.AccountContractsPagRepsone,
+    response_model=AccountContractsPgRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccContractNotExist])
 async def get_account_contracts(
     response: Response,
@@ -60,113 +70,128 @@ async def get_account_contracts(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_contracts.AccountContractsPagRepsone:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    account_contract_read_srvc: ReadSrvc = Depends(
+        services_container["account_contracts_read"]
+    ),
+) -> AccountContractsPgRes:
     """
-    Get many account contracts by account.
+    Fetch all account contracts by account uuid.
     """
 
     async with transaction_manager(db=db):
-        offset = pg.pagination_offset(page=page, limit=limit)
-        total_count = await serv_acc_contr_r.get_account_contracts_ct(
-            account_uuid=account_uuid, db=db
-        )
-        account_contracts = await serv_acc_contr_r.get_account_contracts(
-            account_uuid=account_uuid, limit=limit, offset=offset, db=db
-        )
-        has_more = pg.has_more(total_count=total_count, page=page, limit=limit)
-        return s_account_contracts.AccountContractsPagRepsone(
-            total=total_count,
-            page=page,
-            limit=limit,
-            has_more=has_more,
-            account_contracts=account_contracts,
+        return await account_contract_read_srvc.paginated_account_contracts(
+            account_uuid=account_uuid, page=page, limit=limit, db=db
         )
 
 
 @router.post(
     "/{account_uuid}/account-contracts/",
-    response_model=s_account_contracts.AccountContractsReponse,
+    response_model=AccountContractsRes,
     status_code=status.HTTP_201_CREATED,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccContractNotExist, AccContractExists])
 async def create_account_contract(
     response: Response,
     account_uuid: UUID4,
-    account_contract_data: s_account_contracts.AccountContractsCreate,
+    account_contract_data: AccountContractsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_contracts.AccountContractsCreate:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    account_contract_create_srvc: CreateSrvc = Depends(
+        services_container["account_contracts_create"]
+    ),
+) -> AccountContractsCreate:
     """
     Create one account contract.
     """
 
+    sys_user, _ = user_token
+    _account_contract_data: AccountContractsInternalCreate = internal_schema_validation(
+        data=account_contract_data,
+        schema=AccountContractsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        SetSys.sys_created_by(data=account_contract_data, sys_user=sys_user)
-        return await serv_acc_contr_c.create_account_contract(
+        return await account_contract_create_srvc.create_account_contract(
             account_uuid=account_uuid,
-            account_contract_data=account_contract_data,
+            account_contract_data=_account_contract_data,
             db=db,
         )
 
 
 @router.put(
     "/{account_uuid}/account-contracts/{account_contract_uuid}/",
-    response_model=s_account_contracts.AccountContractsReponse,
+    response_model=AccountContractsRes,
     status_code=status.HTTP_200_OK,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccContractNotExist])
 async def update_account_contract(
     response: Response,
     account_uuid: UUID4,
     account_contract_uuid: UUID4,
-    account_contract_data: s_account_contracts.AccountContractsUpdate,
+    account_contract_data: AccountContractsUpdate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_contracts.AccountContractsUpdate:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    account_contract_update_srvc: UpdateSrvc = Depends(
+        services_container["account_contracts_update"]
+    ),
+) -> AccountContractsRes:
     """
     Update one account contract.
     """
 
+    sys_user, _ = user_token
+    _account_contract_data: AccountContractsInternalUpdate = internal_schema_validation(
+        schema=AccountContractsInternalUpdate,
+        data=account_contract_data,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        SetSys.sys_updated_by(data=account_contract_data, sys_user=sys_user)
-        return await serv_acc_contr_u.update_account_contract(
+
+        return await account_contract_update_srvc.update_account_contract(
             account_uuid=account_uuid,
             account_contract_uuid=account_contract_uuid,
-            account_contract_data=account_contract_data,
+            account_contract_data=_account_contract_data,
             db=db,
         )
 
 
 @router.delete(
     "/{account_uuid}/account-contracts/{account_contract_uuid}/",
-    response_model=s_account_contracts.AccountContractsDelRepsone,
-    status_code=status.HTTP_200_OK,
+    response_model=None,
+    status_code=status.HTTP_204_NO_CONTENT,
 )
-@serv_token.set_auth_cookie
+@set_auth_cookie
 @handle_exceptions([AccContractNotExist])
-async def soft_del_account_contract(
+async def soft_delete_account_contract(
     response: Response,
     account_uuid: UUID4,
     account_contract_uuid: UUID4,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(serv_session.validate_session),
-) -> s_account_contracts.AccountContractsDel:
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
+    account_contracts_delete_srvc: DelSrvc = Depends(
+        services_container["account_contracts_delete"]
+    ),
+) -> None:
     """
-    Soft del one account contract.
+    Soft delete one account contract.
     """
 
+    sys_user, _ = user_token
+    _account_contract_data: AccountContractsDel = internal_schema_validation(
+        schema=AccountContractsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        account_contract_data = s_account_contracts.AccountContractsDel()
-        sys_user, _ = user_token
-        SetSys.sys_deleted_by(data=account_contract_data, sys_user=sys_user)
-        return await serv_acc_contr_d.soft_del_account_contract(
+
+        await account_contracts_delete_srvc.soft_delete_account_contract(
             account_uuid=account_uuid,
             account_contract_uuid=account_contract_uuid,
-            account_contract_data=account_contract_data,
+            account_contract_data=_account_contract_data,
             db=db,
         )

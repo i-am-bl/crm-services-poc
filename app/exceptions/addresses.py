@@ -3,6 +3,19 @@ from .crm_exceptions import CRMExceptions
 
 
 class AddressNotExist(CRMExceptions):
+    """
+    Custom exception raised when an address does not exist.
+
+    Inherits from the base CRMExceptions class. The default message for this exception
+    is specified by the constant `ADDRESSES_NOT_EXIST`. This exception can be raised when
+    attempting to access or modify an address that does not exist in the system.
+
+    :param message: The error message to display when the exception is raised.
+                    Defaults to the value of ADDRESSES_NOT_EXIST.
+    :param args: Additional positional arguments to pass to the parent exception class.
+    :param kwargs: Additional keyword arguments to pass to the parent exception class.
+    """
+
     def __init__(
         self, message: str = ADDRESSES_NOT_EXIST, *args: object, **kwargs
     ) -> None:
@@ -10,6 +23,19 @@ class AddressNotExist(CRMExceptions):
 
 
 class AddressExists(CRMExceptions):
+    """
+    Custom exception raised when an address already exists.
+
+    Inherits from the base CRMExceptions class. The default message for this exception
+    is specified by the constant `ADDRESSES_EXISTS`. This exception can be raised when
+    attempting to create or add an address that already exists in the system.
+
+    :param message: The error message to display when the exception is raised.
+                    Defaults to the value of ADDRESSES_EXISTS.
+    :param args: Additional positional arguments to pass to the parent exception class.
+    :param kwargs: Additional keyword arguments to pass to the parent exception class.
+    """
+
     def __init__(
         self, message: str = ADDRESSES_EXISTS, *args: object, **kwargs
     ) -> None:

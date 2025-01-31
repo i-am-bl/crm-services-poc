@@ -4,7 +4,6 @@ from typing import Optional
 from pydantic import UUID4, BaseModel
 
 
-# TODO: Contacts
 class ContactsBase(BaseModel):
     parent_uuid: UUID4
     child_uuid: UUID4

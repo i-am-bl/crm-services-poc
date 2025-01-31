@@ -5,10 +5,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from .sys_base import SysBase
 
-# TODO: create an api for this table or dicard it for now
-
 
 class StatementItems(SysBase):
+    # TODO: Marking this as abstract for v1 to exclude from build
+    __abstract__ = True
     __tablename__ = "om_statement_items"
     __table_args__ = {"schema": "sales"}
 
