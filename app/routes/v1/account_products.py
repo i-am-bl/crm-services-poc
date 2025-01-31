@@ -14,6 +14,8 @@ from ...orchestrators.account_products import AccountProductsReadOrch
 from ...schemas.account_products import (
     AccountProductsCreate,
     AccountProductsDel,
+    AccountProductsInternalCreate,
+    AccountProductsInternalUpdate,
     AccountProductsOrchPgRes,
     AccountProductsRes,
     AccountProductsUpdate,
@@ -22,6 +24,7 @@ from ...services import account_products as account_products_srvcs
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 
 router = APIRouter()
@@ -105,14 +108,18 @@ async def create_account_product(
     This does not create a product or an account.
     """
 
+    sys_user, _ = user_token
+    _account_product_data: AccountProductsInternalCreate = internal_schema_validation(
+        data=account_product_data,
+        schema=AccountProductsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(
-            data=account_product_data, sys_user_uuid=sys_user.uuid
-        )
         return await account_products_create_srvc.create_account_product(
             account_uuid=account_uuid,
-            account_product_data=account_product_data,
+            account_product_data=_account_product_data,
             db=db,
         )
 
@@ -138,16 +145,19 @@ async def update_account_product(
     """
     Update one link from an account to a product.
     """
-
+    sys_user, _ = user_token
+    _account_product_data: AccountProductsInternalUpdate = internal_schema_validation(
+        data=account_product_data,
+        schema=AccountProductsInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, token = user_token
-        sys_values.sys_updated_by(
-            data=account_product_data, sys_user_uuid=sys_user.uuid
-        )
+
         return await account_products_update_srvc.update_account_product(
             account_uuid=account_uuid,
             account_product_uuid=account_product_uuid,
-            account_product_data=account_product_data,
+            account_product_data=_account_product_data,
             db=db,
         )
 
@@ -172,16 +182,16 @@ async def soft_del_account_product(
     """
     Soft del one link from the account to a product.
     """
-
+    sys_user, _ = user_token
+    _account_product_data: AccountProductsDel = internal_schema_validation(
+        schema=AccountProductsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        account_product_data = AccountProductsDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(
-            data=account_product_data, sys_user_uuid=sys_user.uuid
-        )
         return await account_products_delete_srvc.soft_del_account_product(
             account_uuid=account_uuid,
             account_product_uuid=account_product_uuid,
-            account_product_data=account_product_data,
+            account_product_data=_account_product_data,
             db=db,
         )

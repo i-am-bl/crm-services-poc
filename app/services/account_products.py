@@ -8,12 +8,12 @@ from ..database.operations import Operations
 from ..exceptions import AccProductsExists, AccProductstNotExist
 from ..models.account_products import AccountProducts
 from ..schemas.account_products import (
-    AccountProductsCreate,
+    AccountProductsInternalCreate,
     AccountProductsDel,
     AccountProductsDelRes,
     AccountProductsPgRes,
     AccountProductsRes,
-    AccountProductsUpdate,
+    AccountProductsInternalUpdate,
 )
 from ..utilities import pagination
 from ..utilities.data import record_not_exist, record_exists
@@ -207,7 +207,7 @@ class CreateSrvc:
     async def create_account_product(
         self,
         account_uuid: UUID4,
-        account_product_data: AccountProductsCreate,
+        account_product_data: AccountProductsInternalCreate,
         db: AsyncSession,
     ) -> AccountProductsRes:
         """
@@ -216,7 +216,7 @@ class CreateSrvc:
         :param account_uuid: The UUID of the account.
         :type account_uuid: UUID4
         :param account_product_data: The data for the new account product.
-        :type account_product_data: AccountProductsCreate
+        :type account_product_data: AccountProductsInternalCreate
         :param db: The database session.
         :type db: AsyncSession
         :return: The newly created account product.
@@ -281,7 +281,7 @@ class UpdateSrvc:
         self,
         account_uuid: UUID4,
         account_product_uuid: UUID4,
-        account_product_data: AccountProductsUpdate,
+        account_product_data: AccountProductsInternalUpdate,
         db: AsyncSession,
     ) -> AccountProductsRes:
         """
@@ -292,7 +292,7 @@ class UpdateSrvc:
         :param account_product_uuid: The UUID of the account product.
         :type account_product_uuid: UUID4
         :param account_product_data: The updated data for the account product.
-        :type account_product_data: AccountProductsUpdate
+        :type account_product_data: AccountProductsInternalUpdate
         :param db: The database session.
         :type db: AsyncSession
         :return: The updated account product.

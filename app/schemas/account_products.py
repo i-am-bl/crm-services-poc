@@ -7,7 +7,7 @@ from ._variables import TimeStamp
 from .products import ProductsRes
 
 
-class AccountProducts(BaseModel):
+class AccountProductsCreate(BaseModel):
     """
     Model representing an account product with associated product and contract dates.
     """
@@ -22,9 +22,11 @@ class AccountProducts(BaseModel):
     )
 
 
-class AccountProductsCreate(AccountProducts):
+class AccountProductsInternalCreate(AccountProductsCreate):
     """
     Model representing an account product being created, including system metadata.
+
+    Hides system level fields from the client.
     """
 
     sys_created_at: datetime = Field(
@@ -47,6 +49,15 @@ class AccountProductsUpdate(BaseModel):
     end_on: Optional[date] = Field(
         None, description="End date of the account product contract."
     )
+
+
+class AccountProductsInternalUpdate(AccountProductsUpdate):
+    """
+    Model representing metadata for updating an existing account product.
+
+    Hides system level fields from the client.
+    """
+
     sys_updated_at: datetime = Field(
         TimeStamp, description="Timestamp of when the account product was last updated."
     )
