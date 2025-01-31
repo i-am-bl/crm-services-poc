@@ -9,7 +9,7 @@ from ..exceptions import IndividualExists, IndividualNotExist
 from ..models.individuals import Individuals
 from ..schemas.individuals import (
     IndividualsCreate,
-    IndividualsUpdate,
+    IndividualsInternalUpdate,
     IndividualsRes,
     IndividualsDel,
     IndividualsDelRes,
@@ -272,7 +272,7 @@ class UpdateSrvc:
     async def update_individual(
         self,
         entity_uuid: UUID4,
-        individual_data: IndividualsUpdate,
+        individual_data: IndividualsInternalUpdate,
         db: AsyncSession,
     ) -> IndividualsRes:
         """
@@ -281,7 +281,7 @@ class UpdateSrvc:
         :param entity_uuid: The UUID of the entity whose individual record is being updated.
         :type entity_uuid: UUID4
         :param individual_data: The data used to update the individual's record.
-        :type individual_data: IndividualsUpdate
+        :type individual_data: IndividualsInternalUpdate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 

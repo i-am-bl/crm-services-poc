@@ -38,11 +38,16 @@ class IndividualsUpdate(BaseModel):
     last_name: Optional[ConstrainedStr] = Field(
         None, description="Updated last name of the individual."
     )
+
+
+class IndividualsInternalUpdate(IndividualsUpdate):
+    """Model for updating an individual entity."""
+
     sys_updated_at: datetime = Field(
         TimeStamp, description="Timestamp when the record was last updated."
     )
-    sys_updated_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who last updated the record."
+    sys_updated_by: UUID4 = Field(
+        ..., description="UUID of the user who last updated the record."
     )
 
 

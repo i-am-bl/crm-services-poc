@@ -11,6 +11,7 @@ from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
 from ...schemas.individuals import (
     IndividualsCreate,
+    IndividualsInternalUpdate,
     IndividualsUpdate,
     IndividualsRes,
     IndividualsDel,
@@ -19,6 +20,7 @@ from ...services.individuals import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -69,8 +71,8 @@ async def create_individual(
 ) -> IndividualsRes:
     """create one individual"""
 
+    sys_user, _ = user_token
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
         sys_values.sys_created_by(data=individual_data, sys_user_uuid=sys_user.uuid)
         return await individuals_create_srvc.create_individual(
             entity_uuid=entity_uuid, individual_data=individual_data, db=db
@@ -97,13 +99,20 @@ async def update_individual(
 ) -> IndividualsRes:
     """update one individual"""
 
+    sys_user, _ = user_token
+    _individual_data: IndividualsInternalUpdate = internal_schema_validation(
+        data=individual_data,
+        schema=IndividualsInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=individual_data, sys_user_uuid=sys_user.uuid)
+
         return await individuals_update_srvc.update_individual(
             entity_uuid=entity_uuid,
             individual_uuid=individual_uuid,
-            individual_data=individual_data,
+            individual_data=_individual_data,
             db=db,
         )
 
@@ -125,14 +134,17 @@ async def soft_del_individual(
     ),
 ) -> None:
     """soft del one entity"""
-
+    sys_user, _ = user_token
+    _individual_data: IndividualsDel = internal_schema_validation(
+        schema=IndividualsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        individual_data = IndividualsDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=individual_data, sys_user_uuid=sys_user.uuid)
+
         return await individuals_delete_srvc.soft_del_individual(
             entity_uuid=entity_uuid,
             individual_uuid=individual_uuid,
-            individual_data=individual_data,
+            individual_data=_individual_data,
             db=db,
         )
