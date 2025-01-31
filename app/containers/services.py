@@ -157,321 +157,321 @@ class ServicesContainer(TypedDict):
 container: ServicesContainer = {
     # account contract services
     "account_contracts_create": lambda: account_contracts_srvcs.CreateSrvc(
-        operations=database_container["operations"], model=AccountContracts
+        operations=database_container["operations"](), model=AccountContracts
     ),
     "account_contracts_read": lambda: account_contracts_srvcs.ReadSrvc(
-        operations=database_container["operations"],
-        statements=statements_container["account_contracts_stms"],
+        operations=database_container["operations"](),
+        statements=statements_container["account_contracts_stms"](),
     ),
     "account_contracts_update": lambda: account_contracts_srvcs.UpdateSrvc(
-        operations=database_container["operations"],
-        statements=statements_container["account_contracts_stms"],
+        operations=database_container["operations"](),
+        statements=statements_container["account_contracts_stms"](),
     ),
     "account_contracts_delete": lambda: account_contracts_srvcs.DelSrvc(
-        operations=database_container["operations"],
-        statements=statements_container["account_contracts_stms"],
+        operations=database_container["operations"](),
+        statements=statements_container["account_contracts_stms"](),
     ),
     # account list services
     "account_lists_create": lambda: account_lists_srvcs.CreateSrvc(
         model=AccountLists,
-        statements=statements_container["account_lists_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["account_lists_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "account_lists_read": lambda: account_lists_srvcs.ReadSrvcSrvc(
-        statements=statements_container["account_lists_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["account_lists_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "account_lists_update": lambda: account_lists_srvcs.UpdateSrvc(
-        statements=statements_container["account_lists_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["account_lists_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "account_lists_delete": lambda: account_lists_srvcs.DelSrvc(
-        statements=statements_container["account_lists_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["account_lists_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # account products services
     "account_products_create": lambda: account_products_srvcs.CreateSrvc(
-        statements=statements_container["account_products_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["account_products_stms"](),
+        db_operations=database_container["operations"](),
         model=AccountProducts,
     ),
     "account_products_read": lambda: account_products_srvcs.ReadSrvc(
-        statements=statements_container["account_products_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["account_products_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "account_products_update": lambda: account_products_srvcs.UpdateSrvc(
-        statements=statements_container["account_products_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["account_products_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "account_products_delete": lambda: account_products_srvcs.DelSrvc(
-        statements=statements_container["account_products_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["account_products_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # account services
     "accounts_create": lambda: accounts_srvcs.CreateSrvc(
         model=Accounts, db_operations=database_container["operations"]
     ),
     "accounts_read": lambda: accounts_srvcs.ReadSrvc(
-        statements=statements_container["accounts_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["accounts_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "accounts_update": lambda: accounts_srvcs.UpdateSrvc(
-        statements=statements_container["accounts_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["accounts_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "accounts_delete": lambda: accounts_srvcs.DelSrvc(
-        statements=statements_container["accounts_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["accounts_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # addresses services
     "addresses_create": lambda: addresses_srvcs.CreateSrvc(
-        statements=statements_container["addresses_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["addresses_stms"](),
+        db_operations=database_container["operations"](),
         model=Addresses,
     ),
     "addresses_read": lambda: addresses_srvcs.ReadSrvc(
-        statements=statements_container["addresses_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["addresses_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "addresses_update": lambda: addresses_srvcs.UpdateSrvc(
-        statements=statements_container["addresses_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["addresses_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "addresses_delete": lambda: addresses_srvcs.DelSrvc(
-        statements=statements_container["addresses_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["addresses_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # emails services
     "emails_create": lambda: emails_srvcs.CreateSrvc(
-        statements=statements_container["emails_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["emails_stms"](),
+        db_operations=database_container["operations"](),
         model=Emails,
     ),
     "emails_read": lambda: emails_srvcs.ReadSrvc(
-        statements=statements_container["emails_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["emails_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "emails_update": lambda: emails_srvcs.UpdateSrvc(
-        statements=statements_container["emails_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["emails_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "emails_delete": lambda: emails_srvcs.DelSrvc(
-        statements=statements_container["emails_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["emails_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # entity accounts services
     "entity_accounts_create": lambda: entity_accounts_srvcs.CreateSrvc(
-        statements=statements_container["entity_accounts_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["entity_accounts_stms"](),
+        db_operations=database_container["operations"](),
         model=EntityAccounts,
     ),
     "entity_accounts_read": lambda: entity_accounts_srvcs.ReadSrvc(
-        statements=statements_container["entity_accounts_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["entity_accounts_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "entity_accounts_update": lambda: entity_accounts_srvcs.UpdateSrvc(
-        statements=statements_container["entity_accounts_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["entity_accounts_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "entity_accounts_delete": lambda: entity_accounts_srvcs.DelSrvc(
-        statements=statements_container["entity_accounts_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["entity_accounts_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # entities services
     "entities_create": lambda: entities_srvcs.CreateSrvc(
-        statements=statements_container["entites_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["entites_stms"](),
+        db_operations=database_container["operations"](),
         model=Entities,
     ),
     "entities_read": lambda: entities_srvcs.ReadSrvc(
-        statements=statements_container["entites_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["entites_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "entities_update": lambda: entities_srvcs.UpdateSrvc(
-        statements=statements_container["entites_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["entites_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "entities_delete": lambda: entities_srvcs.DelSrvc(
-        statements=statements_container["entites_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["entites_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # individuals services
     "individuals_create": lambda: individuals_srvcs.CreateSrvc(
-        statements=statements_container["invoice_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_stms"](),
+        db_operations=database_container["operations"](),
         model=Individuals,
     ),
     "individuals_read": lambda: individuals_srvcs.ReadSrvc(
-        statements=statements_container["invoice_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "individuals_update": lambda: individuals_srvcs.UpdateSrvc(
-        statements=statements_container["invoice_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "individuals_delete": lambda: individuals_srvcs.DelSrvc(
-        statements=statements_container["invoice_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # invoice items services
     "invoice_items_create": lambda: invoice_items_srvcs.CreateSrvc(
-        statements=statements_container["invoice_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_items_stms"](),
+        db_operations=database_container["operations"](),
         model=InvoiceItems,
     ),
     "invoice_items_read": lambda: invoice_items_srvcs.ReadSrvc(
-        statements=statements_container["invoice_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_items_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "invoice_items_update": lambda: invoice_items_srvcs.UpdateSrvc(
-        statements=statements_container["invoice_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_items_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "invoice_items_delete": lambda: invoice_items_srvcs.DelSrvc(
-        statements=statements_container["invoice_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_items_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # invoices services
     "invoices_create": lambda: invoices_srvcs.CreateSrvc(
-        statements=statements_container["invoice_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_stms"](),
+        db_operations=database_container["operations"](),
         model=Invoices,
     ),
     "invoices_read": lambda: invoices_srvcs.ReadSrvc(
-        statements=statements_container["invoice_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "invoices_update": lambda: invoices_srvcs.UpdateSrvc(
-        statements=statements_container["invoice_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "invoices_delete": lambda: invoices_srvcs.DelSrvc(
-        statements=statements_container["invoice_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["invoice_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # non-individual services
     "non_individuals_create": lambda: non_individual_srvcs.CreateSrvc(
-        statements=statements_container["non_individuals"],
-        db_operations=database_container["operations"],
+        statements=statements_container["non_individuals"](),
+        db_operations=database_container["operations"](),
         model=NonIndividuals,
     ),
     "non_individuals_read": lambda: non_individual_srvcs.ReadSrvc(
-        statements=statements_container["non_individuals"],
-        db_operations=database_container["operations"],
+        statements=statements_container["non_individuals"](),
+        db_operations=database_container["operations"](),
     ),
     "non_individuals_update": lambda: non_individual_srvcs.UpdateSrvc(
-        statements=statements_container["non_individuals"],
-        db_operations=database_container["operations"],
+        statements=statements_container["non_individuals"](),
+        db_operations=database_container["operations"](),
     ),
     "non_individuals_delete": lambda: non_individual_srvcs.DelSrvc(
-        statements=statements_container["non_individuals"],
-        db_operations=database_container["operations"],
+        statements=statements_container["non_individuals"](),
+        db_operations=database_container["operations"](),
     ),
     # number services
     "numbers_create": lambda: numbers_srvcs.CreateSrvc(
-        statements=statements_container["numbers_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["numbers_stms"](),
+        db_operations=database_container["operations"](),
         model=Numbers,
     ),
     "numbers_read": lambda: numbers_srvcs.ReadSrvc(
-        statements=statements_container["numbers_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["numbers_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "numbers_update": lambda: numbers_srvcs.UpdateSrvc(
-        statements=statements_container["numbers_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["numbers_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "numbers_delete": lambda: numbers_srvcs.DelSrvc(
-        statements=statements_container["numbers_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["numbers_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # order items services
     "order_items_create": lambda: order_items_srvcs.CreateSrvc(
-        statements=statements_container["order_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["order_items_stms"](),
+        db_operations=database_container["operations"](),
         model=OrderItems,
     ),
     "order_items_read": lambda: order_items_srvcs.ReadSrvc(
-        statements=statements_container["order_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["order_items_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "order_items_update": lambda: order_items_srvcs.UpdateSrvc(
-        statements=statements_container["order_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["order_items_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "order_items_delete": lambda: order_items_srvcs.DelSrvc(
-        statements=statements_container["order_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["order_items_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # orders services
     "orders_create": lambda: orders_srvcs.CreateSrvc(
-        db_operations=database_container["operations"], model=Orders
+        db_operations=database_container["operations"](), model=Orders
     ),
     "orders_read": lambda: orders_srvcs.ReadSrvc(
-        statements=statements_container["orders_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["orders_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "orders_update": lambda: orders_srvcs.UpdateSrvc(
-        statements=statements_container["orders_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["orders_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "orders_delete": lambda: orders_srvcs.DelSrvc(
-        statements=statements_container["orders_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["orders_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # product list items services
     "product_list_items_create": lambda: product_list_items_srvcs.CreateSrvc(
-        statements=statements_container["product_list_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["product_list_items_stms"](),
+        db_operations=database_container["operations"](),
         model=ProductListItems,
     ),
     "product_list_items_read": lambda: product_list_items_srvcs.ReadSrvc(
-        statements=statements_container["product_list_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["product_list_items_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "product_list_items_update": lambda: product_list_items_srvcs.UpdateSrvc(
-        statements=statements_container["product_list_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["product_list_items_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "product_list_items_delete": lambda: product_list_items_srvcs.DelSrvc(
-        statements=statements_container["product_list_items_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["product_list_items_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # product lists services
     "product_lists_create": lambda: product_lists_srvcs.CreateSrvc(
-        statements=statements_container["product_lists"],
-        db_operations=database_container["operations"],
+        statements=statements_container["product_lists"](),
+        db_operations=database_container["operations"](),
         model=ProductLists,
     ),
     "product_lists_read": lambda: product_lists_srvcs.ReadSrvc(
-        statements=statements_container["product_lists"],
-        db_operations=database_container["operations"],
+        statements=statements_container["product_lists"](),
+        db_operations=database_container["operations"](),
     ),
     "product_lists_update": lambda: product_lists_srvcs.UpdateSrvc(
-        statements=statements_container["product_lists"],
-        db_operations=database_container["operations"],
+        statements=statements_container["product_lists"](),
+        db_operations=database_container["operations"](),
     ),
     "product_lists_delete": lambda: product_lists_srvcs.DelSrvc(
-        statements=statements_container["product_lists"],
-        db_operations=database_container["operations"],
+        statements=statements_container["product_lists"](),
+        db_operations=database_container["operations"](),
     ),
     # products services
     "products_create": lambda: products_srvcs.CreateSrvc(
-        statements=statements_container["products_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["products_stms"](),
+        db_operations=database_container["operations"](),
         model=Products,
     ),
     "products_read": lambda: products_srvcs.ReadSrvc(
-        statements=statements_container["products_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["products_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "products_update": lambda: products_srvcs.UpdateSrvc(
-        statements=statements_container["products_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["products_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "products_delete": lambda: products_srvcs.DelSrvc(
-        statements=statements_container["products_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["products_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # sys_users services
     "sys_users_create": lambda: sys_users_srvcs.CreateSrvc(
@@ -480,33 +480,33 @@ container: ServicesContainer = {
         model=SysUsers,
     ),
     "sys_users_read": lambda: sys_users_srvcs.ReadSrvc(
-        statements=statements_container["sys_users_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["sys_users_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "sys_users_update": lambda: sys_users_srvcs.UpdateSrvc(
-        statements=statements_container["sys_users_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["sys_users_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "sys_users_delete": lambda: sys_users_srvcs.DelSrvc(
-        statements=statements_container["sys_users_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["sys_users_stms"](),
+        db_operations=database_container["operations"](),
     ),
     # websites services
     "websites_create": lambda: websites_srvcs.CreateSrvc(
-        statements=statements_container["websites_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["websites_stms"](),
+        db_operations=database_container["operations"](),
         model=Websites,
     ),
     "websites_read": lambda: websites_srvcs.ReadSrvc(
-        statements=statements_container["websites_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["websites_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "websites_update": lambda: websites_srvcs.UpdateSrvc(
-        statements=statements_container["websites_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["websites_stms"](),
+        db_operations=database_container["operations"](),
     ),
     "websites_delete": lambda: websites_srvcs.DelSrvc(
-        statements=statements_container["websites_stms"],
-        db_operations=database_container["operations"],
+        statements=statements_container["websites_stms"](),
+        db_operations=database_container["operations"](),
     ),
 }
