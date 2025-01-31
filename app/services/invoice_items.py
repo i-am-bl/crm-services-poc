@@ -9,7 +9,7 @@ from ..database.operations import Operations
 from ..exceptions import InvoiceItemNotExist
 from ..models.invoice_items import InvoiceItems
 from ..schemas.invoice_items import (
-    InvoiceItemsCreate,
+    InvoiceItemsInternalCreate,
     InvoiceItemsDel,
     InvoiceItemsDelRes,
     InvoiceItemsPgRes,
@@ -248,7 +248,7 @@ class CreateSrvc:
     async def create_invoice_item(
         self,
         invoice_uuid: UUID4,
-        invoice_item_data: InvoiceItemsCreate,
+        invoice_item_data: InvoiceItemsInternalCreate,
         db: AsyncSession,
     ) -> InvoiceItemsRes:
         """
@@ -257,7 +257,7 @@ class CreateSrvc:
         :param invoice_uuid: The UUID of the invoice to which the item belongs.
         :type invoice_uuid: UUID4
         :param invoice_item_data: The data for creating the invoice item.
-        :type invoice_item_data: InvoiceItemsCreate
+        :type invoice_item_data: InvoiceItemsInternalCreate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 

@@ -12,6 +12,7 @@ from ...models.sys_users import SysUsers
 from ...schemas.invoice_items import (
     InvoiceItemsCreate,
     InvoiceItemsDel,
+    InvoiceItemsInternalCreate,
     InvoiceItemsPgRes,
     InvoiceItemsUpdate,
     InvoiceItemsRes,
@@ -20,6 +21,7 @@ from ...services.invoice_items import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -101,19 +103,28 @@ async def create_invoice_item(
     """
     Create one invoice item.
     """
+    sys_user, _ = user_token
+    _invoice_item_data: InvoiceItemsInternalCreate = internal_schema_validation(
+        data=invoice_item_data,
+        schema=InvoiceItemsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
 
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(data=invoice_item_data, sys_user_uuid=sys_user.uuid)
         return await invoice_items_create_srvc.create_invoice_item(
-            invoice_uuid=invoice_uuid, invoice_item_data=invoice_item_data, db=db
+            invoice_uuid=invoice_uuid, invoice_item_data=_invoice_item_data, db=db
         )
 
 
+# There is no need for this.
+# TODO: Remove if there is no future need for this.
 @router.put(
     "/{invoice_uuid}/invoice-items/{invoice_item_uuid}/",
     response_model=InvoiceItemsRes,
     status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+    deprecated=True,
 )
 @set_auth_cookie
 @handle_exceptions([InvoiceItemNotExist])
@@ -121,7 +132,6 @@ async def update_invoice_item(
     response: Response,
     invoice_uuid: UUID4,
     invoice_item_uuid: UUID4,
-    invoice_item_data: InvoiceItemsUpdate,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     invoice_items_update_srvc: UpdateSrvc = Depends(
@@ -131,14 +141,18 @@ async def update_invoice_item(
     """
     Update one invoice item.
     """
+    sys_user, _ = user_token
+    _invoice_item_data: InvoiceItemsUpdate = internal_schema_validation(
+        schema=InvoiceItemsUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
 
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=invoice_item_data, sys_user_uuid=sys_user.uuid)
         return await invoice_items_update_srvc.update_invoice_item(
             invoice_uuid=invoice_uuid,
             invoice_item_uuid=invoice_item_uuid,
-            invoice_item_data=invoice_item_data,
+            invoice_item_data=_invoice_item_data,
             db=db,
         )
 
@@ -162,14 +176,16 @@ async def soft_del_invoice_item(
     """
     Soft del one invoice items.
     """
-
+    sys_user, _ = user_token
+    _invoice_item_data: InvoiceItemsDel = internal_schema_validation(
+        schema=InvoiceItemsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        invoice_item_data = InvoiceItemsDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=invoice_item_data, sys_user_uuid=sys_user.uuid)
         return await invoice_items_delete_srvc.soft_del_invoice_item(
             invoice_uuid=invoice_uuid,
             invoice_item_uuid=invoice_item_uuid,
-            invoice_item_data=invoice_item_data,
+            invoice_item_data=_invoice_item_data,
             db=db,
         )

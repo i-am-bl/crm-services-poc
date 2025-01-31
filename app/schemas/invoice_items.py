@@ -8,7 +8,7 @@ from ..constants.enums import ItemAdjustmentType
 from ._variables import ConstrainedDec, TimeStamp
 
 
-class InvoiceItems(BaseModel):
+class InvoiceItemsCreate(BaseModel):
     """Represents an invoice item, including product and pricing details."""
 
     invoice_uuid: UUID4 = Field(..., description="UUID of the associated invoice.")
@@ -43,14 +43,17 @@ class InvoiceItems(BaseModel):
         return value.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
 
 
-class InvoiceItemsCreate(InvoiceItems):
-    """Model for creating an invoice item."""
+class InvoiceItemsInternalCreate(InvoiceItemsCreate):
+    """Model for creating an invoice item.
+
+    Hiding system level fields from the client.
+    """
 
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp when the item was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the item."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the item."
     )
 
 
