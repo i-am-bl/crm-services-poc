@@ -8,7 +8,7 @@ from .accounts import AccountsRes
 from .entities import IndividualNonIndividualRes
 
 
-class EntityAccounts(BaseModel):
+class EntityAccountsCreate(BaseModel):
     """Represents the association between an entity and an account."""
 
     entity_uuid: UUID4 = Field(..., description="Unique identifier of the entity.")
@@ -21,8 +21,11 @@ class EntityAccounts(BaseModel):
     )
 
 
-class EntityAccountsCreate(EntityAccounts):
-    """Model for creating an entity-account association."""
+class EntityAccountsInternalCreate(EntityAccountsCreate):
+    """Model for creating an entity-account association.
+
+    Hiding system level fields from the client.
+    """
 
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp when the record was created."
@@ -63,16 +66,20 @@ class EntityAccountsUpdate(BaseModel):
     end_on: Optional[date] = Field(
         None, description="Updated end date of the association."
     )
+
+
+class EntityAccountsInternalUpdate(EntityAccountsUpdate):
+    """Model for updating an entity-account association.
+
+    Hiding system level fields from the client.
+    """
+
     sys_updated_at: datetime = Field(
         TimeStamp, description="Timestamp when the record was last updated."
     )
     sys_updated_by: Optional[UUID4] = Field(
         None, description="UUID of the user who last updated the record."
     )
-
-
-class EntityAccountsInternalUpdate(EntityAccountsUpdate):
-    """Model for updating an entity-account association hiding system level fields from the client"""
 
 
 class EntityAccountsDel(BaseModel):

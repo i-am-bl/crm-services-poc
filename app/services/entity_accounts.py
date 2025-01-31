@@ -9,12 +9,12 @@ from ..models.entity_accounts import EntityAccounts
 
 from ..schemas.entity_accounts import (
     AccountEntityInternalCreate,
-    EntityAccountsCreate,
+    EntityAccountsInternalCreate,
     EntityAccountsDel,
     EntityAccountsDelRes,
     EntityAccountsInternalUpdate,
     EntityAccountsRes,
-    EntityAccountsUpdate,
+    EntityAccountsInternalUpdate,
 )
 from ..statements.entity_accounts import EntityAccountsStms
 from ..utilities.data import record_exists, record_not_exist
@@ -288,7 +288,7 @@ class CreateSrvc:
     async def create_entity_account(
         self,
         entity_uuid: UUID4,
-        entity_account_data: EntityAccountsCreate,
+        entity_account_data: EntityAccountsInternalCreate,
         db: AsyncSession,
     ) -> EntityAccountsRes:
         """
@@ -298,7 +298,7 @@ class CreateSrvc:
         :param entity_uuid: The UUID of the entity for which the account is being created.
         :type entity_uuid: UUID4
         :param entity_account_data: The data used to create a new EntityAccounts record.
-        :type entity_account_data: EntityAccountsCreate
+        :type entity_account_data: EntityAccountsInternalCreate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 
@@ -416,7 +416,7 @@ class UpdateSrvc:
         self,
         entity_uuid: UUID4,
         entity_account_uuid: UUID4,
-        entity_account_data: EntityAccountsUpdate,
+        entity_account_data: EntityAccountsInternalUpdate,
         db: AsyncSession,
     ) -> EntityAccountsRes:
         """
@@ -427,7 +427,7 @@ class UpdateSrvc:
         :param entity_account_uuid: The UUID of the entity account to update.
         :type entity_account_uuid: UUID4
         :param entity_account_data: The data to update the entity account with.
-        :type entity_account_data: EntityAccountsUpdate
+        :type entity_account_data: EntityAccountsInternalUpdate
         :param db: The database session used to execute the query.
         :type db: AsyncSession
 
