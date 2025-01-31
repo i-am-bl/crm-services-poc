@@ -12,6 +12,7 @@ from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
 from ...schemas.addresses import (
     AccountAddressesCreate,
+    AccountAddressesInternalCreate,
     AddressesDel,
     AddressesDel,
     AddressesPgRes,
@@ -111,7 +112,7 @@ async def get_addresses(
     status_code=status.HTTP_201_CREATED,
 )
 @set_auth_cookie
-@handle_exceptions([AddressExists, AddressNotExist])
+# @handle_exceptions([AddressExists, AddressNotExist])
 async def create_address(
     response: Response,
     account_uuid: UUID4,
@@ -134,11 +135,17 @@ async def create_address(
     ### Returns:
     - **AddressesRes**: The created address data.
     """
+
+    data = AccountAddressesInternalCreate(**address_data.model_dump())
+    print(">>>", data.model_dump())
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(sys_user_uuid=sys_user.uuid, data=address_data)
+        sys_values.sys_created_by(
+            sys_user_uuid=sys_user.uuid,
+            data=data,
+        )
         return await addresses_create_srvc.create_address(
-            parent_uuid=account_uuid, address_data=address_data, db=db
+            parent_uuid=account_uuid, address_data=data, db=db
         )
 
 

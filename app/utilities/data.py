@@ -7,6 +7,10 @@ These utilities assist with:
 - Validating the existence of records and raising appropriate exceptions.
 """
 
+from typing import Callable, List, TypeVar
+
+from pydantic import UUID4, BaseModel
+from .types import Schema
 from .logger import logger
 
 
@@ -74,3 +78,33 @@ def record_not_exist(instance: object, exception: Exception) -> bool:
         logger.warning(f"Warning: record not found for {class_name}")
         raise exception()
     return instance
+
+
+def internal_schema_validation(
+    schema: Schema,
+    data: Schema | List[Schema],
+    setter_method: Callable[
+        [
+            Schema | List[Schema],
+            UUID4,
+        ],
+        Schema | List[Schema],
+    ],
+    sys_user_uuid: UUID4,
+) -> Schema | List[Schema]:
+    """
+    Validates and processes an internal schema by applying a setter method.
+
+    :param schema: The schema class used for validation and instantiation.
+    :param data: The input data to be validated, which can be a single instance or a list of instances.
+    :param setter_method: A callable function that applies a transformation or metadata update to the schema.
+    :param sys_user_uuid: The system user UUID used for setting metadata.
+
+    :return: Schema | List[Schema]: Returns the processed schema instance(s) with applied transformations.
+    """
+    if isinstance(data, list):
+        return [
+            setter_method(schema(**item.model_dump()), sys_user_uuid) for item in data
+        ]
+    else:
+        return setter_method(schema(**data.model_dump()), sys_user_uuid)

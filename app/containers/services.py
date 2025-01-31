@@ -157,18 +157,18 @@ class ServicesContainer(TypedDict):
 container: ServicesContainer = {
     # account contract services
     "account_contracts_create": lambda: account_contracts_srvcs.CreateSrvc(
-        operations=database_container["operations"](), model=AccountContracts
+        db_operations=database_container["operations"](), model=AccountContracts
     ),
     "account_contracts_read": lambda: account_contracts_srvcs.ReadSrvc(
-        operations=database_container["operations"](),
+        operationsdb_operations=database_container["operations"](),
         statements=statements_container["account_contracts_stms"](),
     ),
     "account_contracts_update": lambda: account_contracts_srvcs.UpdateSrvc(
-        operations=database_container["operations"](),
+        db_operations=database_container["operations"](),
         statements=statements_container["account_contracts_stms"](),
     ),
     "account_contracts_delete": lambda: account_contracts_srvcs.DelSrvc(
-        operations=database_container["operations"](),
+        db_operations=database_container["operations"](),
         statements=statements_container["account_contracts_stms"](),
     ),
     # account list services

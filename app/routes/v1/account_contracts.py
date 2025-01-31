@@ -12,6 +12,7 @@ from ...models.sys_users import SysUsers
 from ...schemas.account_contracts import (
     AccountContractsCreate,
     AccountContractsDel,
+    AccountContractsInternalCreate,
     AccountContractsPgRes,
     AccountContractsRes,
     AccountContractsUpdate,
@@ -19,6 +20,7 @@ from ...schemas.account_contracts import (
 from ...services.account_contracts import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
+from ...utilities.data import internal_schema_validation
 from ...utilities.auth import get_validated_session
 
 router = APIRouter()
@@ -98,7 +100,6 @@ async def create_account_contract(
     account_contract_create_srvc: CreateSrvc = Depends(
         services_container["account_contracts_create"]
     ),
-    set_sys_created_by: sys_values.SysFieldSetter = Depends(sys_values.sys_created_by),
 ) -> AccountContractsCreate:
     """
     Create one account contract.
@@ -106,10 +107,15 @@ async def create_account_contract(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        set_sys_created_by(data=account_contract_data, sys_user_uuid=sys_user.uuid)
+        _account_contract_data = internal_schema_validation(
+            data=account_contract_data,
+            schema=AccountContractsInternalCreate,
+            setter_method=sys_values.sys_created_by,
+            sys_user_uuid=sys_user.uuid,
+        )
         return await account_contract_create_srvc.create_account_contract(
             account_uuid=account_uuid,
-            account_contract_data=account_contract_data,
+            account_contract_data=_account_contract_data,
             db=db,
         )
 
@@ -131,7 +137,6 @@ async def update_account_contract(
     account_contract_update_srvc: UpdateSrvc = Depends(
         services_container["account_contracts_update"]
     ),
-    set_sys_updated_by: sys_values.SysFieldSetter = Depends(sys_values.sys_updated_by),
 ) -> AccountContractsUpdate:
     """
     Update one account contract.
@@ -139,7 +144,9 @@ async def update_account_contract(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        set_sys_updated_by(data=account_contract_data, sys_user_uuid=sys_user.uuid)
+        sys_values.sys_updated_by(
+            data=account_contract_data, sys_user_uuid=sys_user.uuid
+        )
         return await account_contract_update_srvc.update_account_contract(
             account_uuid=account_uuid,
             account_contract_uuid=account_contract_uuid,
@@ -164,7 +171,6 @@ async def soft_delete_account_contract(
     account_contracts_delete_srvc: DelSrvc = Depends(
         services_container["account_contracts_delete"]
     ),
-    set_sys_deleted_by: sys_values.SysFieldSetter = Depends(sys_values.sys_deleted_by),
 ) -> None:
     """
     Soft delete one account contract.
@@ -173,7 +179,9 @@ async def soft_delete_account_contract(
     async with transaction_manager(db=db):
         account_contract_data = AccountContractsDel()
         sys_user, _ = user_token
-        set_sys_deleted_by(data=account_contract_data, sys_user_uuid=sys_user.uuid)
+        sys_values.sys_deleted_by(
+            data=account_contract_data, sys_user_uuid=sys_user.uuid
+        )
         await account_contracts_delete_srvc.soft_delete_account_contract(
             account_uuid=account_uuid,
             account_contract_uuid=account_contract_uuid,

@@ -6,7 +6,7 @@ from pydantic import UUID4, BaseModel, Field
 from ._variables import TimeStamp
 
 
-class AccountContracts(BaseModel):
+class AccountContractsCreate(BaseModel):
     """
     Model representing an account contract with basic details.
     """
@@ -20,7 +20,7 @@ class AccountContracts(BaseModel):
     )
 
 
-class AccountContractsCreate(AccountContracts):
+class AccountContractsInternalCreate(AccountContractsCreate):
     """
     Model representing an account contract being created, including system metadata.
     """

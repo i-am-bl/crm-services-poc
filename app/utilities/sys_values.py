@@ -10,9 +10,9 @@ object or a list of objects, ensuring that user-related metadata is appropriatel
 
 from typing import List, Literal, Callable
 from pydantic import UUID4
+from .types import Schema
 
-
-SysFieldSetter = Callable[[object | List[object], UUID4], object | List[object]]
+SysFieldSetter = Callable[[Schema | List[Schema], UUID4], Schema | List[Schema]]
 
 """
 sys_values utilities provide reusable setter methods for system fields. These utilities manage
@@ -22,10 +22,10 @@ lists of objects during I/O operations.
 
 
 def set_sys_field(
-    data: object | List[object],
+    data: Schema | List[Schema],
     field: Literal["sys_created_by", "sys_updated_by", "sys_deleted_by"],
     value: UUID4,
-) -> object | List[object]:
+) -> Schema | List[Schema]:
     """
     Helper function to set the sys_created_by on a single object or list of objects.
 
@@ -46,8 +46,8 @@ def set_sys_field(
 
 
 def sys_created_by(
-    data: object | List[object], sys_user_uuid: UUID4
-) -> object | List[object]:
+    data: Schema | List[Schema], sys_user_uuid: UUID4
+) -> Schema | List[Schema]:
     """
     Utility function to set the sys_created_by on a single object or list of objects.
 
@@ -59,8 +59,8 @@ def sys_created_by(
 
 
 def sys_updated_by(
-    data: object | List[object], sys_user_uuid: UUID4
-) -> object | List[object]:
+    data: Schema | List[Schema], sys_user_uuid: UUID4
+) -> Schema | List[Schema]:
     """
     Utility function to set the sys_updated_by on a single object or list of objects.
 
@@ -72,8 +72,8 @@ def sys_updated_by(
 
 
 def sys_deleted_by(
-    data: object | List[object], sys_user_uuid: UUID4
-) -> object | List[object]:
+    data: Schema | List[Schema], sys_user_uuid: UUID4
+) -> Schema | List[Schema]:
     """
     Utility function to set the sys_deleted_by on a single object or list of objects.
 

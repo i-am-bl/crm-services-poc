@@ -49,6 +49,7 @@ async def get_non_individual(
 
 
 # Deprecating this, the entities router operations will create all entities.
+# TODO: Remove this.
 @router.post(
     "/{entity_uuid}/non-individuals/",
     response_model=NonIndividualsRes,

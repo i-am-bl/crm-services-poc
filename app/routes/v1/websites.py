@@ -1,4 +1,3 @@
-from ast import Del
 from typing import Tuple
 
 from fastapi import APIRouter, Depends, Response, status
