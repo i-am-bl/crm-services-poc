@@ -46,10 +46,14 @@ async def get_individual(
         )
 
 
+# Deprecating this, the entities router operations will create all entities.
+# TODO: Remove this.
 @router.post(
     "/{entity_uuid}/individuals/",
     response_model=IndividualsRes,
     status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+    deprecated=True,
 )
 @set_auth_cookie
 @handle_exceptions([IndividualNotExist, IndividualExists])

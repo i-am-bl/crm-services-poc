@@ -7,6 +7,7 @@ from ..schemas.entity_accounts import (
     EntityAccountParentRes,
     EntityAccountsPgRes,
     EntityAccountsCreate,
+    EntityAccountsRes,
 )
 from ..services import accounts as accounts_srvcs
 from ..services import entity_accounts as entity_accounts_srvcs
@@ -220,7 +221,7 @@ class EntityAccountsCreateOrch:
         account_data: AccountsCreate,
         entity_account_data: EntityAccountsCreate,
         db: AsyncSession,
-    ) -> EntityAccountParentRes:
+    ) -> EntityAccountsRes:
         """
         Creates an account and associates it with an entity by creating an entity-account relationship.
 
@@ -233,16 +234,14 @@ class EntityAccountsCreateOrch:
         :param db: The database session for performing queries.
         :type db: AsyncSession
 
-        :return: A response containing both the newly created account and its associated entity account.
-        :rtype: EntityAccountParentRes
+        :return: A response containing newly created entity account.
+        :rtype: EntityAccountRes
         """
         account = await self._accounts_create_srvc.create_account(
             account_data=account_data, db=db
         )
         await db.flush()
         setattr(entity_account_data, "account_uuid", account.uuid)
-        entity_account = await self._entity_accounts_create_srvc.create_entity_account(
+        return await self._entity_accounts_create_srvc.create_entity_account(
             entity_uuid=entity_uuid, entity_account_data=entity_account_data, db=db
         )
-
-        return EntityAccountParentRes(account=account, entity_account=entity_account)

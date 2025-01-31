@@ -100,7 +100,7 @@ async def get_entity_accounts(
     status_code=status.HTTP_200_OK,
 )
 @set_auth_cookie
-@handle_exceptions([EntityAccNotExist])
+# @handle_exceptions([EntityAccNotExist])
 async def create_entity_account(
     response: Response,
     entity_uuid: UUID4,
@@ -119,7 +119,7 @@ async def create_entity_account(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(sys_user=sys_user, data=entity_account_data)
+        sys_values.sys_created_by(sys_user_uuid=sys_user.uuid, data=entity_account_data)
         return await entity_accounts_create_srvc.create_entity_account(
             entity_uuid=entity_uuid, entity_account_data=entity_account_data, db=db
         )
@@ -127,11 +127,11 @@ async def create_entity_account(
 
 @router.post(
     "/{entity_uuid}/entity-accounts/new-account/",
-    # response_model=EntityAccountParentRes,
+    response_model=EntityAccountsRes,
     status_code=status.HTTP_201_CREATED,
 )
 @set_auth_cookie
-# @handle_exceptions([AccsExists, EntityAccNotExist, EntityAccExists])
+@handle_exceptions([AccsExists, EntityAccNotExist, EntityAccExists])
 async def create_entity_account_account(
     response: Response,
     entity_uuid: UUID4,
@@ -142,8 +142,7 @@ async def create_entity_account_account(
     entity_accounts_read_orch: EntityAccountsCreateOrch = Depends(
         orchs_container["entity_accounts_create_orch"]
     ),
-    # ) -> EntityAccountParentRes:
-):
+) -> EntityAccountsRes:
     """
     Create new account relationship with no existing account.
 

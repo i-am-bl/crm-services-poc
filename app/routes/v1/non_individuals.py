@@ -48,10 +48,13 @@ async def get_non_individual(
         )
 
 
+# Deprecating this, the entities router operations will create all entities.
 @router.post(
     "/{entity_uuid}/non-individuals/",
     response_model=NonIndividualsRes,
     status_code=status.HTTP_201_CREATED,
+    include_in_schema=False,
+    deprecated=True,
 )
 @set_auth_cookie
 @handle_exceptions([NonIndividualNotExist, NonIndividualExists])

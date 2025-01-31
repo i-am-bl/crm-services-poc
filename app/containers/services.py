@@ -209,7 +209,7 @@ container: ServicesContainer = {
     ),
     # account services
     "accounts_create": lambda: accounts_srvcs.CreateSrvc(
-        model=Accounts, db_operations=database_container["operations"]
+        model=Accounts, db_operations=database_container["operations"]()
     ),
     "accounts_read": lambda: accounts_srvcs.ReadSrvc(
         statements=statements_container["accounts_stms"](),
