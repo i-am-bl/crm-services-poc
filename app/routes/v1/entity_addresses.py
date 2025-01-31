@@ -10,16 +10,19 @@ from ...exceptions import AddressExists, AddressNotExist
 from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
 from ...schemas.addresses import (
+    AddressesInternalUpdate,
     EntityAddressesCreate,
     AddressesDel,
     AddressesPgRes,
     AddressesRes,
     AddressesUpdate,
+    EntityAddressesInternalCreate,
 )
 from ...services.addresses import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -96,11 +99,16 @@ async def create_address(
     Create one address.
     """
 
+    sys_user, _ = user_token
+    _address_data: EntityAddressesInternalCreate = internal_schema_validation(
+        data=address_data,
+        schema=EntityAddressesInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(sys_user_uuid=sys_user.uuid, data=address_data)
         return await addresses_create_srvc.create_address(
-            parent_uuid=entity_uuid, address_data=address_data, db=db
+            parent_uuid=entity_uuid, address_data=_address_data, db=db
         )
 
 
@@ -123,15 +131,20 @@ async def update_address(
     """
     Update one address.
     """
+    sys_user, _ = user_token
+    _address_data: AddressesInternalUpdate = internal_schema_validation(
+        data=address_data,
+        schema=AddressesInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
 
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(sys_user_uuid=sys_user.uuid, data=address_data)
         return await addresses_update_srvc.update_address(
             parent_uuid=entity_uuid,
             parent_table="entities",
             address_uuid=address_uuid,
-            address_data=address_data,
+            address_data=_address_data,
             db=db,
         )
 
@@ -153,14 +166,18 @@ async def soft_del_address(
     """
     Soft del one address.
     """
+    sys_user, _ = user_token
+    _address_data: AddressesDel = internal_schema_validation(
+        schema=AddressesDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        address_data = AddressesDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(sys_user_uuid=sys_user.uuid, data=address_data)
+
         return await addresses_delete_srvc.soft_del_address(
             parent_uuid=entity_uuid,
             parent_table="entities",
             address_uuid=address_uuid,
-            address_data=address_data,
+            address_data=_address_data,
             db=db,
         )
