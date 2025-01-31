@@ -85,7 +85,7 @@ async def get_order_items(
     status_code=status.HTTP_200_OK,
 )
 @set_auth_cookie
-# @handle_exceptions([OrderItemNotExist, OrderItemExists])
+@handle_exceptions([OrderItemNotExist, OrderItemExists])
 async def create_order_item(
     response: Response,
     order_uuid: UUID4,
