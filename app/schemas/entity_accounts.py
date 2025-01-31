@@ -41,11 +41,16 @@ class AccountEntityCreate(BaseModel):
     )
     start_on: Optional[date] = Field(None, description="Start date of the association.")
     end_on: Optional[date] = Field(None, description="End date of the association.")
+
+
+class AccountEntityInternalCreate(AccountEntityCreate):
+    """Model for creating an account-entity association hiding system level fields from the client."""
+
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp when the record was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the record."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the record."
     )
 
 
@@ -64,6 +69,10 @@ class EntityAccountsUpdate(BaseModel):
     sys_updated_by: Optional[UUID4] = Field(
         None, description="UUID of the user who last updated the record."
     )
+
+
+class EntityAccountsInternalUpdate(EntityAccountsUpdate):
+    """Model for updating an entity-account association hiding system level fields from the client"""
 
 
 class EntityAccountsDel(BaseModel):

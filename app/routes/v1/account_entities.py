@@ -12,8 +12,10 @@ from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
 from ...orchestrators.entity_accounts import EntityAccountsReadOrch
 from ...schemas.entity_accounts import (
+    AccountEntityInternalCreate,
     EntityAccountsCreate,
     EntityAccountsDel,
+    EntityAccountsInternalUpdate,
     EntityAccountsPgRes,
     EntityAccountsUpdate,
     EntityAccountsRes,
@@ -22,6 +24,7 @@ from ...services import entity_accounts as entity_accounts_srvcs
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -103,11 +106,16 @@ async def create_account_entity(
     This does not create a new entity.
     """
 
+    sys_user, _ = user_token
+    _entity_account_data = internal_schema_validation(
+        data=entity_account_data,
+        schema=AccountEntityInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(sys_user_uuid=sys_user.uuid, data=entity_account_data)
         return await entity_account_create_srvc.create_account_entity(
-            account_uuid=account_uuid, entity_account_data=entity_account_data, db=db
+            account_uuid=account_uuid, entity_account_data=_entity_account_data, db=db
         )
 
 
@@ -133,13 +141,19 @@ async def update_account_entity(
     Update existing account entity relationship.
     """
 
+    sys_user, _ = user_token
+    _entity_account_data = internal_schema_validation(
+        data=entity_account_data,
+        schema=EntityAccountsInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=entity_account_data, sys_user_uuid=sys_user.uuid)
         return await entity_account_update_srvc.update_account_entity(
             account_uuid=account_uuid,
             entity_account_uuid=entity_account_uuid,
-            entity_account_data=entity_account_data,
+            entity_account_data=_entity_account_data,
             db=db,
         )
 
@@ -167,13 +181,17 @@ async def soft_del_account_entity(
     This will remove an entity from the account.
     """
 
+    sys_user, _ = user_token
+    _entity_account_data = internal_schema_validation(
+        schema=EntityAccountsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        entity_account_data = EntityAccountsDel()
-        sys_values.sys_deleted_by(data=entity_account_data, sys_user_uuid=sys_user.uuid)
         return await entity_account_delete_srvc.soft_del_account_entity(
             account_uuid=account_uuid,
             entity_account_uuid=entity_account_uuid,
-            entity_account_data=entity_account_data,
+            entity_account_data=_entity_account_data,
             db=db,
         )

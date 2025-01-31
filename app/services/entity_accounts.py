@@ -8,6 +8,7 @@ from ..exceptions import EntityAccExists, EntityAccNotExist
 from ..models.entity_accounts import EntityAccounts
 
 from ..schemas.entity_accounts import (
+    AccountEntityInternalCreate,
     EntityAccountsCreate,
     EntityAccountsDel,
     EntityAccountsDelRes,
@@ -327,7 +328,7 @@ class CreateSrvc:
     async def create_account_entity(
         self,
         account_uuid: UUID4,
-        entity_account_data: EntityAccountsCreate,
+        entity_account_data: AccountEntityInternalCreate,
         db: AsyncSession,
     ) -> EntityAccountsRes:
         """
@@ -337,7 +338,7 @@ class CreateSrvc:
         :param account_uuid: The UUID of the account for which the entity account is being created.
         :type account_uuid: UUID4
         :param entity_account_data: The data used to create a new EntityAccounts record.
-        :type entity_account_data: EntityAccountsCreate
+        :type entity_account_data: AccountEntityInternalCreate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 
