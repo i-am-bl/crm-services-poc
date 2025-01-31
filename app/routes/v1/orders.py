@@ -12,6 +12,8 @@ from ...models.sys_users import SysUsers
 from ...schemas.orders import (
     OrdersCreate,
     OrdersDel,
+    OrdersInternalCreate,
+    OrdersInternalUpdate,
     OrdersPgRes,
     OrdersUpdate,
     OrdersRes,
@@ -20,6 +22,7 @@ from ...services.orders import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -87,11 +90,16 @@ async def create_order(
     """
     Create one sales order.
     """
+    sys_user, _ = user_token
+    _order_data: OrdersInternalCreate = internal_schema_validation(
+        data=order_data,
+        schema=OrdersInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
 
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(data=order_data, sys_user=sys_user)
-        return await orders_create_srvc.create_order(order_data=order_data, db=db)
+        return await orders_create_srvc.create_order(order_data=_order_data, db=db)
 
 
 @router.put(
@@ -112,12 +120,17 @@ async def update_order(
     """
     Update one sales order.
     """
+    sys_user, _ = user_token
+    _order_data: OrdersInternalUpdate = internal_schema_validation(
+        data=order_data,
+        schema=OrdersInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
 
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=order_data, sys_user=sys_user)
         return await orders_update_srvc.update_order(
-            order_uuid=order_uuid, order_data=order_data, db=db
+            order_uuid=order_uuid, order_data=_order_data, db=db
         )
 
 
@@ -138,10 +151,14 @@ async def soft_del_order(
     Soft delete one sales order.
     """
 
+    sys_user, _ = user_token
+    _order_data: OrdersDel = internal_schema_validation(
+        schema=OrdersDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        order_data = OrdersDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=order_data, sys_user_uuid=sys_user.uuid)
         await orders_delete_srvc.soft_del_order(
-            order_uuid=order_uuid, order_data=order_data, db=db
+            order_uuid=order_uuid, order_data=_order_data, db=db
         )

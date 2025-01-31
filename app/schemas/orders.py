@@ -6,7 +6,7 @@ from pydantic import UUID4, BaseModel, Field
 from ._variables import TimeStamp
 
 
-class Orders(BaseModel):
+class OrdersCreate(BaseModel):
     """Represents an order, including details such as associated account, invoice, and approval status."""
 
     account_uuid: UUID4 = Field(..., description="UUID of the associated account.")
@@ -24,8 +24,11 @@ class Orders(BaseModel):
     )
 
 
-class OrdersCreate(Orders):
-    """Model for creating a new order."""
+class OrdersInternalCreate(OrdersCreate):
+    """Model for creating a new order.
+
+    Hides system level fields from client.
+    """
 
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp when the order was created."
@@ -47,6 +50,14 @@ class OrdersUpdate(BaseModel):
     approved_on: Optional[date] = Field(
         None, description="Updated approval date of the order."
     )
+
+
+class OrdersInternalUpdate(OrdersUpdate):
+    """Model for updating an existing order.
+
+    Hides system level fields from client.
+    """
+
     sys_updated_at: datetime = Field(
         TimeStamp, description="Timestamp when the order was last updated."
     )

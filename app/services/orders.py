@@ -8,9 +8,9 @@ from ..database.operations import Operations
 from ..exceptions import OrderNotExist
 from ..models.orders import Orders
 from ..schemas.orders import (
-    OrdersCreate,
+    OrdersInternalCreate,
     OrdersRes,
-    OrdersUpdate,
+    OrdersInternalUpdate,
     OrdersDel,
     OrdersDelRes,
     OrdersPgRes,
@@ -196,13 +196,13 @@ class CreateSrvc:
         return self._model
 
     async def create_order(
-        self, order_data: OrdersCreate, db: AsyncSession
+        self, order_data: OrdersInternalCreate, db: AsyncSession
     ) -> OrdersRes:
         """
         Creates a new order in the database using the provided order data.
 
         :param order_data: The data to create the new order.
-        :type order_data: OrdersCreate
+        :type order_data: OrdersInternalCreate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 
@@ -265,7 +265,7 @@ class UpdateSrvc:
     async def update_order(
         self,
         order_uuid: UUID4,
-        order_data: OrdersUpdate,
+        order_data: OrdersInternalUpdate,
         db: AsyncSession,
     ) -> OrdersRes:
         """
@@ -274,7 +274,7 @@ class UpdateSrvc:
         :param order_uuid: The UUID of the order to be updated.
         :type order_uuid: UUID4
         :param order_data: The data to update the existing order.
-        :type order_data: OrdersUpdate
+        :type order_data: OrdersInternalUpdate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 
