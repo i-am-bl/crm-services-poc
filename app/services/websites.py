@@ -8,11 +8,11 @@ from ..exceptions import WebsitesExists, WebsitesNotExist
 from ..models.websites import Websites
 from ..schemas.websites import (
     WebsiteDelRes,
-    WebsitesCreate,
+    WebsitesInternalCreate,
     WebsitesPgRes,
     WebsitesRes,
     WebsitesDel,
-    WebsitesUpdate,
+    WebsitesInternalUpdate,
 )
 from ..statements.websites import WebsitesStms
 from ..utilities import pagination
@@ -243,7 +243,7 @@ class CreateSrvc:
 
     async def create_website(
         self,
-        website_data: WebsitesCreate,
+        website_data: WebsitesInternalCreate,
         db: AsyncSession,
     ) -> WebsitesRes:
         """
@@ -252,7 +252,7 @@ class CreateSrvc:
         the website is created.
 
         :param website_data: The data for the new website to be created.
-        :type website_data: WebsitesCreate
+        :type website_data: WebsitesInternalCreate
         :param db: The asynchronous database session to execute queries.
         :type db: AsyncSession
         :returns: The created website data.
@@ -328,7 +328,7 @@ class UpdateSrvc:
         self,
         entity_uuid: UUID4,
         website_uuid: UUID4,
-        website_data: WebsitesUpdate,
+        website_data: WebsitesInternalUpdate,
         db: AsyncSession,
     ) -> WebsitesRes:
         """
@@ -341,7 +341,7 @@ class UpdateSrvc:
         :param website_uuid: The UUID of the website to be updated.
         :type website_uuid: UUID4
         :param website_data: The updated website data.
-        :type website_data: WebsitesUpdate
+        :type website_data: WebsitesInternalUpdate
         :param db: The asynchronous database session to execute queries.
         :type db: AsyncSession
         :returns: The updated website data.

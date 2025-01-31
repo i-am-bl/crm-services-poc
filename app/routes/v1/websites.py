@@ -11,6 +11,8 @@ from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
 from ...schemas.websites import (
     WebsitesCreate,
+    WebsitesInternalCreate,
+    WebsitesInternalUpdate,
     WebsitesPgRes,
     WebsitesDel,
     WebsitesUpdate,
@@ -20,6 +22,7 @@ from ...services.websites import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -94,11 +97,17 @@ async def create_website(
     Create a single entity website record.
     """
 
+    sys_user, _ = user_token
+    _website_data: WebsitesInternalCreate = internal_schema_validation(
+        data=website_data,
+        schema=WebsitesInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(data=website_data, sys_user_uuid=sys_user.uuid)
         return await websites_create_srvc.create_website(
-            website_data=website_data, db=db
+            website_data=_website_data, db=db
         )
 
 
@@ -122,13 +131,19 @@ async def update_website(
     Update one website.
     """
 
+    sys_user, _ = user_token
+    _website_data: WebsitesInternalUpdate = internal_schema_validation(
+        data=website_data,
+        schema=WebsitesInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=website_data, sys_user_uuid=sys_user.uuid)
         return await websites_update_srvc.update_website(
             entity_uuid=entity_uuid,
             website_uuid=website_uuid,
-            website_data=website_data,
+            website_data=_website_data,
             db=db,
         )
 
@@ -151,13 +166,17 @@ async def soft_del_website(
     Soft del one website.
     """
 
+    sys_user, _ = user_token
+    _website_data: WebsitesDel = internal_schema_validation(
+        schema=WebsitesDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        website_data = WebsitesDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=website_data, sys_user_uuid=sys_user.uuid)
         await websites_delete_srvc.soft_del_website(
             entity_uuid=entity_uuid,
             website_uuid=website_uuid,
-            website_data=website_data,
+            website_data=_website_data,
             db=db,
         )

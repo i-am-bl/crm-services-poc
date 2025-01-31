@@ -6,7 +6,7 @@ from pydantic import UUID4, BaseModel, Field
 from ._variables import ConstrainedStr, TimeStamp
 
 
-class WebsitesBase(BaseModel):
+class WebsitesCreate(BaseModel):
     """Base model for website data, shared across create, update, and response models."""
 
     entity_uuid: UUID4 = Field(
@@ -22,8 +22,11 @@ class WebsitesBase(BaseModel):
     )
 
 
-class WebsitesCreate(WebsitesBase):
-    """Model for creating a new website record."""
+class WebsitesInternalCreate(WebsitesCreate):
+    """Model for creating a new website record.
+
+    Hides system level fields from client.
+    """
 
     sys_created_by: Optional[UUID4] = Field(
         None, description="The UUID of the user who created the record (optional)."
@@ -43,6 +46,14 @@ class WebsitesUpdate(BaseModel):
     sys_value_type_uuid: Optional[UUID4] = Field(
         None, description="The updated system value type UUID (optional)."
     )
+
+
+class WebsitesInternalUpdate(WebsitesUpdate):
+    """Model for updating an existing website record.
+
+    Hides system level fields from client.
+    """
+
     sys_updated_at: datetime = TimeStamp
     sys_updated_by: Optional[UUID4] = Field(
         None, description="The UUID of the user who updated the record (optional)."
