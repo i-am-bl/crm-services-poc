@@ -12,6 +12,7 @@ from ..schemas.entity_accounts import (
     EntityAccountsCreate,
     EntityAccountsDel,
     EntityAccountsDelRes,
+    EntityAccountsInternalUpdate,
     EntityAccountsRes,
     EntityAccountsUpdate,
 )
@@ -449,7 +450,7 @@ class UpdateSrvc:
         self,
         account_uuid: UUID4,
         entity_account_uuid: UUID4,
-        entity_account_data: EntityAccountsUpdate,
+        entity_account_data: EntityAccountsInternalUpdate,
         db: AsyncSession,
     ) -> EntityAccountsRes:
         """
@@ -460,7 +461,7 @@ class UpdateSrvc:
         :param entity_account_uuid: The UUID of the entity account to update.
         :type entity_account_uuid: UUID4
         :param entity_account_data: The data to update the account entity with.
-        :type entity_account_data: EntityAccountsUpdate
+        :type entity_account_data: EntityAccountsInternalUpdate
         :param db: The database session used to execute the query.
         :type db: AsyncSession
 
