@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...containers.services import container as services_container
 from ...database.database import get_db, transaction_manager
-from ...exceptions import OrderItemNotExist
+from ...exceptions import OrderItemNotExist, OrderItemExists
 from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
 from ...schemas.order_items import (
