@@ -27,8 +27,8 @@ class EntitiesCreate(Entities):
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp of when the entity was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the entity."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the entity."
     )
 
 
@@ -68,8 +68,8 @@ class EntitiesRes(Entities):
     sys_created_at: datetime = Field(
         ..., description="Timestamp of when the entity was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the entity."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the entity."
     )
     sys_updated_at: Optional[datetime] = Field(
         None, description="Timestamp of when the entity was last updated."
@@ -115,8 +115,8 @@ class EntitiesIndividualRes(Entities):
     sys_created_at: datetime = Field(
         ..., description="Timestamp of when the entity was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the entity."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the entity."
     )
     sys_updated_at: Optional[datetime] = Field(
         None, description="Timestamp of when the entity was last updated."

@@ -28,8 +28,8 @@ class WebsitesInternalCreate(WebsitesCreate):
     Hides system level fields from client.
     """
 
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="The UUID of the user who created the record (optional)."
+    sys_created_by: UUID4 = Field(
+        ..., description="The UUID of the user who created the record (optional)."
     )
     sys_created_at: datetime = TimeStamp
 
@@ -85,8 +85,8 @@ class WebsitesRes(BaseModel):
     description: Optional[ConstrainedStr] = Field(
         None, description="A description of the website (optional)."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="The UUID of the user who created the record (optional)."
+    sys_created_by: UUID4 = Field(
+        ..., description="The UUID of the user who created the record (optional)."
     )
     sys_created_at: datetime = Field(
         ..., description="Timestamp when the website was created."

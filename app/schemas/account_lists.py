@@ -33,8 +33,8 @@ class AccountListsInternalCreate(AccountListsCreate):
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp of when the account list was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the account list."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the account list."
     )
 
 
@@ -85,8 +85,8 @@ class AccountListsRes(BaseModel):
     sys_created_at: datetime = Field(
         ..., description="Timestamp of when the account list was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the account list."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the account list."
     )
     sys_updated_at: Optional[datetime] = Field(
         None,

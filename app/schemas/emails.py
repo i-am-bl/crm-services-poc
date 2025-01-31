@@ -89,8 +89,8 @@ class EmailsRes(BaseModel):
     sys_created_at: datetime = Field(
         ..., description="Timestamp of when the email record was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the email record."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the email record."
     )
     sys_updated_at: Optional[datetime] = Field(
         None, description="Timestamp of when the email record was last updated."

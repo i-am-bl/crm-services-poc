@@ -30,8 +30,8 @@ class AccountsInternalCreate(AccountsCreate):
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp of when the account was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the account."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the account."
     )
 
 
@@ -78,8 +78,8 @@ class AccountsRes(BaseModel):
     sys_created_at: datetime = Field(
         ..., description="Timestamp of when the account was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the account."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the account."
     )
     sys_updated_at: Optional[datetime] = Field(
         None,

@@ -31,8 +31,8 @@ class ProductListsInternalCreate(ProductListsCreate):
         ...,
         description="The timestamp when the product list was created, automatically set.",
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="The UUID of the user who created the product list."
+    sys_created_by: UUID4 = Field(
+        ..., description="The UUID of the user who created the product list."
     )
 
 
@@ -103,8 +103,8 @@ class ProductListsRes(BaseModel):
     sys_created_at: datetime = Field(
         ..., description="The timestamp when the product list was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="The UUID of the user who created the product list."
+    sys_created_by: UUID4 = Field(
+        ..., description="The UUID of the user who created the product list."
     )
     sys_updated_at: Optional[datetime] = Field(
         None, description="The timestamp when the product list was last updated."

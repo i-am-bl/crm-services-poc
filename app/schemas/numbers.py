@@ -30,8 +30,8 @@ class NumbersInternalCreate(NumbersCreate):
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp when the entry was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the entry."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the entry."
     )
 
 

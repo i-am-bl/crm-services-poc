@@ -107,8 +107,8 @@ class InvoiceItemsRes(BaseModel):
     sys_created_at: datetime = Field(
         ..., description="Timestamp when the item was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the item."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the item."
     )
     sys_updated_at: Optional[datetime] = Field(
         None, description="Timestamp when the item was last updated."

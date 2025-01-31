@@ -42,8 +42,8 @@ class ProductsInternalCreate(ProductsCreate):
         ...,
         description="The timestamp when the product was created, automatically set.",
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="The UUID of the user who created the product."
+    sys_created_by: UUID4 = Field(
+        ..., description="The UUID of the user who created the product."
     )
 
 
@@ -135,8 +135,8 @@ class ProductsRes(BaseModel):
     sys_created_at: datetime = Field(
         ..., description="The timestamp when the product was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="The UUID of the user who created the product."
+    sys_created_by: UUID4 = Field(
+        ..., description="The UUID of the user who created the product."
     )
     sys_updated_at: Optional[datetime] = Field(
         None, description="The timestamp when the product was last updated."

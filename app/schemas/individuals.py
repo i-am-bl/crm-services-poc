@@ -24,8 +24,8 @@ class IndividualsInitCreate(IndividualsCreate):
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp when the record was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the record."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the record."
     )
 
 
@@ -78,8 +78,8 @@ class IndividualsRes(BaseModel):
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp when the record was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the record."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the record."
     )
     sys_updated_at: Optional[datetime] = Field(
         None, description="Timestamp when the record was last updated."

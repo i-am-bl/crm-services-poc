@@ -28,8 +28,8 @@ class AccountContractsInternalCreate(AccountContractsCreate):
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp of when the contract was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        description="UUID of the user who created the contract.", default=None
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the contract."
     )
 
 
@@ -45,14 +45,6 @@ class AccountContractsUpdate(BaseModel):
         description="End date of the contract.", default=None
     )
 
-    sys_updated_at: datetime = Field(
-        TimeStamp, description="Timestamp of when the contract was last updated."
-    )
-    sys_updated_by: Optional[UUID4] = Field(
-        description="UUID of the user who last updated the contract.",
-        default=None,
-    )
-
 
 class AccountContractsInternalUpdate(AccountContractsUpdate):
     """
@@ -62,9 +54,9 @@ class AccountContractsInternalUpdate(AccountContractsUpdate):
     sys_updated_at: datetime = Field(
         TimeStamp, description="Timestamp of when the contract was last updated."
     )
-    sys_updated_by: Optional[UUID4] = Field(
+    sys_updated_by: UUID4 = Field(
+        ...,
         description="UUID of the user who last updated the contract.",
-        default=None,
     )
 
 
@@ -76,8 +68,8 @@ class AccountContractsDel(BaseModel):
     sys_deleted_at: datetime = Field(
         TimeStamp, description="Timestamp of when the contract was deleted."
     )
-    sys_deleted_by: Optional[UUID4] = Field(
-        description="UUID of the user who deleted the contract.", default=None
+    sys_deleted_by: UUID4 = Field(
+        ..., description="UUID of the user who deleted the contract."
     )
 
 
@@ -98,8 +90,8 @@ class AccountContractsRes(BaseModel):
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp of when the contract was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        description="UUID of the user who created the contract.", default=None
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the contract."
     )
     sys_updated_at: Optional[datetime] = Field(
         description="Timestamp of when the contract was last updated.",
