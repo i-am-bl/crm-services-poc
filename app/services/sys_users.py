@@ -17,7 +17,7 @@ from ..schemas.sys_users import (
     SysUsersPgRes,
     SysUsersDisable,
     SysUsersRes,
-    SysUsersUpdate,
+    SysUsersInternalUpdate,
 )
 from ..statements.sys_users import SysUsersStms
 from ..utilities import pagination
@@ -350,7 +350,7 @@ class UpdateSrvc:
     async def update_sys_user(
         self,
         sys_user_uuid: UUID4,
-        sys_user_data: SysUsersUpdate,
+        sys_user_data: SysUsersInternalUpdate,
         db: AsyncSession,
     ) -> SysUsersRes:
         """
@@ -361,7 +361,7 @@ class UpdateSrvc:
         :param sys_user_uuid: The UUID of the system user to update.
         :type sys_user_uuid: UUID4
         :param sys_user_data: The new data to update the system user.
-        :type sys_user_data: SysUsersUpdate
+        :type sys_user_data: SysUsersInternalUpdate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 

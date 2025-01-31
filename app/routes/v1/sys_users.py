@@ -13,6 +13,7 @@ from ...schemas.sys_users import (
     SysUsersCreate,
     SysUsersDel,
     SysUsersDisable,
+    SysUsersInternalUpdate,
     SysUsersPgRes,
     SysUsersRes,
     SysUsersUpdate,
@@ -21,6 +22,7 @@ from ...services.sys_users import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -112,11 +114,17 @@ async def update_sys_user(
     Update one system user.
     """
 
+    sys_user, _ = user_token
+    _sys_user_data: SysUsersInternalUpdate = internal_schema_validation(
+        data=sys_user_data,
+        schema=SysUsersInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=sys_user_data, sys_user_uuid=sys_user.uuid)
         return await sys_users_update_srvc.update_sys_user(
-            sys_user_uuid=sys_user_uuid, sys_user_data=sys_user_data, db=db
+            sys_user_uuid=sys_user_uuid, sys_user_data=_sys_user_data, db=db
         )
 
 
@@ -161,11 +169,13 @@ async def del_sys_user(
     """
     Soft delete one system user.
     """
-
+    sys_user, _ = user_token
+    _sys_user_data: SysUsersDel = internal_schema_validation(
+        schema=SysUsersDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user_data = SysUsersDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=sys_user_data, sys_user_uuid=sys_user.uuid)
         await sys_users_delete_srvc.soft_del_sys_user(
-            sys_user_uuid=sys_user_uuid, sys_user_data=sys_user_data, db=db
+            sys_user_uuid=sys_user_uuid, sys_user_data=_sys_user_data, db=db
         )

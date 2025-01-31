@@ -76,10 +76,6 @@ class SysUsersUpdate(BaseModel):
     password: Optional[ConstrainedStr] = Field(
         None, description="The user's updated password (optional)."
     )
-    sys_updated_at: datetime = TimeStamp
-    sys_updated_by: Optional[UUID4] = Field(
-        None, description="The UUID of the user who updated the record."
-    )
 
     @field_validator("password")
     def validate_password(cls, value):
@@ -96,6 +92,18 @@ class SysUsersUpdate(BaseModel):
             raise ValueError("Password must contain at least one numerical character.")
         # Special characters validation can be added once unicode issues are resolved.
         return value
+
+
+class SysUsersInternalUpdate(SysUsersUpdate):
+    """Model for updating an existing system user's details.
+
+    Hides system level fields from client.
+    """
+
+    sys_updated_at: datetime = TimeStamp
+    sys_updated_by: Optional[UUID4] = Field(
+        None, description="The UUID of the user who updated the record."
+    )
 
 
 class SysUsersDel(BaseModel):
