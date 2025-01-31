@@ -11,6 +11,7 @@ from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
 from ...schemas.accounts import (
     AccountsCreate,
+    AccountsInternalCreate,
     AccountsRes,
     AccountsPgRes,
     AccountsDel,
@@ -20,6 +21,7 @@ from ...services.accounts import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -92,25 +94,35 @@ async def create_account(
     Similar behavior can be achieved from the context of the entity.
     """
 
+    sys_user, _ = user_token
+    _account_data: AccountsInternalCreate = internal_schema_validation(
+        data=account_data,
+        schema=AccountsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(data=account_data, sys_user_uuid=sys_user.uuid)
+
         return await accounts_create_srvc.create_account(
-            account_data=account_data, db=db
+            account_data=_account_data, db=db
         )
 
 
+# There is no need for this at this time.
+# TODO: Remove is not needed at some point.
 @router.put(
     "/{account_uuid}/",
     response_model=AccountsRes,
     status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+    deprecated=True,
 )
 @set_auth_cookie
 @handle_exceptions([AccsNotExist])
 async def update_account(
     response: Response,
     account_uuid: UUID4,
-    account_data: AccountsUpdate,
     db: AsyncSession = Depends(get_db),
     user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     update_accounts_srvc: UpdateSrvc = Depends(services_container["accounts_update"]),
@@ -118,12 +130,16 @@ async def update_account(
     """
     Update one account.
     """
+    sys_user, _ = user_token
+    _account_data: AccountsUpdate = internal_schema_validation(
+        schema=AccountsUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
 
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=account_data, sys_user_uuid=sys_user.uuid)
         return await update_accounts_srvc.update_account(
-            account_uuid=account_uuid, account_data=account_data, db=db
+            account_uuid=account_uuid, account_data=_account_data, db=db
         )
 
 
@@ -143,11 +159,13 @@ async def soft_del_account(
     """
     Soft del one account.
     """
-
+    sys_user, _ = user_token
+    _account_data: AccountsDel = internal_schema_validation(
+        schema=AccountsDel,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        account_data = AccountsDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=account_data, sys_user_uuid=sys_user.uuid)
         await accounts_delete_srvc.sof_del_account(
-            account_uuid=account_uuid, account_data=account_data, db=db
+            account_uuid=account_uuid, account_data=_account_data, db=db
         )

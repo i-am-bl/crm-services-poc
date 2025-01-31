@@ -6,7 +6,7 @@ from pydantic import UUID4, BaseModel, Field
 from ._variables import ConstrainedStr, TimeStamp
 
 
-class Accounts(BaseModel):
+class AccountsCreate(BaseModel):
     """
     Model representing an account with optional name and contract dates.
     """
@@ -20,9 +20,11 @@ class Accounts(BaseModel):
     )
 
 
-class AccountsCreate(Accounts):
+class AccountsInternalCreate(AccountsCreate):
     """
     Model representing an account creation request, including system metadata.
+
+    Hiding system level fields from the client.
     """
 
     sys_created_at: datetime = Field(

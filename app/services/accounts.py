@@ -12,7 +12,7 @@ from ..models.accounts import Accounts
 from ..schemas.accounts import (
     AccountsRes,
     AccountsUpdate,
-    AccountsCreate,
+    AccountsInternalCreate,
     AccountsDel,
     AccountsDelRes,
     AccountsPgRes,
@@ -214,13 +214,13 @@ class CreateSrvc:
         return self._db_ops
 
     async def create_account(
-        self, account_data: AccountsCreate, db: AsyncSession
+        self, account_data: AccountsInternalCreate, db: AsyncSession
     ) -> AccountsRes:
         """
         Creates a new account in the database.
 
         :param account_data: The data required to create the new account.
-        :type account_data: AccountsCreate
+        :type account_data: AccountsInternalCreate
         :param db: The database session.
         :type db: AsyncSession
         :return: The result of the account creation operation.
