@@ -6,7 +6,7 @@ from pydantic import UUID4, BaseModel
 from ._variables import TimeStamp
 
 
-class Invoices(BaseModel):
+class InvoicesCreate(BaseModel):
     order_uuid: UUID4
     sys_value_status_uuid: Optional[UUID4] = None
     transacted_on: Optional[date] = None
@@ -14,7 +14,7 @@ class Invoices(BaseModel):
     paid_on: Optional[date] = None
 
 
-class InvoicesCreate(Invoices):
+class InvoicesInternalCreate(InvoicesCreate):
     sys_created_at: datetime = TimeStamp
     sys_created_by: Optional[UUID4] = None
 
@@ -24,6 +24,11 @@ class InvoicesUpdate(BaseModel):
     transacted_on: Optional[date] = None
     posted_on: Optional[date] = None
     paid_on: Optional[date] = None
+    sys_updated_at: Optional[datetime] = None
+    sys_updated_by: Optional[UUID4] = None
+
+
+class InvoicesInternalUpdate(InvoicesUpdate):
     sys_updated_at: Optional[datetime] = None
     sys_updated_by: Optional[UUID4] = None
 

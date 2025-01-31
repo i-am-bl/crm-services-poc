@@ -8,7 +8,7 @@ from ..database.operations import Operations
 from ..exceptions import InvoiceExists, InvoiceNotExist
 from ..models.invoices import Invoices
 from ..schemas.invoices import (
-    InvoicesCreate,
+    InvoicesInternalCreate,
     InvoicesUpdate,
     InvoicesRes,
     InvoicesDel,
@@ -216,14 +216,14 @@ class CreateSrvc:
 
     async def create_invoice(
         self,
-        invoice_data: InvoicesCreate,
+        invoice_data: InvoicesInternalCreate,
         db: AsyncSession,
     ) -> InvoicesRes:
         """
         Creates a new invoice record in the database.
 
         :param invoice_data: The data for creating the new invoice.
-        :type invoice_data: InvoicesCreate
+        :type invoice_data: InvoicesInternalCreate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 

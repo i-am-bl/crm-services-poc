@@ -11,6 +11,8 @@ from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
 from ...schemas.invoices import (
     InvoicesCreate,
+    InvoicesInternalCreate,
+    InvoicesInternalUpdate,
     InvoicesRes,
     InvoicesUpdate,
     InvoicesDel,
@@ -20,6 +22,7 @@ from ...services.invoices import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -90,11 +93,17 @@ async def create_invoice(
     Create one invoice.
     """
 
+    sys_user, _ = user_token
+    _invoice_data: InvoicesInternalCreate = internal_schema_validation(
+        data=invoice_data,
+        schema=InvoicesInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(data=invoice_data, sys_user_uuid=sys_user.uuid)
         return await invoices_create_srvcs.create_invoice(
-            invoice_data=invoice_data, db=db
+            invoice_data=_invoice_data, db=db
         )
 
 
@@ -117,11 +126,17 @@ async def update_invoice(
     Update one invoice.
     """
 
+    sys_user, _ = user_token
+    _invoice_data: InvoicesInternalUpdate = internal_schema_validation(
+        data=invoice_data,
+        schema=InvoicesInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=invoice_data, sys_user=sys_user)
         return await invoices_update_srvc.update_invoice(
-            invoice_uuid=invoice_uuid, invoice_data=invoice_data, db=db
+            invoice_uuid=invoice_uuid, invoice_data=_invoice_data, db=db
         )
 
 
@@ -141,11 +156,14 @@ async def soft_del_invoice(
     """
     Soft delete one invoice.
     """
+    sys_user, _ = user_token
+    _invoice_data: InvoicesDel = internal_schema_validation(
+        schema=InvoicesDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
 
     async with transaction_manager(db=db):
-        invoice_data = InvoicesDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=invoice_data, sys_user=sys_user)
         return await invoices_delete_srvc.soft_del_invoice(
-            invoice_uuid=invoice_uuid, invoice_data=invoice_data, db=db
+            invoice_uuid=invoice_uuid, invoice_data=_invoice_data, db=db
         )
