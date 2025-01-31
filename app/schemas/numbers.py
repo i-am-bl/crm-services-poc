@@ -6,7 +6,7 @@ from pydantic import UUID4, BaseModel, Field
 from ._variables import ConstrainedStr, TimeStamp
 
 
-class Numbers(BaseModel):
+class NumbersCreate(BaseModel):
     """Represents a structured phone number with country code, area code, and line number."""
 
     entity_uuid: UUID4 = Field(..., description="UUID of the associated entity.")
@@ -24,7 +24,7 @@ class Numbers(BaseModel):
     )
 
 
-class NumbersCreate(Numbers):
+class NumbersInternalCreate(NumbersCreate):
     """Model for creating a new phone number entry."""
 
     sys_created_at: datetime = Field(
@@ -53,6 +53,13 @@ class NumbersUpdate(BaseModel):
     extension: Optional[ConstrainedStr] = Field(
         None, description="Updated phone number extension."
     )
+
+
+class NumbersInternalUpdate(NumbersUpdate):
+    """Model for updating an existing phone number entry.
+
+    Hiding system level fields from client.
+    """
 
     sys_updated_at: datetime = Field(
         TimeStamp, description="Timestamp when the entry was last updated."

@@ -7,12 +7,12 @@ from ..database.operations import Operations
 from ..exceptions import NumberExists, NumbersNotExist
 from ..models.numbers import Numbers
 from ..schemas.numbers import (
-    NumbersCreate,
+    NumbersInternalCreate,
     NumbersDel,
     NumbersDelRes,
     NumbersPgRes,
     NumbersRes,
-    NumbersUpdate,
+    NumbersInternalUpdate,
 )
 from ..statements.numbers import NumbersStms
 from ..utilities import pagination
@@ -246,7 +246,7 @@ class CreateSrvc:
     async def create_number(
         self,
         entity_uuid: UUID4,
-        number_data: NumbersCreate,
+        number_data: NumbersInternalCreate,
         db: AsyncSession,
     ) -> NumbersRes:
         """
@@ -260,7 +260,7 @@ class CreateSrvc:
         :param entity_uuid: The UUID of the entity to which the number belongs.
         :type entity_uuid: UUID4
         :param number_data: The data for the new number to be created.
-        :type number_data: NumbersCreate
+        :type number_data: NumbersInternalCreate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 
@@ -339,7 +339,7 @@ class UpdateSrvc:
         self,
         entity_uuid: UUID4,
         number_uuid: UUID4,
-        number_data: NumbersUpdate,
+        number_data: NumbersInternalUpdate,
         db: AsyncSession,
     ) -> NumbersRes:
         """
@@ -353,7 +353,7 @@ class UpdateSrvc:
         :param number_uuid: The UUID of the number to be updated.
         :type number_uuid: UUID4
         :param number_data: The new data for the number.
-        :type number_data: NumbersUpdate
+        :type number_data: NumbersInternalUpdate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 

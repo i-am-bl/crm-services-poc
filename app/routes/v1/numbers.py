@@ -12,6 +12,8 @@ from ...models.sys_users import SysUsers
 from ...schemas.numbers import (
     NumbersCreate,
     NumbersDel,
+    NumbersInternalCreate,
+    NumbersInternalUpdate,
     NumbersPgRes,
     NumbersRes,
     NumbersUpdate,
@@ -20,6 +22,7 @@ from ...services.numbers import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -95,11 +98,17 @@ async def create_number(
     Create one phone number.
     """
 
+    sys_user, _ = user_token
+    _number_data: NumbersInternalCreate = internal_schema_validation(
+        data=number_data,
+        schema=NumbersInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(data=number_data, sys_user_uuid=sys_user.uuid)
         return await numbers_create_srvc.create_number(
-            entity_uuid=entity_uuid, number_data=number_data, db=db
+            entity_uuid=entity_uuid, number_data=_number_data, db=db
         )
 
 
@@ -123,13 +132,19 @@ async def update_number(
     Update one phone number.
     """
 
+    sys_user, _ = user_token
+    _number_data: NumbersInternalUpdate = internal_schema_validation(
+        data=number_data,
+        schema=NumbersInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=number_data, sys_user_uuid=sys_user.uuid)
         return await numbers_update_srvc.update_number(
             entity_uuid=entity_uuid,
             number_uuid=number_uuid,
-            number_data=number_data,
+            number_data=_number_data,
             db=db,
         )
 
@@ -151,14 +166,16 @@ async def soft_del_number(
     """
     Soft del one phone number.
     """
-
+    sys_user, _ = user_token
+    _number_data: NumbersDel = internal_schema_validation(
+        schema=NumbersDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        number_data = NumbersDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=number_data, sys_user_uuid=sys_user.uuid)
         return await numbers_delete_srvc.soft_delete_number(
             entity_uuid=entity_uuid,
             number_uuid=number_uuid,
-            number_data=number_data,
+            number_data=_number_data,
             db=db,
         )
