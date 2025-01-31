@@ -9,7 +9,7 @@ from ..exceptions import InvoiceExists, InvoiceNotExist
 from ..models.invoices import Invoices
 from ..schemas.invoices import (
     InvoicesInternalCreate,
-    InvoicesUpdate,
+    InvoicesInternalUpdate,
     InvoicesRes,
     InvoicesDel,
     InvoicesDelRes,
@@ -294,7 +294,7 @@ class UpdateSrvc:
     async def update_invoice(
         self,
         invoice_uuid: UUID4,
-        invoice_data: InvoicesUpdate,
+        invoice_data: InvoicesInternalUpdate,
         db: AsyncSession,
     ) -> InvoicesRes:
         """
@@ -303,7 +303,7 @@ class UpdateSrvc:
         :param invoice_uuid: The UUID of the invoice to be updated.
         :type invoice_uuid: UUID4
         :param invoice_data: The data to update the invoice.
-        :type invoice_data: InvoicesUpdate
+        :type invoice_data: InvoicesInternalUpdate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 

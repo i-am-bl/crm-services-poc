@@ -1,12 +1,12 @@
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..schemas.accounts import AccountsCreate
+from ..schemas.accounts import AccountsInternalCreate
 from ..schemas.entity_accounts import (
     AccountEntitiesPgRes,
     EntityAccountParentRes,
     EntityAccountsPgRes,
-    EntityAccountsCreate,
+    EntityAccountsInternalCreate,
     EntityAccountsRes,
 )
 from ..services import accounts as accounts_srvcs
@@ -218,8 +218,8 @@ class EntityAccountsCreateOrch:
     async def create_account(
         self,
         entity_uuid: UUID4,
-        account_data: AccountsCreate,
-        entity_account_data: EntityAccountsCreate,
+        account_data: AccountsInternalCreate,
+        entity_account_data: EntityAccountsInternalCreate,
         db: AsyncSession,
     ) -> EntityAccountsRes:
         """
@@ -228,9 +228,9 @@ class EntityAccountsCreateOrch:
         :param entity_uuid: The UUID of the entity to associate with the new account.
         :type entity_uuid: UUID4
         :param account_data: Data used to create the new account.
-        :type account_data: AccountsCreate
+        :type account_data: AccountsInternalCreate
         :param entity_account_data: Data used to create the entity-account relationship.
-        :type entity_account_data: EntityAccountsCreate
+        :type entity_account_data: EntityAccountsInternalCreate
         :param db: The database session for performing queries.
         :type db: AsyncSession
 
