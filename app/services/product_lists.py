@@ -8,12 +8,12 @@ from ..database.operations import Operations
 from ..exceptions import ProductListExists, ProductListNotExist
 from ..models.product_lists import ProductLists
 from ..schemas.product_lists import (
-    ProductListsCreate,
+    ProductListsInternalCreate,
     ProductListsDel,
     ProductListsDelRes,
     ProductListsPgRes,
     ProductListsRes,
-    ProductListsUpdate,
+    ProductListsInternalUpdate,
 )
 from ..statements.product_lists import ProductListsStms
 from ..utilities import pagination
@@ -249,7 +249,7 @@ class CreateSrvc:
 
     async def create_product_list(
         self,
-        product_list_data: ProductListsCreate,
+        product_list_data: ProductListsInternalCreate,
         db: AsyncSession,
     ) -> ProductListsRes:
         """
@@ -260,7 +260,7 @@ class CreateSrvc:
         it proceeds to create the new product list.
 
         :param product_list_data: The data required to create a new product list.
-        :type product_list_data: ProductListsCreate
+        :type product_list_data: ProductListsInternalCreate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 
@@ -338,7 +338,7 @@ class UpdateSrvc:
     async def update_product_list(
         self,
         product_list_uuid: UUID4,
-        product_list_data: ProductListsUpdate,
+        product_list_data: ProductListsInternalUpdate,
         db: AsyncSession,
     ) -> ProductListsRes:
         """
@@ -351,7 +351,7 @@ class UpdateSrvc:
         :param product_list_uuid: The UUID of the product list to update.
         :type product_list_uuid: UUID4
         :param product_list_data: The updated data for the product list.
-        :type product_list_data: ProductListsUpdate
+        :type product_list_data: ProductListsInternalUpdate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 

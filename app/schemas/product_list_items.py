@@ -7,7 +7,7 @@ from pydantic import UUID4, BaseModel, Field, field_validator
 from ._variables import ConstrainedDec, TimeStamp
 
 
-class ProductListItems(BaseModel):
+class ProductListItemsCreate(BaseModel):
     """Represents a product item in a product list, including pricing and allowed adjustments."""
 
     product_list_uuid: UUID4 = Field(
@@ -43,8 +43,11 @@ class ProductListItems(BaseModel):
         return value.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
 
 
-class ProductListItemsCreate(ProductListItems):
-    """Model for creating a new product list item."""
+class ProductListItemsInternalCreate(ProductListItemsCreate):
+    """Model for creating a new product list item.
+
+    Hides system level fields from client.
+    """
 
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp when the product list item was created."
@@ -72,12 +75,6 @@ class ProductListItemsUpdate(BaseModel):
     man_allowed_price_decrease: Optional[bool] = Field(
         None, description="Updated flag for price decrease allowed by the manufacturer."
     )
-    sys_updated_at: datetime = Field(
-        TimeStamp, description="Timestamp when the product list item was last updated."
-    )
-    sys_updated_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who last updated the product list item."
-    )
 
     @field_validator("price", mode="before")
     def round_price(cls, value):
@@ -87,6 +84,20 @@ class ProductListItemsUpdate(BaseModel):
         elif not isinstance(value, Decimal):
             raise ValueError("Price must be a number")
         return value.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
+
+
+class ProductListItemsInternalUpdate(ProductListItemsUpdate):
+    """Model for updating an existing product list item.
+
+    Hides system level fields from client.
+    """
+
+    sys_updated_at: datetime = Field(
+        TimeStamp, description="Timestamp when the product list item was last updated."
+    )
+    sys_updated_by: Optional[UUID4] = Field(
+        None, description="UUID of the user who last updated the product list item."
+    )
 
 
 class ProductListItemsDel(BaseModel):

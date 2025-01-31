@@ -12,6 +12,8 @@ from ...models.sys_users import SysUsers
 from ...schemas.product_lists import (
     ProductListsCreate,
     ProductListsDel,
+    ProductListsInternalCreate,
+    ProductListsInternalUpdate,
     ProductListsPgRes,
     ProductListsRes,
     ProductListsUpdate,
@@ -20,6 +22,7 @@ from ...services.product_lists import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -96,11 +99,17 @@ async def create_product_list(
     Create one product list.
     """
 
+    sys_user, _ = user_token
+    _product_list_data: ProductListsInternalCreate = internal_schema_validation(
+        data=product_list_data,
+        schema=ProductListsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(data=product_list_data, sys_user_uuid=sys_user.uuid)
         return await product_lists_create_srvc.create_product_list(
-            product_list_data=product_list_data, db=db
+            product_list_data=_product_list_data, db=db
         )
 
 
@@ -124,13 +133,17 @@ async def update_product_list(
     """
     Update one product list.
     """
-
+    sys_user, _ = user_token
+    _product_list_data: ProductListsInternalUpdate = internal_schema_validation(
+        data=product_list_data,
+        schema=ProductListsInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=product_list_data, sys_user_uuid=sys_user.uuid)
         return await product_lists_update_srvc.update_product_list(
             product_list_uuid=product_list_uuid,
-            product_list_data=product_list_data,
+            product_list_data=_product_list_data,
             db=db,
         )
 
@@ -153,13 +166,15 @@ async def soft_del_poduct_list(
     """
     Soft del one product list.
     """
-
+    sys_user, _ = user_token
+    _product_list_data: ProductListsDel = internal_schema_validation(
+        schema=ProductListsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        product_list_data = ProductListsDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=product_list_data, sys_user_uuid=sys_user.uuid)
         await product_lists_delete_srvc.soft_del_product_list(
             product_list_uuid=product_list_uuid,
-            product_list_data=product_list_data,
+            product_list_data=_product_list_data,
             db=db,
         )

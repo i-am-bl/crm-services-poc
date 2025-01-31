@@ -9,12 +9,12 @@ from ..database.operations import Operations
 from ..exceptions import ProductListItemExists, ProductListItemNotExist
 from ..models import ProductListItems
 from ..schemas.product_list_items import (
-    ProductListItemsCreate,
+    ProductListItemsInternalCreate,
     ProductListItemsDel,
     ProductListItemsDelRes,
     ProductListItemsPgRes,
     ProductListItemsRes,
-    ProductListItemsUpdate,
+    ProductListItemsInternalUpdate,
 )
 from ..statements.product_list_items import ProductListItemsStms
 from ..utilities import pagination
@@ -264,7 +264,7 @@ class CreateSrvc:
     async def create_product_list_items(
         self,
         product_list_uuid: UUID4,
-        product_list_item_data: List[ProductListItemsCreate],
+        product_list_item_data: List[ProductListItemsInternalCreate],
         db: AsyncSession,
     ) -> List[ProductListItemsRes]:
         """
@@ -273,7 +273,7 @@ class CreateSrvc:
         :param product_list_uuid: The UUID of the product list to add items to.
         :type product_list_uuid: UUID4
         :param product_list_item_data: A list of data for the product list items to create.
-        :type product_list_item_data: List[ProductListItemsCreate]
+        :type product_list_item_data: List[ProductListItemsInternalCreate]
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 
@@ -370,7 +370,7 @@ class UpdateSrvc:
         self,
         product_list_uuid: UUID4,
         product_list_item_uuid: UUID4,
-        product_list_item_data: ProductListItemsUpdate,
+        product_list_item_data: ProductListItemsInternalUpdate,
         db: AsyncSession,
     ) -> ProductListItemsRes:
         """
@@ -381,7 +381,7 @@ class UpdateSrvc:
         :param product_list_item_uuid: The UUID of the product list item to update.
         :type product_list_item_uuid: UUID4
         :param product_list_item_data: The new data for the product list item.
-        :type product_list_item_data: ProductListItemsUpdate
+        :type product_list_item_data: ProductListItemsInternalUpdate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 

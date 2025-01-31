@@ -12,6 +12,8 @@ from ...models.sys_users import SysUsers
 from ...schemas.product_list_items import (
     ProductListItemsCreate,
     ProductListItemsDel,
+    ProductListItemsInternalCreate,
+    ProductListItemsInternalUpdate,
     ProductListItemsPgRes,
     ProductListItemsRes,
     ProductListItemsUpdate,
@@ -20,6 +22,7 @@ from ...services.product_list_items import CreateSrvc, ReadSrvc, UpdateSrvc, Del
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -104,14 +107,20 @@ async def create_product_list_items(
     This will create a link between the an existing product list and product.
     """
 
-    async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_created_by(
-            data=product_list_item_data, sys_user_uuid=sys_user.uuid
+    sys_user, _ = user_token
+    _product_list_item_data: List[ProductListItemsInternalCreate] = (
+        internal_schema_validation(
+            data=product_list_item_data,
+            schema=ProductListItemsInternalCreate,
+            setter_method=sys_values.sys_created_by,
+            sys_user_uuid=sys_user.uuid,
         )
+    )
+
+    async with transaction_manager(db=db):
         return await product_list_items_create_srvc.create_product_list_items(
             product_list_uuid=product_list_uuid,
-            product_list_item_data=product_list_item_data,
+            product_list_item_data=_product_list_item_data,
             db=db,
         )
 
@@ -138,15 +147,21 @@ async def update_product_list_item(
     Update product list item.
     """
 
-    async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(
-            data=product_list_item_data, sys_user_uuid=sys_user.uuid
+    sys_user, _ = user_token
+    _product_list_item_data: ProductListItemsInternalUpdate = (
+        internal_schema_validation(
+            data=product_list_item_data,
+            schema=ProductListItemsInternalUpdate,
+            setter_method=sys_values.sys_updated_by,
+            sys_user_uuid=sys_user.uuid,
         )
+    )
+
+    async with transaction_manager(db=db):
         return await product_list_items_update_srvc.update_product_list_item(
             product_list_uuid=product_list_uuid,
             product_list_item_uuid=product_list_item_uuid,
-            product_list_item_data=product_list_item_data,
+            product_list_item_data=_product_list_item_data,
             db=db,
         )
 
@@ -173,15 +188,17 @@ async def soft_del_product_list_item(
     Removes link between product list and product.
     """
 
+    sys_user, _ = user_token
+    _product_list_item_data: ProductListItemsDel = internal_schema_validation(
+        schema=ProductListItemsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        product_list_item_data = ProductListItemsDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(
-            data=product_list_item_data, sys_user_uuid=sys_user.uuid
-        )
         return await product_list_items_delete_srvc.soft_del_product_list_item(
             product_list_uuid=product_list_uuid,
             product_list_item_uuid=product_list_item_uuid,
-            product_list_item_data=product_list_item_data,
+            product_list_item_data=_product_list_item_data,
             db=db,
         )
