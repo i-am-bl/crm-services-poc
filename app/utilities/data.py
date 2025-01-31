@@ -7,7 +7,7 @@ These utilities assist with:
 - Validating the existence of records and raising appropriate exceptions.
 """
 
-from typing import Callable, List, TypeVar
+from typing import Callable, List, Optional, TypeVar
 
 from pydantic import UUID4, BaseModel
 from .types import Schema
@@ -82,7 +82,6 @@ def record_not_exist(instance: object, exception: Exception) -> bool:
 
 def internal_schema_validation(
     schema: Schema,
-    data: Schema | List[Schema],
     setter_method: Callable[
         [
             Schema | List[Schema],
@@ -91,12 +90,13 @@ def internal_schema_validation(
         Schema | List[Schema],
     ],
     sys_user_uuid: UUID4,
+    data: Schema | List[Schema] | None = None,
 ) -> Schema | List[Schema]:
     """
     Validates and processes an internal schema by applying a setter method.
 
-    :param schema: The schema class used for validation and instantiation.
     :param data: The input data to be validated, which can be a single instance or a list of instances.
+    :param schema: The schema class used for validation and instantiation.
     :param setter_method: A callable function that applies a transformation or metadata update to the schema.
     :param sys_user_uuid: The system user UUID used for setting metadata.
 
@@ -106,5 +106,7 @@ def internal_schema_validation(
         return [
             setter_method(schema(**item.model_dump()), sys_user_uuid) for item in data
         ]
+    elif data == None:
+        return setter_method(schema(), sys_user_uuid)
     else:
         return setter_method(schema(**data.model_dump()), sys_user_uuid)

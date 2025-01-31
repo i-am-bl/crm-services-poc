@@ -7,6 +7,8 @@ from ..exceptions import AccContractNotExist
 from ..models import AccountContracts
 from ..schemas.account_contracts import (
     AccountContractsDelRes,
+    AccountContractsInternalCreate,
+    AccountContractsInternalUpdate,
     AccountContractsRes,
     AccountContractsCreate,
     AccountContractsDel,
@@ -196,7 +198,7 @@ class CreateSrvc:
     async def create_account_contract(
         self,
         account_uuid: UUID4,
-        account_contract_data: AccountContractsCreate,
+        account_contract_data: AccountContractsInternalCreate,
         db: AsyncSession,
     ) -> AccountContractsRes:
         """
@@ -205,7 +207,7 @@ class CreateSrvc:
         :param account_uuid: The UUID of the account.
         :type account_uuid: UUID4
         :param account_contract_data: The data for the account contract.
-        :type account_contract_data: AccountContractsCreate
+        :type account_contract_data: AccountContractsInternalCreate
         :param db: The database session.
         :type db: AsyncSession
         :return: The created account contract.
@@ -259,7 +261,7 @@ class UpdateSrvc:
         self,
         account_uuid: UUID4,
         account_contract_uuid: UUID4,
-        account_contract_data: AccountContractsUpdate,
+        account_contract_data: AccountContractsInternalUpdate,
         db: AsyncSession,
     ) -> AccountContractsRes:
         """
@@ -270,7 +272,7 @@ class UpdateSrvc:
         :param account_contract_uuid: The UUID of the account contract.
         :type account_contract_uuid: UUID4
         :param account_contract_data: The data for the account contract.
-        :type account_contract_data: AccountContractsUpdate
+        :type account_contract_data: AccountContractsInternalUpdate
         :param db: The database session.
         :type db: AsyncSession
         :return: The updated account contract.

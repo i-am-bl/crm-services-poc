@@ -38,6 +38,27 @@ class AccountContractsUpdate(BaseModel):
     Model representing metadata for updating an existing account contract.
     """
 
+    start_on: Optional[date] = Field(
+        description="Start date of the contract.", default=None
+    )
+    end_on: Optional[date] = Field(
+        description="End date of the contract.", default=None
+    )
+
+    sys_updated_at: datetime = Field(
+        TimeStamp, description="Timestamp of when the contract was last updated."
+    )
+    sys_updated_by: Optional[UUID4] = Field(
+        description="UUID of the user who last updated the contract.",
+        default=None,
+    )
+
+
+class AccountContractsInternalUpdate(AccountContractsUpdate):
+    """
+    Model representing an account contract being updated, including system metadata.
+    """
+
     sys_updated_at: datetime = Field(
         TimeStamp, description="Timestamp of when the contract was last updated."
     )
