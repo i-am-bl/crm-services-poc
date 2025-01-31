@@ -114,7 +114,7 @@ async def update_sys_user(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(data=sys_user_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=sys_user_data, sys_user_uuid=sys_user.uuid)
         return await sys_users_update_srvc.update_sys_user(
             sys_user_uuid=sys_user_uuid, sys_user_data=sys_user_data, db=db
         )
@@ -165,7 +165,7 @@ async def del_sys_user(
     async with transaction_manager(db=db):
         sys_user_data = SysUsersDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=sys_user_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=sys_user_data, sys_user_uuid=sys_user.uuid)
         await sys_users_delete_srvc.soft_del_sys_user(
             sys_user_uuid=sys_user_uuid, sys_user_data=sys_user_data, db=db
         )

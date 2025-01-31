@@ -97,7 +97,7 @@ async def create_number(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(data=number_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(data=number_data, sys_user_uuid=sys_user.uuid)
         return await numbers_create_srvc.create_number(
             entity_uuid=entity_uuid, number_data=number_data, db=db
         )
@@ -125,7 +125,7 @@ async def update_number(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(data=number_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=number_data, sys_user_uuid=sys_user.uuid)
         return await numbers_update_srvc.update_number(
             entity_uuid=entity_uuid,
             number_uuid=number_uuid,
@@ -155,7 +155,7 @@ async def soft_del_number(
     async with transaction_manager(db=db):
         number_data = NumbersDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=number_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=number_data, sys_user_uuid=sys_user.uuid)
         return await numbers_delete_srvc.soft_delete_number(
             entity_uuid=entity_uuid,
             number_uuid=number_uuid,

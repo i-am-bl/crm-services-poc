@@ -68,7 +68,7 @@ async def create_non_individual(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(data=non_individual_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(data=non_individual_data, sys_user_uuid=sys_user.uuid)
         return await non_individual_create_srvc.create_non_individual(
             entity_uuid=entity_uuid, non_individual_data=non_individual_data, db=db
         )
@@ -95,7 +95,7 @@ async def update_non_individual(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(data=non_individual_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=non_individual_data, sys_user_uuid=sys_user.uuid)
         return await non_individuals_update_srvc.update_non_individual(
             entity_uuid=entity_uuid,
             non_individual_uuid=non_individual_uuid,
@@ -124,7 +124,7 @@ async def soft_del_non_individual(
     async with transaction_manager(db=db):
         non_individual_data = NonIndividualsDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=non_individual_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=non_individual_data, sys_user_uuid=sys_user.uuid)
         return await non_individuals_delete_srvc.soft_del_non_individual(
             entity_uuid=entity_uuid,
             non_individual_uuid=non_individual_uuid,

@@ -95,7 +95,7 @@ async def create_email(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(data=email_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(data=email_data, sys_user_uuid=sys_user.uuid)
         return await emails_create_srvc.create_email(
             entity_uuid=entity_uuid, email_data=email_data, db=db
         )
@@ -123,7 +123,7 @@ async def update_email(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(data=email_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=email_data, sys_user_uuid=sys_user.uuid)
         return await user_update_srvc.update_email(
             entity_uuid=entity_uuid,
             email_uuid=email_uuid,
@@ -153,7 +153,7 @@ async def soft_del_email(
     async with transaction_manager(db=db):
         email_data = EmailsDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=email_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=email_data, sys_user_uuid=sys_user.uuid)
         return await user_delete_srvc.soft_del_email(
             entity_uuid=entity_uuid,
             email_uuid=email_uuid,

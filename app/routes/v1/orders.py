@@ -141,7 +141,7 @@ async def soft_del_order(
     async with transaction_manager(db=db):
         order_data = OrdersDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=order_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=order_data, sys_user_uuid=sys_user.uuid)
         await orders_delete_srvc.soft_del_order(
             order_uuid=order_uuid, order_data=order_data, db=db
         )

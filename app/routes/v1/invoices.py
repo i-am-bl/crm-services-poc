@@ -92,7 +92,7 @@ async def create_invoice(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(data=invoice_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(data=invoice_data, sys_user_uuid=sys_user.uuid)
         return await invoices_create_srvcs.create_invoice(
             invoice_data=invoice_data, db=db
         )

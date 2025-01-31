@@ -99,7 +99,7 @@ async def create_order_item(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(data=order_item_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(data=order_item_data, sys_user_uuid=sys_user.uuid)
         return await order_items_create_srvc.create_order_item(
             order_uuid=order_uuid, order_item_data=order_item_data, db=db
         )
@@ -129,7 +129,7 @@ async def update_order_item(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(data=order_item_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=order_item_data, sys_user_uuid=sys_user.uuid)
         return await order_items_update_srvc.update_order_item(
             order_uuid=order_uuid,
             order_item_uuid=order_item_uuid,
@@ -161,7 +161,7 @@ async def soft_del_order_item(
     async with transaction_manager(db=db):
         order_item_data = OrderItemsDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=order_item_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=order_item_data, sys_user_uuid=sys_user.uuid)
         return await order_items_delete_srvc.soft_del_order_item(
             order_uuid=order_uuid,
             order_item_uuid=order_item_uuid,

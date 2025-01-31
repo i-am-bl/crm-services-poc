@@ -3,14 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..models.sys_users import SysUsers
 from ..schemas.entities import EntitiesCreate
 from ..schemas.individuals import (
-    Individuals as IndividualsInitCreate,
     IndividualsRes,
     IndividualsCreate,
+    IndividualsInitCreate,
 )
 from ..schemas.non_individuals import (
-    NonIndividuals as NonIndividualsInitCreate,
     NonIndividualsRes,
     NonIndividualsCreate,
+    NonIndividualsInitCreate,
 )
 from ..services import entities as entities_srvcs
 from ..services import individuals as individuals_srvcs
@@ -93,7 +93,7 @@ class EntitiesCreateOrch:
 
     async def create_entity(
         self,
-        entity_data: IndividualsInitCreate | NonIndividualsInitCreate,
+        entity_data: IndividualsCreate | NonIndividualsCreate,
         db: AsyncSession,
         sys_user: SysUsers,
     ) -> IndividualsRes | NonIndividualsRes:
@@ -113,28 +113,39 @@ class EntitiesCreateOrch:
         :return: The created individual or non-individual data.
         :rtype: IndividualsRes | NonIndividualsRes
         """
-        if isinstance(entity_data, IndividualsInitCreate):
+        if isinstance(entity_data, IndividualsCreate):
             _entity_data = EntitiesCreate(
                 type="individual", sys_created_by=sys_user.uuid
             )
             entity = await self._entities_create_srvc.create_entity(
                 entity_data=_entity_data, db=db
             )
-            individual_data = IndividualsCreate(
-                *entity_data, entity_uuid=entity.uuid, sys_created_by=sys_user.uuid
+            await db.flush()
+            print(">>>", entity.uuid)
+            individual_data: IndividualsInitCreate = IndividualsInitCreate(
+                **entity_data.model_dump(),
+                entity_uuid=entity.uuid,
+                sys_created_by=sys_user.uuid,
             )
+            print(">>> model_dump output", entity_data.model_dump())
+            print(">>> model_dump output", individual_data.model_dump())
+
+            # print(">>>", individual_data.entity_uuid)
             return await self._individuals_create_srvc.create_individual(
                 entity_uuid=entity.uuid, individual_data=individual_data, db=db
             )
-        if isinstance(entity_data, NonIndividualsInitCreate):
+        if isinstance(entity_data, NonIndividualsCreate):
             _entity_data = EntitiesCreate(
                 type="non-individual", sys_created_by=sys_user.uuid
             )
             entity = await self._entities_create_srvc.create_entity(
                 entity_data=_entity_data, db=db
             )
-            non_individual_data = NonIndividualsCreate(
-                *entity_data, entity_uuid=entity.uuid, sys_created_by=sys_user.uuid
+            await db.flush()
+            non_individual_data = NonIndividualsInitCreate(
+                **entity_data.model_dump(),
+                entity_uuid=entity.uuid,
+                sys_created_by=sys_user.uuid,
             )
             return await self._non_individuals_create_srvc.create_non_individual(
                 entity_uuid=entity.uuid, non_individual_data=non_individual_data, db=db

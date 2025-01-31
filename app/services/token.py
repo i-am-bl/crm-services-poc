@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from fastapi import Cookie
+from fastapi import Cookie, Depends
 from functools import wraps
 from typing import Any, Callable, Optional
 
@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..constants import constants as cnst
-from ..database.database import transaction_manager
+from ..database.database import transaction_manager, get_db
 from ..schemas.token import TokenData, TokenRequest
 from ..schemas.sys_users import SysUserLogin
 from ..services.sys_users import ReadSrvc
@@ -147,7 +147,7 @@ class TokenSrvc:
         :rtype: tuple(SysUsersRes, any)
         :raises: SysUserNotExist if the user does not exist.
         """
-        token_data: str = jwt.decode(token, set.jwt_secret_key, set.jwt_algorithm)
+        token_data = jwt.decode(token, set.jwt_secret_key, set.jwt_algorithm)
 
         sys_user = await self._sys_user_read_srvc.get_sys_user(
             sys_user_uuid=token_data.get("sub"), db=db
@@ -155,7 +155,7 @@ class TokenSrvc:
 
         if sys_user:
             expires_delta = timedelta(minutes=set.jwt_expiration)
-            token_claims = await self.create_token_context(
+            token_claims = await self._create_token_context(
                 sys_user=sys_user, expires_delta=expires_delta
             )
         return sys_user, await self._create_access_token(token_claims=token_claims)
@@ -163,7 +163,7 @@ class TokenSrvc:
     async def validate_session(
         self,
         db: AsyncSession,
-        jwt: str = Cookie(...),
+        jwt: str,
     ):
         """
         Validates the user's session by verifying the provided JWT.
@@ -196,7 +196,7 @@ def set_auth_cookie(func: Callable) -> Callable:
 
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
-        async def set_cookie(self, response: Response, token: str):
+        async def set_cookie(response: Response, token: str):
             """
             Helper function to set the cookie in the response.
 

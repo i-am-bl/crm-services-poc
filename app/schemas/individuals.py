@@ -6,7 +6,7 @@ from pydantic import UUID4, BaseModel, Field
 from ._variables import ConstrainedStr, TimeStamp
 
 
-class Individuals(BaseModel):
+class IndividualsCreate(BaseModel):
     """Represents an individual with basic personal information."""
 
     first_name: ConstrainedStr = Field(..., description="First name of the individual.")
@@ -15,7 +15,7 @@ class Individuals(BaseModel):
     )
 
 
-class IndividualsCreate(Individuals):
+class IndividualsInitCreate(IndividualsCreate):
     """Model for creating an individual entity."""
 
     entity_uuid: UUID4 = Field(
@@ -61,6 +61,9 @@ class IndividualsRes(BaseModel):
     """Response model representing an individual entity."""
 
     uuid: UUID4 = Field(..., description="Unique identifier of the individual.")
+    entity_uuid: UUID4 = Field(
+        ..., description="Unique identifier of the associated entity."
+    )
     first_name: Optional[ConstrainedStr] = Field(
         None, description="First name of the individual."
     )

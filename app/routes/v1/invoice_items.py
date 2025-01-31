@@ -104,7 +104,7 @@ async def create_invoice_item(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(data=invoice_item_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(data=invoice_item_data, sys_user_uuid=sys_user.uuid)
         return await invoice_items_create_srvc.create_invoice_item(
             invoice_uuid=invoice_uuid, invoice_item_data=invoice_item_data, db=db
         )
@@ -134,7 +134,7 @@ async def update_invoice_item(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(data=invoice_item_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=invoice_item_data, sys_user_uuid=sys_user.uuid)
         return await invoice_items_update_srvc.update_invoice_item(
             invoice_uuid=invoice_uuid,
             invoice_item_uuid=invoice_item_uuid,
@@ -166,7 +166,7 @@ async def soft_del_invoice_item(
     async with transaction_manager(db=db):
         invoice_item_data = InvoiceItemsDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=invoice_item_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=invoice_item_data, sys_user_uuid=sys_user.uuid)
         return await invoice_items_delete_srvc.soft_del_invoice_item(
             invoice_uuid=invoice_uuid,
             invoice_item_uuid=invoice_item_uuid,

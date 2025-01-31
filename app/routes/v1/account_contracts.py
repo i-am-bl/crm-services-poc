@@ -106,7 +106,7 @@ async def create_account_contract(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        set_sys_created_by(data=account_contract_data, sys_user=sys_user.uuid)
+        set_sys_created_by(data=account_contract_data, sys_user_uuid=sys_user.uuid)
         return await account_contract_create_srvc.create_account_contract(
             account_uuid=account_uuid,
             account_contract_data=account_contract_data,
@@ -139,7 +139,7 @@ async def update_account_contract(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        set_sys_updated_by(data=account_contract_data, sys_user=sys_user.uuid)
+        set_sys_updated_by(data=account_contract_data, sys_user_uuid=sys_user.uuid)
         return await account_contract_update_srvc.update_account_contract(
             account_uuid=account_uuid,
             account_contract_uuid=account_contract_uuid,
@@ -173,7 +173,7 @@ async def soft_delete_account_contract(
     async with transaction_manager(db=db):
         account_contract_data = AccountContractsDel()
         sys_user, _ = user_token
-        set_sys_deleted_by(data=account_contract_data, sys_user=sys_user.uuid)
+        set_sys_deleted_by(data=account_contract_data, sys_user_uuid=sys_user.uuid)
         await account_contracts_delete_srvc.soft_delete_account_contract(
             account_uuid=account_uuid,
             account_contract_uuid=account_contract_uuid,

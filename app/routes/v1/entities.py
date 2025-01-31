@@ -26,20 +26,19 @@ from ...schemas.entities import (
     EntitiesRes,
     EntitiesUpdate,
 )
-from ...schemas.individuals import Individuals as IndividualsCreate
-from ...schemas.non_individuals import NonIndividuals as NonIndividualsCreate
+from ...schemas.individuals import IndividualsRes, IndividualsCreate
+from ...schemas.non_individuals import NonIndividualsRes, NonIndividualsCreate
 from ...services.entities import ReadSrvc, UpdateSrvc, DelSrvc
-from ...services.token import set_auth_cookie, TokenSrvc
+from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
 
-token = TokenSrvc(sys_user_read_srvc=services_container["sys_users_read"])
 router = APIRouter()
 
 
 @router.get(
     "/{entity_uuid}/",
-    response_model=EntitiesCombinedRes,
+    response_model=EntitiesRes,
     status_code=status.HTTP_200_OK,
 )
 @set_auth_cookie
@@ -48,7 +47,7 @@ async def get_entity(
     entity_uuid: UUID4,
     response: Response,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple = Depends(get_validated_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     entities_read_srvc: ReadSrvc = Depends(services_container["entities_read"]),
 ) -> EntitiesRes:
     """
@@ -85,7 +84,7 @@ async def get_entities(
 
 @router.post(
     "/",
-    response_model=EntitiesRes,
+    response_model=NonIndividualsRes | IndividualsRes,
     status_code=status.HTTP_201_CREATED,
 )
 @set_auth_cookie
@@ -94,11 +93,12 @@ async def create_entity(
     response: Response,
     entity_data: IndividualsCreate | NonIndividualsCreate,
     db: AsyncSession = Depends(get_db),
-    user_token: Tuple[SysUsers, str] = Depends(token.validate_session),
+    user_token: Tuple[SysUsers, str] = Depends(get_validated_session),
     entities_creates_srvc: EntitiesCreateOrch = Depends(
         orchs_container["entities_create_orch"]
     ),
-) -> EntitiesRes:
+) -> NonIndividualsRes | IndividualsRes:
+
     async with transaction_manager(db=db):
         sys_user, _ = user_token
         return await entities_creates_srvc.create_entity(
@@ -167,7 +167,7 @@ async def soft_del_entity(
     async with transaction_manager(db=db):
         sys_user, _ = user_token
         entity_data = EntitiesDel()
-        sys_values.sys_deleted_by(data=entity_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=entity_data, sys_user_uuid=sys_user.uuid)
         await entities_delete_srvc.soft_del_entity(
             entity_uuid=entity_uuid, entity_data=entity_data, db=db
         )

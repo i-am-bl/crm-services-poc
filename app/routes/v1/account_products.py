@@ -107,7 +107,9 @@ async def create_account_product(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(data=account_product_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(
+            data=account_product_data, sys_user_uuid=sys_user.uuid
+        )
         return await account_products_create_srvc.create_account_product(
             account_uuid=account_uuid,
             account_product_data=account_product_data,
@@ -139,7 +141,9 @@ async def update_account_product(
 
     async with transaction_manager(db=db):
         sys_user, token = user_token
-        sys_values.sys_updated_by(data=account_product_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(
+            data=account_product_data, sys_user_uuid=sys_user.uuid
+        )
         return await account_products_update_srvc.update_account_product(
             account_uuid=account_uuid,
             account_product_uuid=account_product_uuid,
@@ -172,7 +176,9 @@ async def soft_del_account_product(
     async with transaction_manager(db=db):
         account_product_data = AccountProductsDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=account_product_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(
+            data=account_product_data, sys_user_uuid=sys_user.uuid
+        )
         return await account_products_delete_srvc.soft_del_account_product(
             account_uuid=account_uuid,
             account_product_uuid=account_product_uuid,

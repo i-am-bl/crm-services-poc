@@ -105,7 +105,7 @@ async def create_account_entity(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(sys_user=sys_user.uuid, data=entity_account_data)
+        sys_values.sys_created_by(sys_user_uuid=sys_user.uuid, data=entity_account_data)
         return await entity_account_create_srvc.create_account_entity(
             account_uuid=account_uuid, entity_account_data=entity_account_data, db=db
         )
@@ -135,7 +135,7 @@ async def update_account_entity(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(data=entity_account_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=entity_account_data, sys_user_uuid=sys_user.uuid)
         return await entity_account_update_srvc.update_account_entity(
             account_uuid=account_uuid,
             entity_account_uuid=entity_account_uuid,
@@ -170,7 +170,7 @@ async def soft_del_account_entity(
     async with transaction_manager(db=db):
         sys_user, _ = user_token
         entity_account_data = EntityAccountsDel()
-        sys_values.sys_deleted_by(data=entity_account_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=entity_account_data, sys_user_uuid=sys_user.uuid)
         return await entity_account_delete_srvc.soft_del_account_entity(
             account_uuid=account_uuid,
             entity_account_uuid=entity_account_uuid,

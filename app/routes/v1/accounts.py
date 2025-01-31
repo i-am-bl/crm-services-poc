@@ -94,7 +94,7 @@ async def create_account(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(data=account_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(data=account_data, sys_user_uuid=sys_user.uuid)
         return await accounts_create_srvc.create_account(
             account_data=account_data, db=db
         )
@@ -121,7 +121,7 @@ async def update_account(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(data=account_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=account_data, sys_user_uuid=sys_user.uuid)
         return await update_accounts_srvc.update_account(
             account_uuid=account_uuid, account_data=account_data, db=db
         )
@@ -147,7 +147,7 @@ async def soft_del_account(
     async with transaction_manager(db=db):
         account_data = AccountsDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=account_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=account_data, sys_user_uuid=sys_user.uuid)
         await accounts_delete_srvc.sof_del_account(
             account_uuid=account_uuid, account_data=account_data, db=db
         )

@@ -127,11 +127,11 @@ async def create_entity_account(
 
 @router.post(
     "/{entity_uuid}/entity-accounts/new-account/",
-    response_model=EntityAccountsRes,
+    # response_model=EntityAccountParentRes,
     status_code=status.HTTP_201_CREATED,
 )
 @set_auth_cookie
-@handle_exceptions([AccsExists, EntityAccNotExist, EntityAccExists])
+# @handle_exceptions([AccsExists, EntityAccNotExist, EntityAccExists])
 async def create_entity_account_account(
     response: Response,
     entity_uuid: UUID4,
@@ -142,7 +142,8 @@ async def create_entity_account_account(
     entity_accounts_read_orch: EntityAccountsCreateOrch = Depends(
         orchs_container["entity_accounts_create_orch"]
     ),
-) -> EntityAccountParentRes:
+    # ) -> EntityAccountParentRes:
+):
     """
     Create new account relationship with no existing account.
 
@@ -151,8 +152,8 @@ async def create_entity_account_account(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(data=account_data, sys_user=sys_user.uuid)
-        sys_values.sys_created_by(data=entity_account_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(data=account_data, sys_user_uuid=sys_user.uuid)
+        sys_values.sys_created_by(data=entity_account_data, sys_user_uuid=sys_user.uuid)
         return await entity_accounts_read_orch.create_account(
             entity_uuid=entity_uuid,
             account_data=account_data,
@@ -185,7 +186,7 @@ async def update_entity_account(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(data=entity_account_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=entity_account_data, sys_user_uuid=sys_user.uuid)
         return await entity_accounts_update_srvc.update_entity_account(
             entity_uuid=entity_uuid,
             entity_account_uuid=entity_account_uuid,
@@ -220,7 +221,7 @@ async def soft_del_entity_account(
     async with transaction_manager(db=db):
         sys_user, _ = user_token
         entity_account_data = EntityAccountsDel()
-        sys_values.sys_deleted_by(data=entity_account_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=entity_account_data, sys_user_uuid=sys_user.uuid)
         return await entity_accounts_update_srvc.soft_del_entity_account(
             entity_uuid=entity_uuid,
             entity_account_uuid=entity_account_uuid,

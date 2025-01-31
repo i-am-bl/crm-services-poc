@@ -136,7 +136,7 @@ async def create_address(
     """
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(sys_user=sys_user.uuid, data=address_data)
+        sys_values.sys_created_by(sys_user_uuid=sys_user.uuid, data=address_data)
         return await addresses_create_srvc.create_address(
             parent_uuid=account_uuid, address_data=address_data, db=db
         )
@@ -175,7 +175,7 @@ async def update_address(
     """
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(sys_user=sys_user.uuid, data=address_data)
+        sys_values.sys_updated_by(sys_user_uuid=sys_user.uuid, data=address_data)
         return await addresses_update_srvc.update_address(
             parent_uuid=account_uuid,
             parent_table="accounts",
@@ -217,7 +217,7 @@ async def soft_del_address(
     async with transaction_manager(db=db):
         address_data = AddressesDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(sys_user=sys_user.uuid, data=address_data)
+        sys_values.sys_deleted_by(sys_user_uuid=sys_user.uuid, data=address_data)
         return await addresses_delete_srvc.soft_del_address(
             parent_uuid=account_uuid,
             parent_table="accounts",

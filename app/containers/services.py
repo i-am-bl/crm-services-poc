@@ -297,20 +297,20 @@ container: ServicesContainer = {
     ),
     # individuals services
     "individuals_create": lambda: individuals_srvcs.CreateSrvc(
-        statements=statements_container["invoice_stms"](),
+        statements=statements_container["individuals_stms"](),
         db_operations=database_container["operations"](),
         model=Individuals,
     ),
     "individuals_read": lambda: individuals_srvcs.ReadSrvc(
-        statements=statements_container["invoice_stms"](),
+        statements=statements_container["individuals_stms"](),
         db_operations=database_container["operations"](),
     ),
     "individuals_update": lambda: individuals_srvcs.UpdateSrvc(
-        statements=statements_container["invoice_stms"](),
+        statements=statements_container["individuals_stms"](),
         db_operations=database_container["operations"](),
     ),
     "individuals_delete": lambda: individuals_srvcs.DelSrvc(
-        statements=statements_container["invoice_stms"](),
+        statements=statements_container["individuals_stms"](),
         db_operations=database_container["operations"](),
     ),
     # invoice items services

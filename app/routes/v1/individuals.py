@@ -67,7 +67,7 @@ async def create_individual(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(data=individual_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(data=individual_data, sys_user_uuid=sys_user.uuid)
         return await individuals_create_srvc.create_individual(
             entity_uuid=entity_uuid, individual_data=individual_data, db=db
         )
@@ -95,7 +95,7 @@ async def update_individual(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(data=individual_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=individual_data, sys_user_uuid=sys_user.uuid)
         return await individuals_update_srvc.update_individual(
             entity_uuid=entity_uuid,
             individual_uuid=individual_uuid,
@@ -125,7 +125,7 @@ async def soft_del_individual(
     async with transaction_manager(db=db):
         individual_data = IndividualsDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=individual_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=individual_data, sys_user_uuid=sys_user.uuid)
         return await individuals_delete_srvc.soft_del_individual(
             entity_uuid=entity_uuid,
             individual_uuid=individual_uuid,

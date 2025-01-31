@@ -78,8 +78,8 @@ class ReadSrvc:
         :rtype: EntitiesRes
         :raises EntityNotExist: If the entity does not exist.
         """
-        statement: Select = self._statements.get_entity(entity_uuid=entity_uuid)
-        entity: EntitiesRes = await self._db_ops.return_one_row(
+        statement = self._statements.get_entity(entity_uuid=entity_uuid)
+        entity = await self._db_ops.return_one_row(
             service=cnst.ENTITIES_READ_SERV, statement=statement, db=db
         )
         return record_not_exist(instance=entity, exception=EntityNotExist)

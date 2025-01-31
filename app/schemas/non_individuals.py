@@ -6,7 +6,7 @@ from pydantic import UUID4, BaseModel, Field
 from ._variables import ConstrainedStr, TimeStamp
 
 
-class NonIndividuals(BaseModel):
+class NonIndividualsCreate(BaseModel):
     """Represents a non-individual entity, such as a business or organization."""
 
     name: ConstrainedStr = Field(
@@ -17,7 +17,7 @@ class NonIndividuals(BaseModel):
     )
 
 
-class NonIndividualsCreate(NonIndividuals):
+class NonIndividualsInitCreate(NonIndividualsCreate):
     """Model for creating a non-individual entity."""
 
     entity_uuid: UUID4 = Field(..., description="UUID of the associated entity.")

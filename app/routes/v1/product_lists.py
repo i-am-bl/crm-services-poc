@@ -98,7 +98,7 @@ async def create_product_list(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_created_by(data=product_list_data, sys_user=sys_user.uuid)
+        sys_values.sys_created_by(data=product_list_data, sys_user_uuid=sys_user.uuid)
         return await product_lists_create_srvc.create_product_list(
             product_list_data=product_list_data, db=db
         )
@@ -127,7 +127,7 @@ async def update_product_list(
 
     async with transaction_manager(db=db):
         sys_user, _ = user_token
-        sys_values.sys_updated_by(data=product_list_data, sys_user=sys_user.uuid)
+        sys_values.sys_updated_by(data=product_list_data, sys_user_uuid=sys_user.uuid)
         return await product_lists_update_srvc.update_product_list(
             product_list_uuid=product_list_uuid,
             product_list_data=product_list_data,
@@ -157,7 +157,7 @@ async def soft_del_poduct_list(
     async with transaction_manager(db=db):
         product_list_data = ProductListsDel()
         sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=product_list_data, sys_user=sys_user.uuid)
+        sys_values.sys_deleted_by(data=product_list_data, sys_user_uuid=sys_user.uuid)
         await product_lists_delete_srvc.soft_del_product_list(
             product_list_uuid=product_list_uuid,
             product_list_data=product_list_data,
