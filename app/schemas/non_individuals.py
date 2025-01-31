@@ -38,6 +38,14 @@ class NonIndividualsUpdate(BaseModel):
     legal_name: Optional[ConstrainedStr] = Field(
         None, description="Updated legal name of the entity."
     )
+
+
+class NonIndividualsInternalUpdate(NonIndividualsUpdate):
+    """Model for updating a non-individual entity.
+
+    Hiding system level fields from the client.
+    """
+
     sys_updated_at: datetime = Field(
         TimeStamp, description="Timestamp when the entity was last updated."
     )

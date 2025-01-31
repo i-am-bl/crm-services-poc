@@ -12,6 +12,7 @@ from ...models.sys_users import SysUsers
 from ...schemas.non_individuals import (
     NonIndividualsCreate,
     NonIndividualsDel,
+    NonIndividualsInternalUpdate,
     NonIndividualsRes,
     NonIndividualsUpdate,
 )
@@ -19,6 +20,7 @@ from ...services.non_individuals import ReadSrvc, CreateSrvc, UpdateSrvc, DelSrv
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -97,13 +99,18 @@ async def update_non_individual(
     ),
 ) -> NonIndividualsRes:
 
+    sys_user, _ = user_token
+    _non_individual_data: NonIndividualsInternalUpdate = internal_schema_validation(
+        data=non_individual_data,
+        schema=NonIndividualsInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=non_individual_data, sys_user_uuid=sys_user.uuid)
         return await non_individuals_update_srvc.update_non_individual(
             entity_uuid=entity_uuid,
             non_individual_uuid=non_individual_uuid,
-            non_individual_data=non_individual_data,
+            non_individual_data=_non_individual_data,
             db=db,
         )
 
@@ -125,13 +132,17 @@ async def soft_del_non_individual(
     ),
 ) -> None:
 
+    sys_user, _ = user_token
+    _non_individual_data: NonIndividualsDel = internal_schema_validation(
+        schema=NonIndividualsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
+
     async with transaction_manager(db=db):
-        non_individual_data = NonIndividualsDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=non_individual_data, sys_user_uuid=sys_user.uuid)
         return await non_individuals_delete_srvc.soft_del_non_individual(
             entity_uuid=entity_uuid,
             non_individual_uuid=non_individual_uuid,
-            non_individual_data=non_individual_data,
+            non_individual_data=_non_individual_data,
             db=db,
         )

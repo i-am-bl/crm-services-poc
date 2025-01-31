@@ -11,7 +11,7 @@ from ..schemas.non_individuals import (
     NonIndividualsDel,
     NonIndividualsRes,
     NonIndividualsDelRes,
-    NonIndividualsUpdate,
+    NonIndividualsInternalUpdate,
 )
 from ..statements.non_individuals import NonIndivididualsStms
 from ..utilities.data import record_not_exist, record_exists
@@ -289,7 +289,7 @@ class UpdateSrvc:
     async def update_non_individual(
         self,
         entity_uuid: UUID4,
-        non_individual_data: NonIndividualsUpdate,
+        non_individual_data: NonIndividualsInternalUpdate,
         db: AsyncSession,
     ) -> NonIndividualsRes:
         """
@@ -298,7 +298,7 @@ class UpdateSrvc:
         :param entity_uuid: The UUID of the non-individual entity to update.
         :type entity_uuid: UUID4
         :param non_individual_data: The updated data for the non-individual entity.
-        :type non_individual_data: NonIndividualsUpdate
+        :type non_individual_data: NonIndividualsInternalUpdate
         :param db: The asynchronous session for database operations.
         :type db: AsyncSession
 
