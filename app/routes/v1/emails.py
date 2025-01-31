@@ -11,6 +11,8 @@ from ...handlers.handler import handle_exceptions
 from ...models.sys_users import SysUsers
 from ...schemas.emails import (
     EmailsCreate,
+    EmailsInternalCreate,
+    EmailsInternalUpdate,
     EmailsUpdate,
     EmailsRes,
     EmailsPgRes,
@@ -20,6 +22,7 @@ from ...services.emails import CreateSrvc, ReadSrvc, UpdateSrvc, DelSrvc
 from ...services.token import set_auth_cookie
 from ...utilities import sys_values
 from ...utilities.auth import get_validated_session
+from ...utilities.data import internal_schema_validation
 
 router = APIRouter()
 
@@ -92,12 +95,18 @@ async def create_email(
     """
     Create one email for entity.
     """
+    sys_user, _ = user_token
+    _email_data: EmailsInternalCreate = internal_schema_validation(
+        data=email_data,
+        schema=EmailsInternalCreate,
+        setter_method=sys_values.sys_created_by,
+        sys_user_uuid=sys_user.uuid,
+    )
 
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
         sys_values.sys_created_by(data=email_data, sys_user_uuid=sys_user.uuid)
         return await emails_create_srvc.create_email(
-            entity_uuid=entity_uuid, email_data=email_data, db=db
+            entity_uuid=entity_uuid, email_data=_email_data, db=db
         )
 
 
@@ -120,14 +129,20 @@ async def update_email(
     """
     Update one email.
     """
+    sys_user, _ = user_token
+    _email_data: EmailsInternalUpdate = internal_schema_validation(
+        data=email_data,
+        schema=EmailsInternalUpdate,
+        setter_method=sys_values.sys_updated_by,
+        sys_user_uuid=sys_user.uuid,
+    )
 
     async with transaction_manager(db=db):
-        sys_user, _ = user_token
-        sys_values.sys_updated_by(data=email_data, sys_user_uuid=sys_user.uuid)
+
         return await user_update_srvc.update_email(
             entity_uuid=entity_uuid,
             email_uuid=email_uuid,
-            email_data=email_data,
+            email_data=_email_data,
             db=db,
         )
 
@@ -149,14 +164,17 @@ async def soft_del_email(
     """
     Soft del one email.
     """
+    sys_user, _ = user_token
+    _email_data: EmailsDel = internal_schema_validation(
+        schema=EmailsDel,
+        setter_method=sys_values.sys_deleted_by,
+        sys_user_uuid=sys_user.uuid,
+    )
 
     async with transaction_manager(db=db):
-        email_data = EmailsDel()
-        sys_user, _ = user_token
-        sys_values.sys_deleted_by(data=email_data, sys_user_uuid=sys_user.uuid)
         return await user_delete_srvc.soft_del_email(
             entity_uuid=entity_uuid,
             email_uuid=email_uuid,
-            email_data=email_data,
+            email_data=_email_data,
             db=db,
         )

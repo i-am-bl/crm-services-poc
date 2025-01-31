@@ -14,7 +14,7 @@ from pydantic import UUID4, BaseModel, Field
 from ._variables import ConstrainedEmailStr, TimeStamp
 
 
-class Emails(BaseModel):
+class EmailsCreate(BaseModel):
     """
     Base model representing an email.
     """
@@ -22,19 +22,21 @@ class Emails(BaseModel):
     email: ConstrainedEmailStr = Field(
         ..., description="Email address with constraints applied."
     )
+    entity_uuid: UUID4 = Field(..., description="UUID of the associated entity.")
 
 
-class EmailsCreate(Emails):
+class EmailsInternalCreate(EmailsCreate):
     """
     Model for creating a new email record.
+
+    Hiding system level fields from the client.
     """
 
-    entity_uuid: UUID4 = Field(..., description="UUID of the associated entity.")
     sys_created_at: datetime = Field(
         TimeStamp, description="Timestamp of when the email record was created."
     )
-    sys_created_by: Optional[UUID4] = Field(
-        None, description="UUID of the user who created the email record."
+    sys_created_by: UUID4 = Field(
+        ..., description="UUID of the user who created the email record."
     )
 
 
@@ -46,6 +48,15 @@ class EmailsUpdate(BaseModel):
     email: Optional[ConstrainedEmailStr] = Field(
         None, description="Updated email address."
     )
+
+
+class EmailsInternalUpdate(EmailsUpdate):
+    """
+    Model for updating an existing email record.
+
+    Hiding system level fields from the client.
+    """
+
     sys_updated_at: datetime = Field(
         TimeStamp, description="Timestamp of when the email record was last updated."
     )

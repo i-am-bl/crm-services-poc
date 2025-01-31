@@ -9,8 +9,8 @@ from ..database.operations import Operations
 from ..exceptions import EmailExists, EmailNotExist
 from ..models.emails import Emails
 from ..schemas.emails import (
-    EmailsCreate,
-    EmailsUpdate,
+    EmailsInternalCreate,
+    EmailsInternalUpdate,
     EmailsRes,
     EmailsDel,
     EmailsDelRes,
@@ -236,7 +236,7 @@ class CreateSrvc:
     async def create_email(
         self,
         entity_uuid: UUID4,
-        email_data: EmailsCreate,
+        email_data: EmailsInternalCreate,
         db: AsyncSession,
     ):
         """
@@ -245,7 +245,7 @@ class CreateSrvc:
         :param entity_uuid: The UUID of the entity to associate with the email.
         :type entity_uuid: UUID4
         :param email_data: The data required to create the email.
-        :type email_data: EmailsCreate
+        :type email_data: EmailsInternalCreate
         :param db: The database session.
         :type db: AsyncSession
         :return: The result of the email creation operation.
@@ -316,7 +316,7 @@ class UpdateSrvc:
         self,
         entity_uuid: UUID4,
         email_uuid: UUID4,
-        email_data: EmailsUpdate,
+        email_data: EmailsInternalUpdate,
         db: AsyncSession,
     ) -> EmailsRes:
         """
@@ -327,7 +327,7 @@ class UpdateSrvc:
         :param email_uuid: The UUID of the email to update.
         :type email_uuid: UUID4
         :param email_data: The data to update the email with.
-        :type email_data: EmailsUpdate
+        :type email_data: EmailsInternalUpdate
         :param db: The database session.
         :type db: AsyncSession
         :return: The updated email data.
