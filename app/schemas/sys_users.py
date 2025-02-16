@@ -133,9 +133,7 @@ class SysUsersRes(BaseModel):
     sys_created_at: datetime = Field(
         ..., description="Timestamp when the user was created."
     )
-    sys_created_by: UUID4 = Field(
-        ..., description="The UUID of the user who created the record."
-    )
+    sys_created_by: Optional[UUID4]
     sys_updated_at: Optional[datetime] = Field(
         None, description="Timestamp when the user was last updated."
     )
