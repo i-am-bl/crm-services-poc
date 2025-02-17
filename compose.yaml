@@ -17,7 +17,6 @@ services:
       - postgres-db
     ports:
       - 8000:8000
-    restart: always
     environment:
       POSTGRES_USER: ${DB_USRNM}
       POSTGRES_PASSWORD: ${DB_PWD}
